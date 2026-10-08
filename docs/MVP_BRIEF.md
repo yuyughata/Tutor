@@ -11,7 +11,10 @@ The repo (`yuyughata/tutor`) is empty, so this is a greenfield build.
 | Platforms | iOS + Android, React Native (Expo) |
 | Audience | Ages 2–12, split into age bands (see below) |
 | Access model | Parent account and subscription on the web. Child profiles inside the app. A free sample library is open without signing in. |
-| Backend | Supabase (Auth, Postgres, Storage/CDN, RLS) + Stripe (web checkout and billing portal) |
+| Backend | Supabase (Auth, Postgres, Storage/CDN, RLS) + Paystack (web checkout and subscriptions) |
+
+## Brand
+CUSTAR colours drive the UI: purple `#ab46d2` (primary actions), teal `#10a19c` (secondary and success), amber `#ffbe00` (highlights and badges) and charcoal `#232323` (text). Charcoal text is used on teal and amber because white on `#10a19c` is only 3.2:1 contrast. Typeface: Nunito.
 
 ## Product goals
 1. A child can open the app and be reading a story within 3 taps.
@@ -65,8 +68,8 @@ Age bands (drive content filtering and reader typography):
 **6. Subscription and access (web-paid)**
 - Free tier: a sample set (about 5 stories, to be decided by CUSTAR) readable without an account.
 - Premium: the full catalogue.
-- The web checkout is built on Stripe: a plan page, Checkout, and the Stripe customer portal for managing billing.
-- A Stripe webhook writes the `entitlements` row in Supabase, and the app reads it on launch and on foreground.
+- The web checkout is built on Paystack: a plan page on the Genova website that starts a Paystack subscription transaction (plans are created in the Paystack dashboard). Billing management links to Paystack's subscription management email flow.
+- A Paystack webhook (Supabase Edge Function, HMAC-SHA512 verified, idempotent) writes the `entitlements` row in Supabase, and the app reads it on launch and whenever it returns to the foreground.
 - The app shows **no prices or purchase buttons**. Locked titles show a lock icon and a neutral message: "Ask a grown-up to sign in."
 
 **7. Internal CMS** (an admin web page, which can start as Supabase Studio plus a small admin UI)
@@ -83,7 +86,9 @@ Age bands (drive content filtering and reader typography):
 - Multi-language content (the schema should allow it).
 
 ## Data model (Supabase / Postgres)
-- `profiles` (parent): id (= auth user), email, stripe_customer_id
+- `profiles` (parent): id (= auth user), email, is_admin
+- `billing_accounts` (server-only): parent_id, paystack_customer_code, paystack_subscription_code, paystack_email_token
+- `payment_events` (server-only): webhook dedupe key, event, payload
 - `child_profiles`: id, parent_id, name, avatar, age_band
 - `stories`: id, slug, title, synopsis, cover_url, author_id, age_band, status, is_free, page_count, published_at
 - `story_pages`: id, story_id, position, image_url, text, *(future: audio_url, audio_timings, video_url)*
@@ -104,7 +109,7 @@ Future media is additive: audio and video fields on `story_pages` and a media bu
 
 ## Architecture
 - **App**: Expo (React Native) + TypeScript, Expo Router, TanStack Query, a local cache for offline reads.
-- **Backend**: Supabase Auth, Postgres, Storage/CDN, and an Edge Function for the Stripe webhook.
+- **Backend**: Supabase Auth, Postgres, Storage/CDN, and Edge Functions for Paystack checkout and the Paystack webhook.
 - **Web**: a lightweight site (Next.js or similar) hosting the landing page, plans and checkout, the account page, and the admin CMS.
 - **Images**: authored at a fixed ratio (suggest 4:3), served in several sizes.
 
@@ -137,13 +142,13 @@ Future media is additive: audio and video fields on `story_pages` and a media bu
 2. Supabase schema, RLS policies, storage buckets, and seed data with 3 sample stories.
 3. Expo app: home → detail → reader against seeded data.
 4. Auth, parent/child profiles, parental gate.
-5. Stripe web checkout, webhook, entitlement gating in the app.
+5. Paystack web checkout, webhook, entitlement gating in the app.
 6. Admin CMS and the featured-slot scheduler.
 7. Library features, offline cache, polish, accessibility (dynamic type, screen-reader labels, reduced motion).
 8. Beta with real families, then store submission.
 
 ## Verification (once building starts)
 - Seed a story in Supabase, read it end to end on iOS and Android simulators, and confirm that progress resumes.
-- Verify that an unsubscribed parent sees locked titles and cannot fetch their page images (RLS and signed URLs). Then subscribe through Stripe test mode and confirm unlock within seconds.
+- Verify that an unsubscribed parent sees locked titles and cannot fetch their page images (RLS and signed URLs). Then subscribe through Paystack test mode and confirm unlock within seconds.
 - Confirm that the Title of the Week/Month slots change on schedule.
 - Run the parental gate, privacy, and store-policy checklists before TestFlight and Play internal testing.

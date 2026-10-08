@@ -60,7 +60,8 @@ export async function getHome(band: AgeBand): Promise<HomeData> {
       (slots ?? []).find((s) => s.type === t)?.stories as unknown as { slug: string } | undefined;
     weekSlug = slugFor('week')?.slug;
     monthSlug = slugFor('month')?.slug;
-    categories = cats ?? [];
+    const icons: Record<string, string> = Object.fromEntries(mock.categories.map((c) => [c.slug, c.icon ?? 'book']));
+    categories = (cats ?? []).map((c) => ({ ...c, icon: icons[c.slug] ?? 'book' }));
   }
 
   const bySlug = (slug?: string) => all.find((s) => s.slug === slug) ?? null;
@@ -92,5 +93,13 @@ export async function getPages(story: Story): Promise<StoryPage[]> {
     .eq('story_id', story.id)
     .order('position');
   if (error) throw error;
-  return (data ?? []).map((p) => ({ position: p.position, imageUrl: p.image_url, text: p.text }));
+  const rows = data ?? [];
+  // Private bucket: image_url holds a storage path, served through short-lived signed URLs.
+  const paths = rows.filter((p) => !/^https?:/.test(p.image_url)).map((p) => p.image_url as string);
+  const signed = new Map<string, string>();
+  if (paths.length) {
+    const { data: urls } = await supabase.storage.from('pages').createSignedUrls(paths, 3600);
+    for (const u of urls ?? []) if (u.path && u.signedUrl) signed.set(u.path, u.signedUrl);
+  }
+  return rows.map((p) => ({ position: p.position, imageUrl: signed.get(p.image_url) ?? p.image_url, text: p.text }));
 }

@@ -1,13 +1,44 @@
-import { Stack } from 'expo-router';
+import { Nunito_600SemiBold, Nunito_800ExtraBold, Nunito_900Black, useFonts } from '@expo-google-fonts/nunito';
+import { Stack, router, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { ProfileProvider } from '../src/profile';
+import { useEffect } from 'react';
+import { GateProvider } from '../src/state/gate';
+import { AuthProvider } from '../src/state/auth';
+import { LibraryProvider } from '../src/state/library';
+import { ProfilesProvider, useProfiles } from '../src/state/profiles';
 import { colors } from '../src/theme';
 
+/** First launch: nobody is reading yet, so ask who is before showing anything else. */
+function OnboardingGuard() {
+  const { ready, children } = useProfiles();
+  const segments = useSegments();
+  useEffect(() => {
+    if (ready && children.length === 0 && segments[0] !== 'profile') router.replace('/profile/new?first=1');
+  }, [ready, children.length, segments]);
+  return null;
+}
+
 export default function RootLayout() {
+  const [loaded] = useFonts({ Nunito_600SemiBold, Nunito_800ExtraBold, Nunito_900Black });
+  if (!loaded) return null;
   return (
-    <ProfileProvider>
-      <StatusBar style="dark" />
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }} />
-    </ProfileProvider>
+    <AuthProvider>
+      <ProfilesProvider>
+        <LibraryProvider>
+          <GateProvider>
+            <StatusBar style="dark" />
+            <OnboardingGuard />
+            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
+              <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="story/[slug]" options={{ animation: 'slide_from_right' }} />
+              <Stack.Screen name="read/[slug]" options={{ animation: 'fade', gestureEnabled: false }} />
+              <Stack.Screen name="profile/new" options={{ presentation: 'modal' }} />
+              <Stack.Screen name="profile/switch" options={{ presentation: 'transparentModal', animation: 'fade', contentStyle: { backgroundColor: 'transparent' } }} />
+              <Stack.Screen name="sign-in" options={{ presentation: 'modal' }} />
+            </Stack>
+          </GateProvider>
+        </LibraryProvider>
+      </ProfilesProvider>
+    </AuthProvider>
   );
 }

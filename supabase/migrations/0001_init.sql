@@ -13,7 +13,6 @@ create type entitlement_status as enum ('active', 'trialing', 'past_due', 'cance
 create table profiles (
   id uuid primary key references auth.users (id) on delete cascade,
   email text,
-  stripe_customer_id text unique,
   is_admin boolean not null default false,
   created_at timestamptz not null default now()
 );
@@ -34,6 +33,25 @@ create table entitlements (
   plan text,
   current_period_end timestamptz,
   updated_at timestamptz not null default now()
+);
+
+-- Paystack identifiers. Server-only: RLS is enabled with no policies, so only the
+-- service role (edge functions) can read or write. email_token can cancel a subscription.
+create table billing_accounts (
+  parent_id uuid primary key references profiles (id) on delete cascade,
+  paystack_customer_code text unique,
+  paystack_subscription_code text unique,
+  paystack_email_token text,
+  updated_at timestamptz not null default now()
+);
+
+-- Idempotency + audit log for webhook deliveries (service role only).
+create table payment_events (
+  id bigint generated always as identity primary key,
+  dedupe_key text not null unique,
+  event text not null,
+  payload jsonb not null,
+  received_at timestamptz not null default now()
 );
 
 -- ---------- catalogue ----------
@@ -169,6 +187,8 @@ for each row execute function handle_new_user();
 alter table profiles enable row level security;
 alter table child_profiles enable row level security;
 alter table entitlements enable row level security;
+alter table billing_accounts enable row level security;
+alter table payment_events enable row level security;
 alter table authors enable row level security;
 alter table stories enable row level security;
 alter table story_pages enable row level security;
@@ -179,7 +199,7 @@ alter table reading_progress enable row level security;
 alter table favorites enable row level security;
 alter table read_events enable row level security;
 
--- parents: own row only (is_admin / stripe_customer_id are not client-writable)
+-- parents: own row only (is_admin is not client-writable; billing ids live in billing_accounts)
 create policy "own profile read" on profiles for select using (id = auth.uid());
 
 -- child profiles: owned by the signed-in parent

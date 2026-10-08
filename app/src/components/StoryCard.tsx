@@ -1,42 +1,53 @@
-import { Image } from 'expo-image';
-import { Link } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, radius } from '../theme';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import { StyleSheet, Text, View } from 'react-native';
+import { useAuth } from '../state/auth';
+import { colors, radius, shadow, type } from '../theme';
 import type { Story } from '../types';
+import { Picture } from './Picture';
+import { Tap } from './Tap';
 
-type Props = { story: Story; size?: 'small' | 'large'; locked?: boolean };
+export const CARD_W = 148;
 
-export function StoryCard({ story, size = 'small', locked = !story.isFree }: Props) {
-  const large = size === 'large';
+export function openStory(slug: string) {
+  router.push({ pathname: '/story/[slug]', params: { slug } });
+}
+
+/** Shelf card: cover first, then title and a quiet meta line. */
+export function StoryCard({ story, width = CARD_W }: { story: Story; width?: number }) {
+  const { canRead } = useAuth();
+  const locked = !canRead(story);
   return (
-    <Link href={{ pathname: '/story/[slug]', params: { slug: story.slug } }} asChild>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`${story.title}${locked ? ', locked' : ''}`}
-        style={[styles.card, large ? styles.large : styles.small]}
-      >
-        <Image source={story.coverUrl} style={StyleSheet.absoluteFill} contentFit="cover" />
-        <View style={styles.scrim} />
+    <Tap
+      accessibilityRole="button"
+      accessibilityLabel={`${story.title}. Ages ${story.ageBand}. ${story.readingMinutes} minutes.${locked ? ' Locked.' : ''}`}
+      onPress={() => openStory(story.slug)}
+      style={{ width }}
+    >
+      <View style={[styles.cover, shadow.soft]}>
+        <Picture uri={story.coverUrl} art={story.art} style={StyleSheet.absoluteFill} />
         {locked && (
           <View style={styles.lock}>
-            <Text style={styles.lockText}>🔒</Text>
+            <Ionicons name="lock-closed" size={13} color={colors.ink} />
           </View>
         )}
-        <Text style={[styles.title, large && styles.titleLarge]} numberOfLines={2}>
-          {story.title}
-        </Text>
-      </Pressable>
-    </Link>
+        {story.isFree && (
+          <View style={styles.free}>
+            <Text style={styles.freeText}>FREE</Text>
+          </View>
+        )}
+      </View>
+      <Text style={styles.title} numberOfLines={2}>{story.title}</Text>
+      <Text style={styles.meta}>Ages {story.ageBand} · {story.readingMinutes} min</Text>
+    </Tap>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { borderRadius: radius.lg, overflow: 'hidden', justifyContent: 'flex-end', backgroundColor: colors.surface },
-  small: { width: 150, height: 190 },
-  large: { flex: 1, height: 200 },
-  scrim: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.22)' },
-  title: { color: '#fff', fontWeight: '700', fontSize: 15, padding: 12 },
-  titleLarge: { fontSize: 18 },
-  lock: { position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: radius.pill, padding: 6 },
-  lockText: { fontSize: 12 },
+  cover: { aspectRatio: 3 / 4, borderRadius: radius.lg, overflow: 'hidden', backgroundColor: colors.purpleSoft },
+  lock: { position: 'absolute', top: 10, right: 10, width: 28, height: 28, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.92)', alignItems: 'center', justifyContent: 'center' },
+  free: { position: 'absolute', left: 10, bottom: 10, backgroundColor: colors.amber, paddingHorizontal: 9, paddingVertical: 3, borderRadius: radius.pill },
+  freeText: { fontFamily: 'Nunito_900Black', fontSize: 11, letterSpacing: 0.6, color: colors.onAmber },
+  title: { ...type.heading, color: colors.ink, marginTop: 10 },
+  meta: { ...type.small, color: colors.muted, marginTop: 2 },
 });
