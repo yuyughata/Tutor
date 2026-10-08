@@ -30,7 +30,12 @@ function toStory(r: StoryRow, reads: Map<string, number>): Story {
 
 async function remoteStories(): Promise<Story[]> {
   const [{ data: rows, error }, { data: pop }] = await Promise.all([
-    supabase!.from('stories').select(STORY_SELECT).eq('status', 'published').order('published_at', { ascending: false }),
+    // Live = published or scheduled, and its publish time has arrived (RLS enforces the same rule for parents).
+    supabase!.from('stories').select(STORY_SELECT)
+      .in('status', ['published', 'scheduled'])
+      .not('published_at', 'is', null)
+      .lte('published_at', new Date().toISOString())
+      .order('published_at', { ascending: false }),
     supabase!.from('popular_stories').select('story_id, reads_30d'),
   ]);
   if (error) throw error;
