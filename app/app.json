@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "name": "Genova",
+    "slug": "genova",
+    "scheme": "genova",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "plugins": ["expo-router"],
+    "experiments": { "typedRoutes": true },
+    "ios": { "bundleIdentifier": "com.custar.genova", "supportsTablet": true },
+    "android": { "package": "com.custar.genova" }
+  }
+}
