@@ -41,6 +41,13 @@ test('charge.success grants access only for plan charges, using metadata.user_id
   assert.equal(failed.action, 'ignore');
 });
 
+test('checkout metadata names our plan id, which beats the Paystack plan code', () => {
+  const e = interpretEvent({ event: 'charge.success', data: { status: 'success', reference: 'r9', paid_at: '2026-10-08T10:00:00.000Z', metadata: { user_id: 'u1', plan: 'quarterly' },
+    customer: { email: 'a@b.c' }, plan: { plan_code: 'PLN_q', interval: 'quarterly' } } });
+  assert.equal(e.plan, 'quarterly');
+  assert.ok(Date.parse(e.periodEnd) > Date.parse('2026-12-30') && Date.parse(e.periodEnd) < Date.parse('2027-01-20'), 'a quarterly charge grants about 3 months');
+});
+
 test('payment failure, disable and unknown events', () => {
   assert.equal(interpretEvent({ event: 'invoice.payment_failed', data: { customer: { email: 'a@b.c' } } }).action, 'past_due');
   assert.equal(interpretEvent({ event: 'subscription.disable', data: { subscription_code: 'SUB_1' } }).action, 'cancel');

@@ -8,5 +8,7 @@ export const supabase =
   url && anonKey
     ? createClient(url, anonKey, {
         auth: { storage: AsyncStorage, autoRefreshToken: true, persistSession: true, detectSessionInUrl: false },
+        // Fail fast when offline: screens fall back to the cached catalogue instead of waiting on retries.
+        db: { retry: false },
       })
     : null;

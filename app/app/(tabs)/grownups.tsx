@@ -7,6 +7,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Avatar } from '../../src/components/Avatar';
 import { Button } from '../../src/components/Button';
 import { Tap } from '../../src/components/Tap';
+import { formatBytes, removeAll, useDownloads } from '../../src/data/downloads';
+import { levelFull } from '../../src/levels';
 import { useAuth } from '../../src/state/auth';
 import { useGate } from '../../src/state/gate';
 import { useProfiles } from '../../src/state/profiles';
@@ -24,6 +26,8 @@ export default function GrownUps() {
   const { configured, session, entitlement, signOut, refresh } = useAuth();
   const { children: kids, active, select } = useProfiles();
   const [unlocked, setUnlocked] = useState(false);
+  const downloads = useDownloads();
+  const [confirmClear, setConfirmClear] = useState(false);
   // Keep the latest refresh in a ref so the focus effect below only re-runs on focus, not on every auth update.
   const refreshRef = useRef(refresh);
   useEffect(() => { refreshRef.current = refresh; }, [refresh]);
@@ -63,12 +67,15 @@ export default function GrownUps() {
         ) : session ? (
           <>
             <Text style={styles.body}>{session.user.email}</Text>
-            <View style={[styles.badge, entitlement.active ? styles.badgeOn : styles.badgeOff]}>
-              <Ionicons name={entitlement.active ? 'checkmark-circle' : 'ellipse-outline'} size={16} color={entitlement.active ? '#0b6f6b' : colors.muted} />
-              <Text style={[styles.badgeText, { color: entitlement.active ? '#0b6f6b' : colors.muted }]}>
-                {entitlement.active ? 'Premium is active' : 'Free plan'}
+            <View style={[styles.badge, entitlement.inGrace ? styles.badgeWarn : entitlement.active ? styles.badgeOn : styles.badgeOff]} accessible accessibilityLabel={entitlement.inGrace ? 'Payment overdue' : entitlement.active ? 'Premium is active' : 'Free plan'}>
+              <Ionicons name={entitlement.inGrace ? 'alert-circle' : entitlement.active ? 'checkmark-circle' : 'ellipse-outline'} size={16} color={entitlement.inGrace ? colors.amberDeep : entitlement.active ? colors.tealDeep : colors.muted} />
+              <Text style={[styles.badgeText, { color: entitlement.inGrace ? colors.amberDeep : entitlement.active ? colors.tealDeep : colors.muted }]}>
+                {entitlement.inGrace ? 'Payment overdue' : entitlement.active ? 'Premium is active' : 'Free plan'}
               </Text>
             </View>
+            {entitlement.inGrace && entitlement.until && (
+              <Text style={styles.body}>Renew on the website before {new Date(entitlement.until).toLocaleDateString(undefined, { day: 'numeric', month: 'long' })} to keep Premium. After that your account moves back to the Free plan.</Text>
+            )}
             {WEB_URL && (
               <Button label={entitlement.active ? 'Manage on the web' : 'Get Premium on the web'} icon="open-outline" variant="secondary" onPress={() => Linking.openURL(WEB_URL)} />
             )}
@@ -90,7 +97,7 @@ export default function GrownUps() {
               <Avatar id={k.avatar} size={44} ring={active?.id === k.id ? colors.teal : undefined} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.name}>{k.name}</Text>
-                <Text style={styles.meta}>Ages {k.ageBand}{active?.id === k.id ? ' · reading now' : ''}</Text>
+                <Text style={styles.meta}>{levelFull(k.level)}{active?.id === k.id ? ' · reading now' : ''}</Text>
               </View>
             </Tap>
             <Tap accessibilityRole="button" accessibilityLabel={`Edit ${k.name}`} onPress={() => router.push({ pathname: '/profile/new', params: { id: k.id } })} style={styles.edit}>
@@ -102,8 +109,19 @@ export default function GrownUps() {
       </Card>
 
       <Card>
-        <Text style={styles.cardTitle}>Privacy</Text>
-        <Text style={styles.body}>No ads. No tracking. Genova collects only a child's first name or nickname and age group, so we can show the right stories.</Text>
+        <Text accessibilityRole="header" style={styles.cardTitle}>Offline reading</Text>
+        <Text style={styles.body}>
+          {downloads.list.length === 0 ? 'No stories saved on this device. Open a story and choose "Save for offline".' : `${downloads.list.length} ${downloads.list.length === 1 ? 'story' : 'stories'} saved · ${formatBytes(downloads.bytes)} on this device.`}
+        </Text>
+        {downloads.list.length > 0 && (
+          <Button label={confirmClear ? 'Tap again to remove all' : 'Remove all downloads'} icon="trash-outline" variant="danger" onPress={() => { if (!confirmClear) return setConfirmClear(true); removeAll(); setConfirmClear(false); }} />
+        )}
+      </Card>
+
+      <Card>
+        <Text accessibilityRole="header" style={styles.cardTitle}>Privacy</Text>
+        <Text style={styles.body}>No ads. No tracking. Genova collects only a child's first name or nickname and reading level, so we can show the right stories.</Text>
+        <Button label="Read our privacy policy" icon="document-text-outline" variant="secondary" onPress={() => router.push('/legal/privacy')} />
       </Card>
       <Text style={styles.footer}>Genova · a CUSTAR product · v0.1</Text>
     </ScrollView>
@@ -119,6 +137,7 @@ const styles = StyleSheet.create({
   badge: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 6, borderRadius: radius.pill },
   badgeOn: { backgroundColor: colors.tealSoft },
   badgeOff: { backgroundColor: colors.border },
+  badgeWarn: { backgroundColor: colors.amberSoft },
   badgeText: { ...type.heading, fontSize: 14 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   rowMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 },

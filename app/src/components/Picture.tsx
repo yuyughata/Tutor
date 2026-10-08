@@ -20,7 +20,8 @@ export function Picture({ uri, art, style }: Props) {
   const fallback = art ?? { emoji: '📖', colors: ['#ab46d2', '#10a19c'] as [string, string] };
 
   return (
-    <View style={[styles.box, style]} onLayout={(e) => setW(e.nativeEvent.layout.width)} accessible={false}>
+    // Illustrations are decorative here: the card or page text around them carries the meaning for screen readers.
+    <View style={[styles.box, style]} onLayout={(e) => setW(e.nativeEvent.layout.width)} aria-hidden importantForAccessibility="no-hide-descendants">
       <LinearGradient colors={fallback.colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
       {!useImage && w > 0 && (
         <>

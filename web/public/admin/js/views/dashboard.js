@@ -43,7 +43,7 @@ export async function render(ctx) {
       h('a', { class: 'btn', href: '#/stories/new' }, icon('plus'), 'New story')),
     h('div', { class: 'grid cols-4' },
       stat('book', 'var(--purple-soft)', 'var(--purple-deep)', stats.stories_live, 'Live stories', `${stats.stories_scheduled} scheduled · ${stats.stories_draft} drafts`),
-      stat('wallet', 'var(--teal-soft)', 'var(--teal-deep)', stats.subscribers, 'Active subscribers', `${num(stats.parents)} parent accounts`),
+      stat('wallet', 'var(--teal-soft)', 'var(--teal-deep)', stats.subscribers, 'Premium subscribers', `${num(stats.past_due || 0)} in grace period · ${num(stats.parents)} accounts`),
       stat('baby', 'var(--amber-soft)', 'var(--amber-deep)', stats.readers, 'Child readers', null),
       stat('eye', 'var(--purple-soft)', 'var(--purple-deep)', stats.reads_7d, 'Stories started (7 days)', `${num(stats.reads_30d)} in 30 days`)),
     alerts.length ? h('div', { class: 'grid', style: { marginTop: '16px' } }, alerts.map((a) =>

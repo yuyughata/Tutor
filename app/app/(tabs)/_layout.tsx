@@ -60,7 +60,7 @@ export default function TabsLayout() {
 const styles = StyleSheet.create({
   outer: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
   bar: { flexDirection: 'row', alignItems: 'center', gap: 4, padding: 8, borderRadius: radius.pill, backgroundColor: colors.surface },
-  item: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 48, minWidth: 56, paddingHorizontal: 16, borderRadius: radius.pill },
+  item: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 48, minWidth: 56, paddingHorizontal: 16, borderRadius: radius.pill },
   itemOn: { backgroundColor: colors.purple, paddingHorizontal: 20 },
   label: { fontFamily: fonts.black, fontSize: 15, color: colors.onPurple },
 });

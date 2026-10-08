@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
+import { levelFull, levelName } from '../levels';
 import { useAuth } from '../state/auth';
 import { colors, radius, shadow, type } from '../theme';
 import type { Story } from '../types';
@@ -20,7 +21,7 @@ export function StoryCard({ story, width = CARD_W }: { story: Story; width?: num
   return (
     <Tap
       accessibilityRole="button"
-      accessibilityLabel={`${story.title}. Ages ${story.ageBand}. ${story.readingMinutes} minutes.${locked ? ' Locked.' : ''}`}
+      accessibilityLabel={`${story.title}. ${levelFull(story.level)}. ${story.readingMinutes} minutes.${locked ? ' Locked.' : ''}`}
       onPress={() => openStory(story.slug)}
       style={{ width }}
     >
@@ -38,7 +39,7 @@ export function StoryCard({ story, width = CARD_W }: { story: Story; width?: num
         )}
       </View>
       <Text style={styles.title} numberOfLines={2}>{story.title}</Text>
-      <Text style={styles.meta}>Ages {story.ageBand} · {story.readingMinutes} min</Text>
+      <Text style={styles.meta}>{levelName(story.level)} · {story.readingMinutes} min</Text>
     </Tap>
   );
 }

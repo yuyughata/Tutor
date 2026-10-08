@@ -8,11 +8,13 @@ import { Button } from '../../src/components/Button';
 import { EmptyState } from '../../src/components/EmptyState';
 import { Picture } from '../../src/components/Picture';
 import { Tap } from '../../src/components/Tap';
-import { getHome, getStory } from '../../src/data/repository';
+import { formatBytes, removeStory, saveStory, useDownloads } from '../../src/data/downloads';
+import { getHome, getPages, getStory } from '../../src/data/repository';
+import { levelFull } from '../../src/levels';
 import { useAuth } from '../../src/state/auth';
 import { useGate } from '../../src/state/gate';
 import { useLibrary } from '../../src/state/library';
-import { useAgeBand } from '../../src/state/profiles';
+import { useReadingLevel } from '../../src/state/profiles';
 import { colors, radius, shadow, space, type } from '../../src/theme';
 import type { Category, Story } from '../../src/types';
 
@@ -30,11 +32,13 @@ export default function StoryDetail() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const ask = useGate();
-  const band = useAgeBand();
+  const band = useReadingLevel();
   const { canRead } = useAuth();
   const { isFavorite, toggleFavorite, progress } = useLibrary();
   const [story, setStory] = useState<Story | null | undefined>(undefined);
   const [cats, setCats] = useState<Category[]>([]);
+  const downloads = useDownloads();
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     getStory(slug).then(setStory).catch(() => setStory(null));
@@ -57,6 +61,19 @@ export default function StoryDetail() {
   const heroH = Math.min(width, 520) * 0.92;
   const resume = p && !p.finished && p.page > 0;
 
+  const savedInfo = downloads.saved[story.slug];
+  const progressNow = downloads.progress(story.slug);
+  const toggleSave = async () => {
+    setSaveError(null);
+    if (savedInfo) return removeStory(story.slug);
+    try {
+      const pages = await getPages(story, { fresh: true });
+      if (!pages.length) throw new Error('empty');
+      await saveStory(story, pages);
+    } catch {
+      setSaveError("Couldn't save this story. Check your connection and try again.");
+    }
+  };
   const read = () => router.push({ pathname: '/read/[slug]', params: { slug: story.slug } });
   const unlock = async () => {
     if (await ask()) router.dismissTo('/grownups');
@@ -75,7 +92,7 @@ export default function StoryDetail() {
           <Text style={styles.by}>by {story.author}</Text>
 
           <View style={styles.facts}>
-            <Fact icon="happy" label={`Ages ${story.ageBand}`} bg={colors.purpleSoft} fg={colors.purpleDeep} />
+            <Fact icon="sparkles" label={levelFull(story.level)} bg={colors.purpleSoft} fg={colors.purpleDeep} />
             <Fact icon="albums" label={`${story.pageCount} pages`} bg={colors.tealSoft} fg="#0b6f6b" />
             <Fact icon="time" label={`${story.readingMinutes} min`} bg={colors.amberSoft} fg="#7a5a00" />
           </View>
@@ -102,10 +119,23 @@ export default function StoryDetail() {
                 <Button label="Ask a grown-up" icon="shield-checkmark" onPress={unlock} />
               </>
             )}
+            {readable && (
+              <>
+                <Button
+                  label={progressNow !== undefined ? `Saving… ${Math.round(progressNow * 100)}%` : savedInfo ? `Saved for offline · ${formatBytes(savedInfo.bytes)}` : 'Save for offline'}
+                  icon={savedInfo ? 'checkmark-circle' : 'cloud-download-outline'}
+                  variant="secondary"
+                  disabled={progressNow !== undefined}
+                  onPress={toggleSave}
+                />
+                {savedInfo && <Text style={styles.savedHint}>Tap again to remove it from this device.</Text>}
+                {saveError && <Text style={styles.saveErr} accessibilityRole="alert" accessibilityLiveRegion="polite">{saveError}</Text>}
+              </>
+            )}
             <View style={styles.soonRow}>
               {(['Listen', 'Watch'] as const).map((l) => (
                 <View key={l} accessibilityState={{ disabled: true }} accessibilityLabel={`${l}, coming soon`} style={styles.soon}>
-                  <Ionicons name={l === 'Listen' ? 'headset' : 'play-circle'} size={18} color={colors.lock} />
+                  <Ionicons name={l === 'Listen' ? 'headset' : 'play-circle'} size={18} color="#5a5360" />
                   <Text style={styles.soonText}>{l} · soon</Text>
                 </View>
               ))}
@@ -145,9 +175,11 @@ const styles = StyleSheet.create({
   tag: { ...type.heading, fontSize: 14, color: colors.purpleDeep },
   premium: { flexDirection: 'row', gap: 10, alignItems: 'center', backgroundColor: colors.purpleSoft, borderRadius: radius.md, padding: 14 },
   premiumText: { ...type.body, flex: 1, color: colors.ink },
+  savedHint: { ...type.small, color: colors.muted, textAlign: 'center' },
+  saveErr: { ...type.small, color: colors.danger, textAlign: 'center' },
   soonRow: { flexDirection: 'row', gap: 10 },
-  soon: { flex: 1, flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center', height: 46, borderRadius: radius.pill, backgroundColor: colors.border },
-  soonText: { ...type.heading, fontSize: 14, color: colors.lock },
+  soon: { flex: 1, flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center', minHeight: 46, borderRadius: radius.pill, backgroundColor: '#f1ebf4' },
+  soonText: { ...type.heading, fontSize: 14, color: '#5a5360' },
   bar: { position: 'absolute', left: 16, right: 16, flexDirection: 'row', justifyContent: 'space-between' },
   round: { width: 46, height: 46, borderRadius: 23, backgroundColor: 'rgba(255,255,255,0.95)', alignItems: 'center', justifyContent: 'center' },
 });

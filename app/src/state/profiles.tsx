@@ -1,7 +1,8 @@
 import * as Crypto from 'expo-crypto';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { supabase } from '../lib/supabase';
-import type { AgeBand, ChildProfile } from '../types';
+import type { ReadingLevel, ChildProfile } from '../types';
+import { DEFAULT_LEVEL } from '../levels';
 import { useAuth } from './auth';
 import { load, save } from './storage';
 
@@ -42,14 +43,14 @@ export function ProfilesProvider({ children: kids }: { children: ReactNode }) {
   useEffect(() => {
     if (!supabase || !session || !ready) return;
     (async () => {
-      const { data } = await supabase!.from('child_profiles').select('id, name, avatar, age_band');
-      const remote: ChildProfile[] = (data ?? []).map((r) => ({ id: r.id, name: r.name, avatar: r.avatar, ageBand: r.age_band }));
+      const { data } = await supabase!.from('child_profiles').select('id, name, avatar, reading_level');
+      const remote: ChildProfile[] = (data ?? []).map((r) => ({ id: r.id, name: r.name, avatar: r.avatar, level: r.reading_level }));
       const local = listRef.current;
       const merged = [...local, ...remote.filter((r) => !local.some((l) => l.id === r.id))];
       const localOnly = local.filter((l) => !remote.some((r) => r.id === l.id));
       if (localOnly.length) {
         await supabase!.from('child_profiles').upsert(
-          localOnly.map((c) => ({ id: c.id, parent_id: session.user.id, name: c.name, avatar: c.avatar, age_band: c.ageBand })),
+          localOnly.map((c) => ({ id: c.id, parent_id: session.user.id, name: c.name, avatar: c.avatar, reading_level: c.level })),
         );
       }
       setList(merged);
@@ -66,7 +67,7 @@ export function ProfilesProvider({ children: kids }: { children: ReactNode }) {
   const value = useMemo<Ctx>(() => {
     const push = (c: ChildProfile) => {
       if (supabase && session) {
-        supabase.from('child_profiles').upsert({ id: c.id, parent_id: session.user.id, name: c.name, avatar: c.avatar, age_band: c.ageBand }).then(() => {});
+        supabase.from('child_profiles').upsert({ id: c.id, parent_id: session.user.id, name: c.name, avatar: c.avatar, reading_level: c.level }).then(() => {});
       }
     };
     return {
@@ -113,7 +114,7 @@ export function useProfiles() {
   return ctx;
 }
 
-/** The active child's age band, or a sensible default before onboarding finishes. */
-export function useAgeBand(): AgeBand {
-  return useProfiles().active?.ageBand ?? '5-8';
+/** The active child's reading level, or a sensible default before onboarding finishes. */
+export function useReadingLevel(): ReadingLevel {
+  return useProfiles().active?.level ?? DEFAULT_LEVEL;
 }

@@ -7,13 +7,8 @@ import { Button } from '../../src/components/Button';
 import { Tap } from '../../src/components/Tap';
 import { useProfiles } from '../../src/state/profiles';
 import { avatars, colors, fonts, radius, space, type } from '../../src/theme';
-import type { AgeBand } from '../../src/types';
-
-const BANDS: { id: AgeBand; label: string; emoji: string; hint: string }[] = [
-  { id: '2-4', label: 'Little', emoji: '🧸', hint: 'Ages 2–4' },
-  { id: '5-8', label: 'Explorer', emoji: '🧭', hint: 'Ages 5–8' },
-  { id: '9-12', label: 'Adventurer', emoji: '🗺️', hint: 'Ages 9–12' },
-];
+import { LEVELS } from '../../src/levels';
+import type { ReadingLevel } from '../../src/types';
 
 export default function ProfileEditor() {
   const { first, id } = useLocalSearchParams<{ first?: string; id?: string }>();
@@ -23,14 +18,14 @@ export default function ProfileEditor() {
 
   const [name, setName] = useState(editing?.name ?? '');
   const [avatar, setAvatar] = useState(editing?.avatar ?? 'fox');
-  const [band, setBand] = useState<AgeBand | null>(editing?.ageBand ?? null);
+  const [band, setBand] = useState<ReadingLevel | null>(editing?.level ?? null);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const valid = name.trim().length > 0 && band !== null;
   const save = () => {
     if (!valid || !band) return;
-    if (editing) update(editing.id, { name: name.trim(), avatar, ageBand: band });
-    else add({ name: name.trim(), avatar, ageBand: band });
+    if (editing) update(editing.id, { name: name.trim(), avatar, level: band });
+    else add({ name: name.trim(), avatar, level: band });
     if (first) router.replace('/');
     else router.back();
   };
@@ -64,14 +59,14 @@ export default function ProfileEditor() {
 
         <Text style={styles.label}>Reading level</Text>
         <View style={{ gap: 10 }}>
-          {BANDS.map((b) => {
+          {LEVELS.map((b) => {
             const on = band === b.id;
             return (
               <Tap key={b.id} accessibilityRole="button" accessibilityState={{ selected: on }} onPress={() => setBand(b.id)} style={[styles.band, on && styles.bandOn]}>
-                <Text style={{ fontSize: 30 }}>{b.emoji}</Text>
+                <Text style={{ fontSize: 30 }} accessibilityElementsHidden>{b.emoji}</Text>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.bandTitle}>{b.label}</Text>
-                  <Text style={styles.bandHint}>{b.hint}</Text>
+                  <Text style={styles.bandTitle}>{b.name}</Text>
+                  <Text style={styles.bandHint}>{b.descriptor}</Text>
                 </View>
                 <View style={[styles.radio, on && styles.radioOn]} />
               </Tap>
@@ -100,7 +95,7 @@ export default function ProfileEditor() {
 }
 
 const styles = StyleSheet.create({
-  kicker: { ...type.label, color: colors.purple },
+  kicker: { ...type.label, color: colors.purpleDeep },
   title: { ...type.display, color: colors.ink, marginBottom: 8 },
   label: { ...type.heading, color: colors.ink, marginTop: 18, marginBottom: 6 },
   input: { fontFamily: fonts.bold, fontSize: 20, color: colors.ink, backgroundColor: colors.surface, borderRadius: radius.md, borderWidth: 2, borderColor: colors.border, paddingHorizontal: 18, height: 58 },

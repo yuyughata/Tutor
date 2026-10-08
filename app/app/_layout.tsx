@@ -2,6 +2,8 @@ import { Nunito_600SemiBold, Nunito_800ExtraBold, Nunito_900Black, useFonts } fr
 import { Stack, router, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import { initDownloads } from '../src/data/downloads';
+import { useReducedMotion } from '../src/lib/a11y';
 import { GateProvider } from '../src/state/gate';
 import { AuthProvider } from '../src/state/auth';
 import { LibraryProvider } from '../src/state/library';
@@ -20,6 +22,8 @@ function OnboardingGuard() {
 
 export default function RootLayout() {
   const [loaded] = useFonts({ Nunito_600SemiBold, Nunito_800ExtraBold, Nunito_900Black });
+  const reduceMotion = useReducedMotion();
+  useEffect(() => { initDownloads(); }, []);
   if (!loaded) return null;
   return (
     <AuthProvider>
@@ -28,13 +32,15 @@ export default function RootLayout() {
           <GateProvider>
             <StatusBar style="dark" />
             <OnboardingGuard />
-            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
+            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg }, animation: reduceMotion ? 'none' : 'default' }}>
               <Stack.Screen name="(tabs)" />
-              <Stack.Screen name="story/[slug]" options={{ animation: 'slide_from_right' }} />
-              <Stack.Screen name="read/[slug]" options={{ animation: 'fade', gestureEnabled: false }} />
+              <Stack.Screen name="story/[slug]" options={{ animation: reduceMotion ? 'none' : 'slide_from_right' }} />
+              <Stack.Screen name="read/[slug]" options={{ animation: reduceMotion ? 'none' : 'fade', gestureEnabled: false }} />
               <Stack.Screen name="profile/new" options={{ presentation: 'modal' }} />
-              <Stack.Screen name="profile/switch" options={{ presentation: 'transparentModal', animation: 'fade', contentStyle: { backgroundColor: 'transparent' } }} />
+              <Stack.Screen name="profile/switch" options={{ presentation: 'transparentModal', animation: reduceMotion ? 'none' : 'fade', contentStyle: { backgroundColor: 'transparent' } }} />
               <Stack.Screen name="sign-in" options={{ presentation: 'modal' }} />
+              <Stack.Screen name="forgot-password" options={{ presentation: 'modal' }} />
+              <Stack.Screen name="legal/privacy" options={{ presentation: 'modal' }} />
             </Stack>
           </GateProvider>
         </LibraryProvider>

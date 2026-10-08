@@ -31,6 +31,17 @@ export function createApi(sb) {
     if (stale.length) await sb.storage.from(bucket).remove(stale);
   }
 
+  async function support(body) {
+    const { data, error } = await sb.functions.invoke('admin-user-support', { body });
+    if (error) {
+      let msg = error.message;
+      try { const j = await error.context.json(); if (j?.error) msg = j.error; } catch { /* not json */ }
+      throw new Error(msg);
+    }
+    if (data?.error) throw new Error(data.error);
+    return data;
+  }
+
   return {
     demo: false,
 
@@ -61,12 +72,12 @@ export function createApi(sb) {
     // ---------- stories ----------
     async listStories() {
       return unwrap(await sb.from('stories')
-        .select('id, slug, title, synopsis, cover_url, age_band, status, is_free, page_count, reading_minutes, published_at, updated_at, authors(name), story_categories(category_id)')
+        .select('id, slug, title, synopsis, cover_url, reading_level, status, is_free, page_count, reading_minutes, published_at, updated_at, authors(name), story_categories(category_id)')
         .order('updated_at', { ascending: false }));
     },
     async getStory(id) {
       const story = unwrap(await sb.from('stories')
-        .select('id, slug, title, synopsis, cover_url, author_id, age_band, status, is_free, reading_minutes, published_at, updated_at, story_categories(category_id)')
+        .select('id, slug, title, synopsis, cover_url, author_id, reading_level, status, is_free, reading_minutes, published_at, updated_at, story_categories(category_id)')
         .eq('id', id).maybeSingle());
       if (!story) return null;
       const pages = unwrap(await sb.from('story_pages').select('id, position, image_url, text').eq('story_id', id).order('position'));
@@ -77,7 +88,7 @@ export function createApi(sb) {
     async saveStory(story, categoryIds, pages) {
       const row = {
         id: story.id, slug: story.slug, title: story.title, synopsis: story.synopsis, cover_url: story.cover_url || null,
-        author_id: story.author_id || null, age_band: story.age_band, status: story.status, is_free: !!story.is_free,
+        author_id: story.author_id || null, reading_level: story.reading_level, status: story.status, is_free: !!story.is_free,
         reading_minutes: story.reading_minutes, published_at: story.published_at || null,
       };
       unwrap(await sb.from('stories').upsert(row, { onConflict: 'id' }));
@@ -165,9 +176,23 @@ export function createApi(sb) {
     async deleteFeatured(id) { unwrap(await sb.from('featured_slots').delete().eq('id', id)); },
 
     // ---------- people ----------
-    async listSubscribers(search) { return unwrap(await sb.rpc('admin_subscribers', { search: search || null })); },
+    async listSubscribers(search) { return unwrap(await sb.rpc('admin_people', { search: search || null })); },
     async setEntitlement(parentId, status, until, plan) {
       unwrap(await sb.rpc('admin_set_entitlement', { p_parent: parentId, p_status: status, p_until: until, p_plan: plan || null }));
+    },
+    // ---------- privacy policy ----------
+    async getLegal(slug = 'privacy-policy') {
+      return unwrap(await sb.from('legal_documents').select('slug, title, body, version, updated_at').eq('slug', slug).maybeSingle());
+    },
+    async saveLegal(slug, title, body) {
+      return unwrap(await sb.from('legal_documents').update({ title, body }).eq('slug', slug).select('slug, title, body, version, updated_at').single());
+    },
+
+    // ---------- password support (runs in an edge function with service-role access) ----------
+    async supportSendReset(email) { return support({ action: 'send_reset', email }); },
+    async supportSetPassword(email, password) { return support({ action: 'set_password', email, password }); },
+    async listSupportActions() {
+      return unwrap(await sb.from('admin_actions').select('id, action, target_email, created_at').order('created_at', { ascending: false }).limit(8));
     },
     async listAdmins() { return unwrap(await sb.from('profiles').select('id, email').eq('is_admin', true).order('email')); },
     async setAdmin(email, isAdmin) { unwrap(await sb.rpc('admin_set_admin', { p_email: email, p_admin: isAdmin })); },
@@ -178,5 +203,5 @@ export const API_METHODS = [
   'session', 'signIn', 'signOut', 'onAuthChange', 'me', 'stats', 'recentPayments', 'listStories', 'getStory', 'saveStory',
   'setStoryStatus', 'deleteStory', 'uploadCover', 'uploadPageImage', 'pageImageUrl', 'listAuthors', 'listCategories',
   'saveCategory', 'deleteCategory', 'listFeatured', 'saveFeatured', 'deleteFeatured', 'listSubscribers', 'setEntitlement',
-  'listAdmins', 'setAdmin',
+  'getLegal', 'saveLegal', 'supportSendReset', 'supportSetPassword', 'listSupportActions', 'listAdmins', 'setAdmin',
 ];

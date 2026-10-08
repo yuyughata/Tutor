@@ -8,8 +8,10 @@ import { Button } from '../../src/components/Button';
 import { Picture } from '../../src/components/Picture';
 import { Tap } from '../../src/components/Tap';
 import { getPages, getStory } from '../../src/data/repository';
+import { announce, useReducedMotion } from '../../src/lib/a11y';
+import { useAuth } from '../../src/state/auth';
 import { useLibrary } from '../../src/state/library';
-import { useAgeBand } from '../../src/state/profiles';
+import { useReadingLevel } from '../../src/state/profiles';
 import { colors, fonts, radius, readerFontBase, readerThemes, shadow, space, type, type ReaderThemeName } from '../../src/theme';
 import type { Story, StoryPage } from '../../src/types';
 
@@ -23,8 +25,10 @@ export default function Reader() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const band = useAgeBand();
+  const band = useReadingLevel();
   const { progress, saveProgress, trackStart } = useLibrary();
+  const { canRead, accessReady } = useAuth();
+  const reduceMotion = useReducedMotion();
   const listRef = useRef<FlatList<Item>>(null);
 
   const [story, setStory] = useState<Story | null>(null);
@@ -35,39 +39,57 @@ export default function Reader() {
   const [themeName, setThemeName] = useState<ReaderThemeName>('day');
   const theme = readerThemes[themeName];
 
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+
+  useEffect(() => { getStory(slug).then(setStory).catch(() => { setStory(null); setPages([]); }); }, [slug]);
+
+  const readable = story ? canRead(story) : null;
   useEffect(() => {
-    (async () => {
-      const s = await getStory(slug);
-      setStory(s);
-      const p = s ? await getPages(s) : [];
+    if (!story || !accessReady) return;
+    setFailed(false);
+    if (!readable) { setPages([]); return; } // locked (or a saved premium story whose access has lapsed)
+    getPages(story).then((p) => {
       setPages(p);
-      if (s && p.length) {
-        const saved = progress[s.slug];
+      if (p.length) {
+        const saved = progress[story.slug];
         const at = saved && !saved.finished ? Math.min(saved.page, p.length - 1) : 0;
         setStart(at);
         setIndex(at);
-        trackStart(s);
+        trackStart(story);
       }
-    })().catch(() => setPages([]));
+    }).catch(() => { setFailed(true); setPages([]); });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slug]);
+  }, [story, accessReady, readable, attempt]);
 
   const items: Item[] = pages ? [...pages.map((page) => ({ kind: 'page' as const, page })), { kind: 'end' as const }] : [];
   const last = items.length - 1;
 
   const onIndex = useCallback((i: number) => {
     setIndex(i);
+    if (pages) announce(i >= pages.length ? 'The End' : `Page ${i + 1} of ${pages.length}`);
     if (story && pages) saveProgress(story, Math.min(i, pages.length - 1), i >= pages.length);
   }, [story, pages, saveProgress]);
 
   const go = (i: number) => {
     const to = Math.max(0, Math.min(last, i));
-    listRef.current?.scrollToIndex({ index: to, animated: true });
+    listRef.current?.scrollToIndex({ index: to, animated: !reduceMotion });
     onIndex(to);
   };
 
   if (!pages) return <ActivityIndicator style={{ marginTop: 160 }} color={colors.purple} />;
 
+  if (failed) {
+    return (
+      <View style={styles.locked}>
+        <View style={styles.lockBadge}><Ionicons name="cloud-offline" size={36} color={colors.purpleDeep} /></View>
+        <Text style={styles.lockedTitle}>Can't open this story</Text>
+        <Text style={styles.lockedText}>Check your connection and try again. Stories you saved for offline open without internet.</Text>
+        <Button label="Try again" onPress={() => { setPages(null); setAttempt((n) => n + 1); }} />
+        <Button label="Back" variant="ghost" onPress={() => router.back()} />
+      </View>
+    );
+  }
   if (pages.length === 0) {
     return (
       <View style={styles.locked}>

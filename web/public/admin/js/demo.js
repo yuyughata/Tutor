@@ -23,29 +23,41 @@ export function createDemoApi() {
   const authors = [{ id: 'a1', name: 'CUSTAR' }];
   const mk = (id, title, band, free, status, pub, key, cover, categoryIds, texts) => ({
     id, slug: title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-$/, ''), title, synopsis: `The story of ${title}.`, cover_url: cover,
-    author_id: 'a1', age_band: band, status, is_free: free, reading_minutes: 3, published_at: pub, updated_at: iso(-Math.random() * 9),
+    author_id: 'a1', reading_level: band, status, is_free: free, reading_minutes: 3, published_at: pub, updated_at: iso(-Math.random() * 9),
     categoryIds, pages: texts.map((t, i) => ({ id: uid(), position: i + 1, image_url: art[key], text: t })),
   });
   const stories = [
-    mk('s1', 'The Curious Little Fox', '2-4', true, 'published', iso(-12), 'fox', art.fox, ['c2', 'c1'], ['Fox woke up and sniffed the air.', 'A trail of glowing berries led past the old oak tree.', 'All his friends were waiting. Surprise!']),
-    mk('s2', 'Luna and the Firefly', '5-8', true, 'published', iso(-30), 'moon', art.moon, ['c3', 'c4'], ['Late one evening, Luna sat by her window.', 'A soft sparkle danced across her room.']),
-    mk('s3', 'The Child and the Snow Leopard', '9-12', false, 'published', iso(-45), 'leopard', art.leopard, ['c1', 'c2'], ['The mountain wind howled.', 'Two pale eyes watched from the ridge.', 'Side by side, they walked on.']),
-    mk('s4', 'The Dragon Who Hated Fire', '5-8', false, 'scheduled', iso(6), 'dragon', art.dragon, ['c4'], ['Ember was a dragon with a secret.', 'She baked the fluffiest cakes.']),
-    mk('s5', 'Bedtime for Bear', '2-4', true, 'draft', null, 'bear', art.bear, ['c3'], ['Bear yawned a great big yawn.']),
-    mk('s6', 'Captain Pip and the Paper Boat', '5-8', false, 'draft', null, 'boat', '', [], []),
+    mk('s1', 'The Curious Little Fox', 'sunrise', true, 'published', iso(-12), 'fox', art.fox, ['c2', 'c1'], ['Fox woke up and sniffed the air.', 'A trail of glowing berries led past the old oak tree.', 'All his friends were waiting. Surprise!']),
+    mk('s2', 'Luna and the Firefly', 'spark', true, 'published', iso(-30), 'moon', art.moon, ['c3', 'c4'], ['Late one evening, Luna sat by her window.', 'A soft sparkle danced across her room.']),
+    mk('s3', 'The Child and the Snow Leopard', 'seeker', false, 'published', iso(-45), 'leopard', art.leopard, ['c1', 'c2'], ['The mountain wind howled.', 'Two pale eyes watched from the ridge.', 'Side by side, they walked on.']),
+    mk('s4', 'The Dragon Who Hated Fire', 'spark', false, 'scheduled', iso(6), 'dragon', art.dragon, ['c4'], ['Ember was a dragon with a secret.', 'She baked the fluffiest cakes.']),
+    mk('s5', 'Bedtime for Bear', 'sunrise', true, 'draft', null, 'bear', art.bear, ['c3'], ['Bear yawned a great big yawn.']),
+    mk('s6', 'Captain Pip and the Paper Boat', 'spark', false, 'draft', null, 'boat', '', [], []),
   ];
   const featured = [
     { id: 'f1', type: 'week', story_id: 's2', starts_at: iso(-2), ends_at: iso(5) },
     { id: 'f2', type: 'month', story_id: 's3', starts_at: iso(-10), ends_at: iso(20) },
   ];
+  const GRACE = 5 * day;
   const people = [
-    { parent_id: 'p1', email: 'amara@example.com', joined_at: iso(-60), status: 'active', plan: 'PLN_monthly', current_period_end: iso(11), readers: 2 },
-    { parent_id: 'p2', email: 'kofi@example.com', joined_at: iso(-41), status: 'active', plan: 'PLN_yearly', current_period_end: iso(250), readers: 1 },
-    { parent_id: 'p3', email: 'zainab@example.com', joined_at: iso(-20), status: 'past_due', plan: 'PLN_monthly', current_period_end: iso(-1), readers: 3 },
+    { parent_id: 'p1', email: 'amara@example.com', joined_at: iso(-60), status: 'active', plan: 'monthly', current_period_end: iso(11), readers: 2 },
+    { parent_id: 'p2', email: 'kofi@example.com', joined_at: iso(-41), status: 'active', plan: 'quarterly', current_period_end: iso(80), readers: 1 },
+    { parent_id: 'p3', email: 'zainab@example.com', joined_at: iso(-20), status: 'past_due', plan: 'monthly', current_period_end: iso(-2), readers: 3 },
     { parent_id: 'p4', email: 'tunde@example.com', joined_at: iso(-9), status: 'none', plan: null, current_period_end: null, readers: 1 },
     { parent_id: 'p5', email: 'review@apple.example', joined_at: iso(-3), status: 'active', plan: 'comp', current_period_end: iso(30), readers: 1 },
     { parent_id: 'me', email: 'you@custar.example', joined_at: iso(-90), status: 'none', plan: null, current_period_end: null, readers: 0 },
   ];
+  // same rule as the database: 5 days of grace after a missed renewal, cancelled keeps what was paid for
+  const accessUntil = (p) => {
+    if (!p.current_period_end) return p.status === 'active' || p.status === 'trialing' ? null : undefined;
+    const end = new Date(p.current_period_end).getTime();
+    if (['active', 'trialing', 'past_due'].includes(p.status)) return new Date(end + GRACE).toISOString();
+    if (p.status === 'canceled') return p.current_period_end;
+    return undefined;
+  };
+  const hasAccess = (p) => { const u = accessUntil(p); return u === null || (u !== undefined && new Date(u) > new Date()); };
+  let legal = { slug: 'privacy-policy', title: 'Privacy Policy', version: 1, updated_at: iso(-3), body: 'SAMPLE TEXT: placeholder wording.\n\n# Our promise to families\nGenova is a children\'s storybook app made by CUSTAR. We do not show ads and we never sell personal information.\n\n# What we collect\n- Parent email address\n- A child\'s first name or nickname, avatar and reading level\n- Reading activity such as stories started and finished' };
+  const supportLog = [{ id: 1, action: 'send_reset', target_email: 'amara@example.com', created_at: iso(-1) }];
   let admins = [{ id: 'me', email: 'you@custar.example' }];
   const state = (s) => (s.status === 'draft' ? 'draft' : new Date(s.published_at) <= new Date() ? 'live' : 'scheduled');
 
@@ -72,7 +84,7 @@ export function createDemoApi() {
         stories_scheduled: stories.filter((s) => state(s) === 'scheduled').length,
         stories_draft: stories.filter((s) => s.status === 'draft').length,
         parents: people.length, readers: people.reduce((n, p) => n + p.readers, 0),
-        subscribers: people.filter((p) => p.status === 'active').length,
+        subscribers: people.filter(hasAccess).length, past_due: people.filter((p) => p.status === 'past_due' && hasAccess(p)).length,
         reads_7d: reads.slice(-7).reduce((n, r) => n + r.reads, 0), reads_30d: reads.reduce((n, r) => n + r.reads, 0) * 2,
         reads_by_day: reads,
         top_stories: [{ id: 's2', title: 'Luna and the Firefly', reads: 187 }, { id: 's3', title: 'The Child and the Snow Leopard', reads: 142 }, { id: 's1', title: 'The Curious Little Fox', reads: 96 }],
@@ -130,9 +142,22 @@ export function createDemoApi() {
 
     async listSubscribers(search) {
       const q = (search || '').toLowerCase();
-      return delay(people.filter((p) => !q || p.email.includes(q)).sort((a, b) => b.joined_at.localeCompare(a.joined_at)));
+      return delay(people.filter((p) => !q || p.email.includes(q)).sort((a, b) => b.joined_at.localeCompare(a.joined_at))
+        .map((p) => ({ ...p, access_until: accessUntil(p) ?? null, has_access: hasAccess(p), is_admin: admins.some((a) => a.id === p.parent_id) })));
     },
     async setEntitlement(parentId, status, until, plan) { Object.assign(people.find((p) => p.parent_id === parentId), { status, current_period_end: until, plan: plan || null }); await delay(0); },
+    async getLegal() { return delay(legal); },
+    async saveLegal(_slug, title, body) { legal = { ...legal, title, body, version: legal.version + (title !== legal.title || body !== legal.body ? 1 : 0), updated_at: new Date().toISOString() }; return delay(legal); },
+    async supportSendReset(email) {
+      if (!people.some((p) => p.email === email)) throw new Error('No account found for that email.');
+      supportLog.unshift({ id: Date.now(), action: 'send_reset', target_email: email, created_at: new Date().toISOString() }); return delay({ ok: true });
+    },
+    async supportSetPassword(email, password) {
+      if (!people.some((p) => p.email === email)) throw new Error('No account found for that email.');
+      if (!password || password.length < 8) throw new Error('Use at least 8 characters.');
+      supportLog.unshift({ id: Date.now(), action: 'set_password', target_email: email, created_at: new Date().toISOString() }); return delay({ ok: true });
+    },
+    async listSupportActions() { return delay(supportLog.slice(0, 8)); },
     async listAdmins() { return delay(admins); },
     async setAdmin(email, isAdmin) {
       const p = people.find((x) => x.email.toLowerCase() === email.toLowerCase());

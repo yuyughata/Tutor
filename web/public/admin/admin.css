@@ -171,3 +171,6 @@ dialog h2 { margin-bottom:6px; } dialog .actions { display:flex; gap:10px; justi
   .page-card { grid-template-columns:28px 1fr; } .page-card .page-img { width:100%; } .page-actions { flex-direction:row; grid-column:1 / -1; }
 }
 }
+.legal h3 { margin:18px 0 6px; } .legal h3:first-child { margin-top:0; } .legal p { margin:0 0 10px; } .legal ul { margin:0 0 10px; padding-left:20px; } .legal li { margin-bottom:4px; }
+textarea.mono { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:13.5px; line-height:1.55; min-height:340px; }
+.log { display:grid; gap:8px; } .log .row { padding:8px 0; border-top:1px solid var(--line); font-size:14px; }

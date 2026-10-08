@@ -68,7 +68,8 @@ export function interpretEvent(body: Any, now = Date.now()): Interpreted {
     customerCode: str(customer.customer_code),
     subscriptionCode: str(d.subscription_code) ?? str(sub.subscription_code),
     emailToken: str(d.email_token) ?? str(sub.email_token),
-    plan: str(plan.plan_code) ?? str(plan.name),
+    // our plan id ('monthly' | 'quarterly') when checkout sent it as metadata, else Paystack's plan code
+    plan: str(d.metadata?.plan) ?? str(plan.plan_code) ?? str(plan.name),
   };
   const ref = str(d.reference) ?? str(d.subscription_code) ?? str(d.invoice_code) ?? str(d.id)?.toString() ?? String(d.id ?? '');
   const dedupeKey = `${event}:${ref || JSON.stringify(d).length}:${str(d.paid_at) ?? str(d.createdAt) ?? ''}`;

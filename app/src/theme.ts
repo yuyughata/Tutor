@@ -14,6 +14,8 @@ export const colors = {
   purpleSoft: '#f4e6fa',
   tealSoft: '#dcf3f2',
   amberSoft: '#fff2c7',
+  amberDeep: '#7a5a00', // text on amberSoft, 5.6:1
+  tealDeep: '#0b6f6b', // text on white / tealSoft
   ink: brand.charcoal,
   muted: '#6b6472',
   bg: '#fbf8fd',
@@ -57,8 +59,8 @@ export const shadow = {
   })!,
 };
 
-// Reader type scale per age band (younger children get larger type) and reading themes.
-export const readerFontBase = { '2-4': 30, '5-8': 24, '9-12': 19 } as const;
+// Reader type scale per reading level (earlier readers get larger type) and reading themes.
+export const readerFontBase = { sunrise: 30, spark: 24, seeker: 19 } as const;
 
 export const readerThemes = {
   day: { bg: '#ffffff', sheet: '#ffffff', ink: brand.charcoal, muted: '#6b6472', icon: 'sunny' },

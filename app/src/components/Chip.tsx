@@ -18,7 +18,7 @@ export function Chip({ label, icon, active, onPress }: { label: string; icon?: s
 }
 
 const styles = StyleSheet.create({
-  chip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, height: 42, borderRadius: radius.pill, borderWidth: 1.5 },
+  chip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, minHeight: 44, borderRadius: radius.pill, borderWidth: 1.5 },
   on: { backgroundColor: colors.purple, borderColor: colors.purple },
   off: { backgroundColor: colors.surface, borderColor: colors.border },
   text: { fontFamily: fonts.bold, fontSize: 15 },

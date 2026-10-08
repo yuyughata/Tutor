@@ -1,4 +1,5 @@
 import { h, icon, fmtDate, statusPill, storyState, toast, busy } from '../ui.js';
+import { LEVELS, levelName } from '../levels.js';
 
 export async function render(ctx) {
   const { api } = ctx;
@@ -11,9 +12,9 @@ export async function render(ctx) {
     const q = filters.q.trim().toLowerCase();
     const rows = all.filter((s) => (!q || s.title.toLowerCase().includes(q))
       && (filters.state === 'all' || storyState(s) === filters.state)
-      && (filters.band === 'all' || s.age_band === filters.band));
+      && (filters.band === 'all' || s.reading_level === filters.band));
     body.replaceChildren(rows.length ? h('div', { class: 'card', style: { padding: '8px 8px 4px' } }, h('div', { class: 'table-wrap' }, h('table', {},
-      h('thead', {}, h('tr', {}, ['', 'Story', 'Status', 'Ages', 'Pages', 'Access', 'Categories', 'Updated', ''].map((t) => h('th', { class: ['Ages', 'Pages', 'Categories', 'Updated'].includes(t) ? 'hide-sm' : '' }, t)))),
+      h('thead', {}, h('tr', {}, ['', 'Story', 'Status', 'Level', 'Pages', 'Access', 'Categories', 'Updated', ''].map((t) => h('th', { class: ['Level', 'Pages', 'Categories', 'Updated'].includes(t) ? 'hide-sm' : '' }, t)))),
       h('tbody', {}, rows.map((s) => row(s)))))) : h('div', { class: 'card empty' }, h('div', { class: 'big' }, '📚'),
       h('h2', {}, all.length ? 'No stories match' : 'No stories yet'), h('p', {}, all.length ? 'Try a different filter.' : 'Create the first Genova story.'),
       all.length ? null : h('a', { class: 'btn', href: '#/stories/new' }, icon('plus'), 'New story')));
@@ -43,7 +44,7 @@ export async function render(ctx) {
       h('td', {}, s.cover_url ? h('img', { class: 'thumb', src: s.cover_url, alt: '' }) : h('div', { class: 'thumb' })),
       h('td', {}, h('b', {}, s.title), h('div', { class: 'small muted' }, s.slug)),
       h('td', {}, statusPill(state), state === 'scheduled' ? h('div', { class: 'small muted' }, fmtDate(s.published_at)) : null),
-      h('td', { class: 'hide-sm' }, s.age_band), h('td', { class: 'hide-sm' }, String(s.page_count)),
+      h('td', { class: 'hide-sm' }, levelName(s.reading_level)), h('td', { class: 'hide-sm' }, String(s.page_count)),
       h('td', {}, s.is_free ? h('span', { class: 'pill free' }, 'FREE') : h('span', { class: 'pill purple' }, 'Premium')),
       h('td', { class: 'hide-sm' }, h('span', { class: 'small muted' }, s.story_categories.map((c) => catName.get(c.category_id)).filter(Boolean).join(', ') || '—')),
       h('td', { class: 'small muted nowrap hide-sm' }, fmtDate(s.updated_at)),
@@ -63,6 +64,6 @@ export async function render(ctx) {
       h('a', { class: 'btn', href: '#/stories/new' }, icon('plus'), 'New story')),
     h('div', { class: 'row', style: { marginBottom: '16px' } }, h('div', { style: { width: '260px', maxWidth: '100%' } }, search),
       seg('state', [['all', 'All'], ['live', 'Live'], ['scheduled', 'Scheduled'], ['draft', 'Drafts']]),
-      seg('band', [['all', 'All ages'], ['2-4', '2–4'], ['5-8', '5–8'], ['9-12', '9–12']])),
+      seg('band', [['all', 'All levels'], ...LEVELS.map((l) => [l.id, l.name])])),
     body);
 }

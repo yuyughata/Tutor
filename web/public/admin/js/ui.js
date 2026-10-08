@@ -117,3 +117,17 @@ export function busy(btn, fn) {
     try { return await fn(...a); } catch (e) { toast(e.message || String(e), 'err'); } finally { btn.disabled = false; }
   };
 }
+
+/** Renders the privacy policy's simple format: "# Heading", "- bullet", blank-line separated paragraphs. */
+export function renderLegal(text) {
+  const root = h('div', { class: 'legal' });
+  let list = null;
+  for (const raw of String(text || '').split('\n')) {
+    const line = raw.trimEnd();
+    if (line.startsWith('- ')) { if (!list) { list = h('ul', {}); root.append(list); } list.append(h('li', {}, line.slice(2))); continue; }
+    list = null;
+    if (line.startsWith('# ')) root.append(h('h3', {}, line.slice(2)));
+    else if (line.trim()) root.append(h('p', {}, line));
+  }
+  return root;
+}

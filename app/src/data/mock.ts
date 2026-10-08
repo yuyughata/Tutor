@@ -24,22 +24,22 @@ type Seed = Omit<Story, 'coverUrl' | 'author' | 'pageCount'> & { artKey: string 
 const seeds: Seed[] = [
   { id: 'b1', slug: 'the-curious-little-fox', title: 'The Curious Little Fox', artKey: 'fox',
     synopsis: 'A little fox follows a trail of glowing berries deep into the forest.',
-    ageBand: '2-4', isFree: true, readingMinutes: 2, publishedAt: ago(2), categories: ['animals', 'adventure'], reads30d: 41 },
+    level: 'sunrise', isFree: true, readingMinutes: 2, publishedAt: ago(2), categories: ['animals', 'adventure'], reads30d: 41 },
   { id: 'b2', slug: 'luna-and-the-firefly', title: 'Luna and the Firefly', artKey: 'firefly',
     synopsis: 'Luna follows a tiny light through the garden and learns where fireflies go at dawn.',
-    ageBand: '5-8', isFree: true, readingMinutes: 4, publishedAt: ago(9), categories: ['bedtime', 'fantasy'], reads30d: 87 },
+    level: 'spark', isFree: true, readingMinutes: 4, publishedAt: ago(9), categories: ['bedtime', 'fantasy'], reads30d: 87 },
   { id: 'b3', slug: 'the-child-and-the-snow-leopard', title: 'The Child and the Snow Leopard', artKey: 'leopard',
     synopsis: 'A brave journey across frozen mountains to discover courage and friendship.',
-    ageBand: '9-12', isFree: false, readingMinutes: 6, publishedAt: ago(20), categories: ['adventure', 'animals', 'fantasy'], reads30d: 64 },
+    level: 'seeker', isFree: false, readingMinutes: 6, publishedAt: ago(20), categories: ['adventure', 'animals', 'fantasy'], reads30d: 64 },
   { id: 'b4', slug: 'bedtime-for-bear', title: 'Bedtime for Bear', artKey: 'bear',
     synopsis: 'Bear has counted every star twice. Why is sleep so hard to find tonight?',
-    ageBand: '2-4', isFree: true, readingMinutes: 2, publishedAt: ago(1), categories: ['bedtime', 'animals'], reads30d: 52 },
+    level: 'sunrise', isFree: true, readingMinutes: 2, publishedAt: ago(1), categories: ['bedtime', 'animals'], reads30d: 52 },
   { id: 'b5', slug: 'the-dragon-who-hated-fire', title: 'The Dragon Who Hated Fire', artKey: 'dragon',
     synopsis: 'Ember would rather bake cakes than burn castles. Can a gentle dragon change a kingdom?',
-    ageBand: '5-8', isFree: false, readingMinutes: 5, publishedAt: ago(5), categories: ['fantasy', 'adventure'], reads30d: 73 },
+    level: 'spark', isFree: false, readingMinutes: 5, publishedAt: ago(5), categories: ['fantasy', 'adventure'], reads30d: 73 },
   { id: 'b6', slug: 'captain-pip-and-the-paper-boat', title: 'Captain Pip and the Paper Boat', artKey: 'boat',
     synopsis: 'One paper boat, one big puddle, and an ocean of imagination.',
-    ageBand: '5-8', isFree: false, readingMinutes: 4, publishedAt: ago(14), categories: ['adventure'], reads30d: 38 },
+    level: 'spark', isFree: false, readingMinutes: 4, publishedAt: ago(14), categories: ['adventure'], reads30d: 38 },
 ];
 
 export const stories: Story[] = seeds.map(({ artKey, ...s }) => ({

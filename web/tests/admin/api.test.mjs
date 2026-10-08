@@ -1,12 +1,12 @@
 // Runs the real api.js with the real supabase-js against a recording fake network,
 // so we can assert the exact requests the dashboard would send to Supabase.
-//   node --test web/admin/tests/api.test.mjs                       (uses the copy in app/node_modules)
+//   node --test web/tests/admin/api.test.mjs                       (uses the copy in app/node_modules)
 //   SUPABASE_JS=/path/to/supabase-js/dist/main/index.js node --test ...   (test the exact version the page loads from the CDN)
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { createApi, API_METHODS } from '../js/api.js';
-import { createDemoApi } from '../js/demo.js';
+import { createApi, API_METHODS } from '../../public/admin/js/api.js';
+import { createDemoApi } from '../../public/admin/js/demo.js';
 
 const { createClient } = process.env.SUPABASE_JS
   ? createRequire(import.meta.url)(process.env.SUPABASE_JS)
@@ -45,7 +45,7 @@ test('saveStory: upserts the story, diffs categories, and reorders pages in safe
     if (c.path.startsWith('/storage/')) return [200, []];
     return [201, []];
   });
-  const story = { id: 's1', slug: 'my-story', title: 'My story', synopsis: 'x', cover_url: 'https://c/x.png', author_id: 'a1', age_band: '5-8', status: 'published', is_free: true, reading_minutes: 3, published_at: null };
+  const story = { id: 's1', slug: 'my-story', title: 'My story', synopsis: 'x', cover_url: 'https://c/x.png', author_id: 'a1', reading_level: 'spark', status: 'published', is_free: true, reading_minutes: 3, published_at: null };
   await api.saveStory(story, ['c2', 'c3'], [
     { id: 'p3', image_url: 's1/c.png', text: 'third becomes first' },
     { id: null, image_url: 's1/new.png', text: 'brand new second' },
@@ -76,7 +76,7 @@ test('saveStory: upserts the story, diffs categories, and reorders pages in safe
 
 test('saveStory with no pages and no categories only touches the story', async () => {
   const { api, calls } = harness((c) => (c.method === 'GET' ? [200, []] : [201, []]));
-  await api.saveStory({ id: 's2', slug: 's', title: 't', synopsis: '', cover_url: '', age_band: '2-4', status: 'draft', is_free: false, reading_minutes: 1, published_at: null }, [], []);
+  await api.saveStory({ id: 's2', slug: 's', title: 't', synopsis: '', cover_url: '', reading_level: 'sunrise', status: 'draft', is_free: false, reading_minutes: 1, published_at: null }, [], []);
   const writes = calls.filter((c) => c.method !== 'GET' && c.path.startsWith('/rest/v1/'));
   assert.equal(writes.length, 1);
   assert.equal(writes[0].body.cover_url, null, 'empty cover is stored as null');
@@ -89,7 +89,7 @@ test('rpc calls use the right function names and argument names', async () => {
   await api.setEntitlement('parent-1', 'active', '2027-01-01T00:00:00.000Z', 'comp');
   await api.setAdmin('a@b.c', true);
   const rpc = (name) => calls.find((c) => c.path === `/rest/v1/rpc/${name}`);
-  assert.deepEqual(rpc('admin_subscribers').body, { search: 'amy' });
+  assert.deepEqual(rpc('admin_people').body, { search: 'amy' });
   assert.deepEqual(rpc('admin_set_entitlement').body, { p_parent: 'parent-1', p_status: 'active', p_until: '2027-01-01T00:00:00.000Z', p_plan: 'comp' });
   assert.deepEqual(rpc('admin_set_admin').body, { p_email: 'a@b.c', p_admin: true });
 });
@@ -131,4 +131,27 @@ test('page images already stored as URLs are used as-is; storage paths get signe
   assert.match(url, /token=t/);
   await api.pageImageUrl('s1/a.png');
   assert.equal(calls.filter((c) => c.path.includes('/object/sign/')).length, 1, 'signed URLs are cached');
+});
+
+test('privacy policy: read and update only the policy row', async () => {
+  const row = { slug: 'privacy-policy', title: 'Privacy Policy', body: 'x', version: 2, updated_at: '2026-10-09T00:00:00Z' };
+  const { api, calls } = harness((c) => (c.method === 'GET' ? [200, row] : [200, { ...row, body: 'new', version: 3 }]));
+  assert.equal((await api.getLegal()).version, 2);
+  const out = await api.saveLegal('privacy-policy', 'Privacy Policy', 'new');
+  assert.equal(out.version, 3);
+  const patch = calls.find((c) => c.method === 'PATCH');
+  assert.equal(patch.query.slug, 'eq.privacy-policy');
+  assert.deepEqual(patch.body, { title: 'Privacy Policy', body: 'new' }, 'version and timestamps are set by the database, never by the page');
+});
+
+test('password support goes through the edge function and surfaces its error message', async () => {
+  const { api, calls } = harness((c) => {
+    if (c.path === '/functions/v1/admin-user-support') return c.body.email === 'nobody@x.com' ? [404, { error: 'No account found for that email.' }] : [200, { ok: true }];
+    return [200, []];
+  });
+  assert.deepEqual(await api.supportSendReset('a@b.c'), { ok: true });
+  assert.deepEqual(calls.find((c) => c.path === '/functions/v1/admin-user-support').body, { action: 'send_reset', email: 'a@b.c' });
+  await api.supportSetPassword('a@b.c', 'Temp-pass-123');
+  assert.deepEqual(calls.filter((c) => c.path === '/functions/v1/admin-user-support')[1].body, { action: 'set_password', email: 'a@b.c', password: 'Temp-pass-123' });
+  await assert.rejects(() => api.supportSendReset('nobody@x.com'), /No account found/);
 });

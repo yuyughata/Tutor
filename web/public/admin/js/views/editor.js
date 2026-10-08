@@ -1,6 +1,6 @@
 import { h, icon, clear, field, slugify, toast, busy, statusPill, storyState, toLocalInput, fromLocalInput } from '../ui.js';
+import { LEVELS, levelName } from '../levels.js';
 
-const BANDS = [['2-4', 'Little · 2–4'], ['5-8', 'Explorer · 5–8'], ['9-12', 'Adventurer · 9–12']];
 const key = () => Math.random().toString(36).slice(2);
 const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${key()}`);
 const words = (t) => (t.trim() ? t.trim().split(/\s+/).length : 0);
@@ -15,8 +15,8 @@ export async function render(ctx, { id }) {
   let story, categoryIds, pages, visibility, publishAt, slugTouched, minutesTouched, active = 0, dirty = false, savedAt = null;
   const load = (s) => {
     story = s
-      ? { id: s.id, slug: s.slug, title: s.title, synopsis: s.synopsis, cover_url: s.cover_url || '', author_id: s.author_id || authors[0]?.id || null, age_band: s.age_band, is_free: s.is_free, reading_minutes: s.reading_minutes, status: s.status, published_at: s.published_at }
-      : { id: uuid(), slug: '', title: '', synopsis: '', cover_url: '', author_id: authors[0]?.id || null, age_band: '5-8', is_free: false, reading_minutes: 3, status: 'draft', published_at: null };
+      ? { id: s.id, slug: s.slug, title: s.title, synopsis: s.synopsis, cover_url: s.cover_url || '', author_id: s.author_id || authors[0]?.id || null, reading_level: s.reading_level, is_free: s.is_free, reading_minutes: s.reading_minutes, status: s.status, published_at: s.published_at }
+      : { id: uuid(), slug: '', title: '', synopsis: '', cover_url: '', author_id: authors[0]?.id || null, reading_level: 'spark', is_free: false, reading_minutes: 3, status: 'draft', published_at: null };
     categoryIds = new Set(s ? s.categoryIds : []);
     pages = (s ? s.pages : []).map((p) => ({ key: key(), id: p.id, image_url: p.image_url, text: p.text, preview: null }));
     visibility = s ? storyState(s) : 'draft';
@@ -78,7 +78,7 @@ export async function render(ctx, { id }) {
   const synopsis = h('textarea', { maxlength: 400, rows: 3, placeholder: 'One or two sentences that make a child want to open it.' });
   const synCount = h('div', { class: 'count' });
   const minutes = h('input', { type: 'number', min: 1, max: 60 });
-  const bandSeg = h('div', { class: 'seg', role: 'group', 'aria-label': 'Age band' });
+  const bandSeg = h('div', { class: 'seg', role: 'group', 'aria-label': 'Reading level' });
   const chipBox = h('div', { class: 'chips' });
   const authorSel = h('select', {}, authors.map((a) => h('option', { value: a.id }, a.name)));
   const free = h('input', { type: 'checkbox' });
@@ -89,7 +89,7 @@ export async function render(ctx, { id }) {
   minutes.oninput = () => { minutesTouched = true; story.reading_minutes = Math.max(1, Number(minutes.value) || 1); touch(); };
   authorSel.onchange = () => { story.author_id = authorSel.value; touch(); };
   free.onchange = () => { story.is_free = free.checked; touch(); paintAside(); };
-  const paintBand = () => bandSeg.replaceChildren(...BANDS.map(([v, l]) => h('button', { type: 'button', 'aria-pressed': String(story.age_band === v), onclick: () => { story.age_band = v; paintBand(); touch(); } }, l)));
+  const paintBand = () => bandSeg.replaceChildren(...LEVELS.map((l) => h('button', { type: 'button', title: l.descriptor, 'aria-pressed': String(story.reading_level === l.id), onclick: () => { story.reading_level = l.id; paintBand(); touch(); } }, `${l.name} · ${l.descriptor}`)));
   const paintChips = () => chipBox.replaceChildren(...cats.map((c) => h('button', { type: 'button', class: 'chip', 'aria-pressed': String(categoryIds.has(c.id)), onclick: () => { categoryIds.has(c.id) ? categoryIds.delete(c.id) : categoryIds.add(c.id); paintChips(); touch(); } }, c.name)));
   const autoMinutes = () => { if (!minutesTouched) { story.reading_minutes = Math.max(1, Math.ceil(pages.reduce((n, p) => n + words(p.text), 0) / 90)); minutes.value = story.reading_minutes; } };
 
@@ -202,7 +202,7 @@ export async function render(ctx, { id }) {
         visibility !== 'draft' && !ready ? h('p', { class: 'small', style: { color: 'var(--danger)', marginBottom: 0 } }, 'Finish these before saving as live.') : null),
       h('div', { class: 'card' }, h('h2', {}, 'In the app'), h('div', { class: 'row', style: { alignItems: 'flex-start', flexWrap: 'nowrap' } },
         h('div', { class: 'shelf-card' }, h('div', { class: 'c' }, story.cover_url ? h('img', { src: story.cover_url, alt: '' }) : '📖'), h('b', {}, story.title || 'Untitled'),
-          h('span', { class: 'small muted' }, `Ages ${story.age_band} · ${story.reading_minutes} min`)),
+          h('span', { class: 'small muted' }, `${levelName(story.reading_level)} · ${story.reading_minutes} min`)),
         h('div', {}, story.is_free ? h('span', { class: 'pill free' }, 'FREE') : h('span', { class: 'pill purple' }, '🔒 Premium')))),
     );
     aside.append(h('div', { class: 'card' }, h('h2', {}, 'Reader preview'), phoneBox));
@@ -237,7 +237,7 @@ export async function render(ctx, { id }) {
         h('div', { class: 'card', style: { marginBottom: '16px' } }, h('h2', {}, 'Details'),
           field('Title', title), field('URL name', slug, 'Used in links. Filled in from the title; change it only if you need to.'),
           field('Synopsis', h('div', {}, synopsis, synCount)),
-          field('Age group', bandSeg), field('Categories', chipBox),
+          field('Reading level', bandSeg), field('Categories', chipBox),
           h('div', { class: 'row', style: { alignItems: 'flex-start' } },
             h('div', { class: 'grow', style: { minWidth: '160px' } }, field('Author', authorSel)),
             h('div', { style: { width: '150px' } }, field('Reading time (min)', minutes))),

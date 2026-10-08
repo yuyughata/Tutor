@@ -1,21 +1,24 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { FlatList, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Avatar } from '../../src/components/Avatar';
 import { Button } from '../../src/components/Button';
 import { Chip } from '../../src/components/Chip';
 import { EmptyState } from '../../src/components/EmptyState';
+import { OfflineBanner } from '../../src/components/OfflineBanner';
+import { HomeSkeleton } from '../../src/components/Skeleton';
 import { Picture } from '../../src/components/Picture';
 import { Section } from '../../src/components/Section';
 import { openStory, StoryCard } from '../../src/components/StoryCard';
 import { Tap } from '../../src/components/Tap';
 import { getHome } from '../../src/data/repository';
+import { levelName } from '../../src/levels';
 import { useGate } from '../../src/state/gate';
-import { useAgeBand, useProfiles } from '../../src/state/profiles';
-import { colors, radius, shadow, space, type } from '../../src/theme';
+import { useReadingLevel, useProfiles } from '../../src/state/profiles';
+import { colors, fonts, radius, shadow, space, type } from '../../src/theme';
 import type { HomeData, Story } from '../../src/types';
 
 function Shelf({ stories }: { stories: Story[] }) {
@@ -45,8 +48,12 @@ function WeekHero({ story }: { story: Story }) {
       <View style={styles.heroBody}>
         <Text style={styles.heroTitle} numberOfLines={2}>{story.title}</Text>
         <Text style={styles.heroSub} numberOfLines={2}>{story.synopsis}</Text>
-        <View style={{ flexDirection: 'row', marginTop: 14 }}>
-          <Button label="Read now" icon="book" onPress={() => openStory(story.slug)} style={{ minHeight: 46 }} />
+        {/* the whole card is the button; this is only its visual label (no nested interactive element) */}
+        <View style={{ flexDirection: 'row', marginTop: 14 }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+          <View style={styles.readNow}>
+            <Ionicons name="book" size={20} color={colors.onPurple} />
+            <Text style={styles.readNowText}>Read now</Text>
+          </View>
         </View>
       </View>
     </Tap>
@@ -63,7 +70,7 @@ function MonthCard({ story }: { story: Story }) {
           <Text style={styles.tealPillText}>TITLE OF THE MONTH</Text>
         </View>
         <Text style={styles.monthTitle} numberOfLines={2}>{story.title}</Text>
-        <Text style={styles.monthMeta}>Ages {story.ageBand} · {story.readingMinutes} min read</Text>
+        <Text style={styles.monthMeta}>{levelName(story.level)} · {story.readingMinutes} min read</Text>
       </View>
       <Ionicons name="chevron-forward" size={22} color={colors.lock} />
     </Tap>
@@ -71,7 +78,7 @@ function MonthCard({ story }: { story: Story }) {
 }
 
 export default function Home() {
-  const band = useAgeBand();
+  const band = useReadingLevel();
   const { active } = useProfiles();
   const ask = useGate();
   const insets = useSafeAreaInsets();
@@ -79,11 +86,10 @@ export default function Home() {
   const [error, setError] = useState(false);
   const [category, setCategory] = useState<string | null>(null);
 
-  useEffect(() => {
-    setData(null);
-    setError(false);
-    getHome(band).then(setData).catch(() => setError(true));
-  }, [band]);
+  const [refreshing, setRefreshing] = useState(false);
+  const fetchHome = useCallback(() => getHome(band).then((d) => { setData(d); setError(false); }).catch(() => setError(true)), [band]);
+  useEffect(() => { setData(null); setError(false); fetchHome(); }, [fetchHome]);
+  const onRefresh = async () => { setRefreshing(true); await fetchHome(); setRefreshing(false); };
 
   const filter = (list: Story[]) => (category ? list.filter((s) => s.categories.includes(category)) : list);
   const switchChild = async () => {
@@ -93,10 +99,10 @@ export default function Home() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <LinearGradient colors={[colors.purpleSoft, colors.bg]} style={styles.wash} />
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 12, paddingBottom: 140 }} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 12, paddingBottom: 140 }} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.purple} colors={[colors.purple]} />}>
         <View style={styles.header}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.hi}>Hi{active ? `, ${active.name}` : ''}! 👋</Text>
+            <Text accessibilityRole="header" style={styles.hi}>Hi{active ? `, ${active.name}` : ''}! 👋</Text>
             <Text style={styles.hiSub}>What shall we read today?</Text>
           </View>
           {active && (
@@ -106,15 +112,16 @@ export default function Home() {
           )}
         </View>
 
-        {error && (
+        <OfflineBanner />
+        {error && !data && (
           <>
-            <EmptyState emoji="🛜" title="Can't reach the library" body="Check your connection and try again." />
+            <EmptyState emoji="🛜" title="Can't reach the library" body="Check your connection and try again. Stories you saved for offline are in My books." />
             <View style={{ alignItems: 'center' }}>
-              <Button label="Try again" variant="secondary" onPress={() => { setError(false); getHome(band).then(setData).catch(() => setError(true)); }} />
+              <Button label="Try again" variant="secondary" onPress={() => { setError(false); fetchHome(); }} />
             </View>
           </>
         )}
-        {!data && !error && <ActivityIndicator style={{ marginTop: 80 }} color={colors.purple} />}
+        {!data && !error && <HomeSkeleton />}
 
         {data && (
           <>
@@ -152,6 +159,8 @@ const styles = StyleSheet.create({
   pill: { position: 'absolute', top: 16, left: 16, flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: colors.amber, paddingHorizontal: 12, paddingVertical: 6, borderRadius: radius.pill },
   pillText: { ...type.label, color: colors.onAmber },
   heroBody: { padding: 20 },
+  readNow: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 46, paddingHorizontal: 22, borderRadius: radius.pill, backgroundColor: colors.purple },
+  readNowText: { fontFamily: fonts.black, fontSize: 17, color: colors.onPurple },
   heroTitle: { ...type.display, color: '#fff' },
   heroSub: { ...type.body, color: 'rgba(255,255,255,0.88)', marginTop: 4 },
   month: { flexDirection: 'row', alignItems: 'center', gap: 14, marginHorizontal: space.md, marginTop: 14, padding: 12, borderRadius: radius.lg, backgroundColor: colors.surface },

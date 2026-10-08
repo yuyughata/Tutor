@@ -1,4 +1,4 @@
-export type AgeBand = '2-4' | '5-8' | '9-12';
+export type ReadingLevel = 'sunrise' | 'spark' | 'seeker';
 
 export type Category = { slug: string; name: string; icon?: string };
 
@@ -13,7 +13,7 @@ export type Story = {
   coverUrl: string;
   art?: Art;
   author: string;
-  ageBand: AgeBand;
+  level: ReadingLevel;
   isFree: boolean;
   pageCount: number;
   readingMinutes: number;
@@ -32,4 +32,4 @@ export type HomeData = {
   categories: Category[];
 };
 
-export type ChildProfile = { id: string; name: string; avatar: string; ageBand: AgeBand };
+export type ChildProfile = { id: string; name: string; avatar: string; level: ReadingLevel };

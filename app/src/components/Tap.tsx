@@ -1,5 +1,6 @@
 import * as Haptics from 'expo-haptics';
 import { useRef } from 'react';
+import { useReducedMotion } from '../lib/a11y';
 import { Animated, Platform, Pressable, type PressableProps, type StyleProp, type ViewStyle } from 'react-native';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -12,7 +13,9 @@ type Props = Omit<PressableProps, 'style'> & { style?: StyleProp<ViewStyle>; hap
  */
 export function Tap({ style, children, haptic = true, scaleTo = 0.96, onPressIn, onPressOut, onPress, ...rest }: Props) {
   const scale = useRef(new Animated.Value(1)).current;
-  const to = (v: number) => Animated.spring(scale, { toValue: v, useNativeDriver: Platform.OS !== 'web', speed: 40, bounciness: 6 }).start();
+  const reduced = useReducedMotion();
+  // With Reduce Motion on, taps still respond (haptics, pressed state) but nothing bounces.
+  const to = (v: number) => reduced ? undefined : Animated.spring(scale, { toValue: v, useNativeDriver: Platform.OS !== 'web', speed: 40, bounciness: 6 }).start();
   return (
     <AnimatedPressable
       {...rest}

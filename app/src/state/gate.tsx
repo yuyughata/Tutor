@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useRef, useState, type ReactNod
 import { Modal, StyleSheet, Text, View } from 'react-native';
 import { Button } from '../components/Button';
 import { Tap } from '../components/Tap';
+import { useReducedMotion } from '../lib/a11y';
 import { colors, fonts, radius, shadow, space, type } from '../theme';
 
 // Parental gate: a short number-word challenge that pre-readers can't solve, guarding
@@ -15,6 +16,7 @@ type Ctx = { ask: () => Promise<boolean> };
 const GateContext = createContext<Ctx | null>(null);
 
 export function GateProvider({ children }: { children: ReactNode }) {
+  const reduceMotion = useReducedMotion();
   const [open, setOpen] = useState(false);
   const [challenge, setChallenge] = useState<number[]>(makeChallenge());
   const [entered, setEntered] = useState<number[]>([]);
@@ -56,7 +58,7 @@ export function GateProvider({ children }: { children: ReactNode }) {
   return (
     <GateContext.Provider value={{ ask }}>
       {children}
-      <Modal visible={open} transparent animationType="fade" onRequestClose={() => finish(false)}>
+      <Modal visible={open} transparent animationType={reduceMotion ? 'none' : 'fade'} onRequestClose={() => finish(false)}>
         <View style={styles.scrim}>
           <View style={[styles.card, shadow.lift]} accessibilityViewIsModal>
             <Text style={styles.kicker}>GROWN-UPS ONLY</Text>
@@ -92,7 +94,7 @@ export function useGate() {
 const styles = StyleSheet.create({
   scrim: { flex: 1, backgroundColor: 'rgba(35,35,35,0.55)', alignItems: 'center', justifyContent: 'center', padding: space.lg },
   card: { width: '100%', maxWidth: 360, backgroundColor: colors.surface, borderRadius: radius.xl, padding: space.lg, alignItems: 'center' },
-  kicker: { ...type.label, color: colors.purple },
+  kicker: { ...type.label, color: colors.purpleDeep },
   title: { ...type.title, color: colors.ink, textAlign: 'center', marginTop: 6 },
   words: { fontFamily: fonts.black, fontSize: 24, color: colors.purpleDeep, marginTop: 10, textAlign: 'center' },
   dots: { flexDirection: 'row', gap: 10, marginTop: 14 },
