@@ -9,7 +9,7 @@ The repo (`yuyughata/tutor`) is empty, so this is a greenfield build.
 | Area | Decision |
 |---|---|
 | Platforms | iOS + Android, React Native (Expo) |
-| Audience | Ages 2–12, split into age bands (see below) |
+| Audience | Children from first listening to independent reading, grouped by **reading level**, never by age (see below) |
 | Access model | Parent account and subscription on the web. Child profiles inside the app. A free sample library is open without signing in. |
 | Backend | Supabase (Auth, Postgres, Storage/CDN, RLS) + Paystack (web checkout and subscriptions) |
 
@@ -23,15 +23,15 @@ CUSTAR colours drive the UI: purple `#ab46d2` (primary actions), teal `#10a19c` 
 4. The data model leaves room for audio and video without a rewrite.
 
 ## Users
-- **Parent / guardian** (buyer and account owner): subscribes, creates child profiles, sets the age band.
-- **Child** (reader, ages 2–12): browses by thumbnail and reads.
+- **Parent / guardian** (buyer and account owner): subscribes, creates child profiles, sets each reader's reading level.
+- **Child** (reader): browses by thumbnail and reads.
 - **CUSTAR editor** (internal): creates, schedules and features stories.
 - **External author** (post-MVP): submits stories.
 
-Age bands (drive content filtering and reader typography):
-- **2–4**: parent reads aloud. Very large type, 1–2 sentences per page.
-- **5–8**: early readers. Medium type, short paragraphs.
-- **9–12**: independent readers. Smaller type, longer text, chapters.
+Reading levels (drive content filtering and reader typography). Ages are never shown anywhere in the product:
+- **Sunrise** (Assisted Reader): a grown-up reads along. Very large type, 1–2 sentences per page.
+- **Spark** (Emergent Reader): early readers. Medium type, short paragraphs.
+- **Seeker** (Developing Reader): independent readers. Smaller type, longer text, chapters.
 
 ## MVP scope
 
@@ -41,11 +41,11 @@ Age bands (drive content filtering and reader typography):
 - Title of the Month: a second featured card.
 - Popular: a horizontal carousel, ranked by reads over a rolling 30 days.
 - New: a horizontal carousel, newest first.
-- Categories chips (e.g. Adventure, Animals, Bedtime, Fantasy), filtered to the child's age band.
+- Categories chips (e.g. Adventure, Animals, Bedtime, Fantasy), filtered to the child's reading level.
 - Header with the child-profile avatar and a search icon.
 
 **2. Story detail screen**
-- Cover, title, author ("CUSTAR"), age band, category tags, page count and reading time, synopsis.
+- Cover, title, author ("CUSTAR"), reading level, category tags, page count and reading time, synopsis.
 - "Read" button, plus a favourite (heart) toggle.
 - Disabled placeholder slots for "Listen" and "Watch", which will light up in later phases.
 
@@ -62,19 +62,20 @@ Age bands (drive content filtering and reader typography):
 - Optional download for offline reading (pages are cached on device).
 
 **5. Accounts and profiles**
-- Parent sign-in (email + password and magic link). Child profiles hold a name, an avatar and an age band, with no personal data collected from children.
+- Parent sign-in (email + password and magic link). Child profiles hold a name, an avatar and a reading level, with no personal data collected from children.
 - A **parental gate** (a simple adult-level challenge) guards the profile switcher, settings, and any link to the web.
 
 **6. Subscription and access (web-paid)**
 - Free tier: a sample set (about 5 stories, to be decided by CUSTAR) readable without an account.
-- Premium: the full catalogue.
+- Premium: the full catalogue. Plans: **Free**, **Paid ₦5,000 per month**, **Paid ₦12,000 per quarter**.
+- Grace rule: a subscriber who has not renewed 5 days after the due date moves to Free automatically (enforced in the database, so the app, site and webhook agree).
 - The web checkout is built on Paystack: a plan page on the Genova website that starts a Paystack subscription transaction (plans are created in the Paystack dashboard). Billing management links to Paystack's subscription management email flow.
 - A Paystack webhook (Supabase Edge Function, HMAC-SHA512 verified, idempotent) writes the `entitlements` row in Supabase, and the app reads it on launch and whenever it returns to the foreground.
 - The app shows **no prices or purchase buttons**. Locked titles show a lock icon and a neutral message: "Ask a grown-up to sign in."
 
 **7. Internal CMS** (an admin web page, which can start as Supabase Studio plus a small admin UI)
 - Create a story: metadata, upload page images and write page text, reorder pages.
-- Set status (draft, scheduled, published), the free flag, and the age band.
+- Set status (draft, scheduled, published), the free flag, and the reading level.
 - Curate "Title of the Week" and "Title of the Month" by picking a story and dates.
 
 ### Out of scope for the MVP
@@ -116,8 +117,8 @@ Future media is additive: audio and video fields on `story_pages` and a media bu
 ## Key risks and open items
 1. **App-store rules for web-paid kids apps.** Kids Category (Apple) and Google's Families policy restrict external links, purchases, analytics and ads. The "no prices, no buy links, parental gate" approach is the safe default, but the current rules (including any external-link entitlement for reader apps) must be checked before submission.
 2. **Children's privacy.** COPPA, GDPR-K, and UK Children's Code apply. No third-party analytics or ad SDKs. First-party, anonymous usage data only. A privacy policy and parent consent flow are needed before launch.
-3. **Content pipeline is the real bottleneck.** The app is only as good as the catalogue. Target **15–20 launch stories** across the three age bands, with illustration production planned in parallel with the build.
-4. **Age range 2–12 is wide.** The MVP uses age-band filtering, but the 2–4 and 9–12 experiences differ a lot. If the budget is tight, consider launching with 2–8 and adding 9–12 after.
+3. **Content pipeline is the real bottleneck.** The app is only as good as the catalogue. Target **15–20 launch stories** across the three reading levels, with illustration production planned in parallel with the build.
+4. **The reading range is wide.** Sunrise and Seeker experiences differ a lot. If the budget is tight, consider launching with Sunrise and Spark and adding Seeker after.
 5. **Offline reading** adds complexity (cache invalidation, entitlement checks offline). It is the first candidate to cut if the schedule slips.
 6. **Illustration style and rights.** Confirm ownership terms for all artwork and text, particularly before opening to external authors.
 

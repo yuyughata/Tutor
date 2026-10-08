@@ -10,16 +10,16 @@ insert into categories (slug, name, sort_order) values
   ('bedtime', 'Bedtime', 3),
   ('fantasy', 'Fantasy', 4);
 
-insert into stories (id, slug, title, synopsis, cover_url, author_id, age_band, status, is_free, page_count, reading_minutes, published_at) values
+insert into stories (id, slug, title, synopsis, cover_url, author_id, reading_level, status, is_free, page_count, reading_minutes, published_at) values
   ('00000000-0000-0000-0000-0000000000b1', 'the-curious-little-fox', 'The Curious Little Fox',
    'A little fox follows a trail of glowing berries deep into the forest.',
-   'https://picsum.photos/seed/fox/600/450', '00000000-0000-0000-0000-0000000000a1', '2-4', 'published', true, 3, 2, now() - interval '2 days'),
+   'https://picsum.photos/seed/fox/600/450', '00000000-0000-0000-0000-0000000000a1', 'sunrise', 'published', true, 3, 2, now() - interval '2 days'),
   ('00000000-0000-0000-0000-0000000000b2', 'luna-and-the-firefly', 'Luna and the Firefly',
    'Luna follows a tiny light through the garden and learns where fireflies go at dawn.',
-   'https://picsum.photos/seed/firefly/600/450', '00000000-0000-0000-0000-0000000000a1', '5-8', 'published', true, 3, 4, now() - interval '9 days'),
+   'https://picsum.photos/seed/firefly/600/450', '00000000-0000-0000-0000-0000000000a1', 'spark', 'published', true, 3, 4, now() - interval '9 days'),
   ('00000000-0000-0000-0000-0000000000b3', 'the-child-and-the-snow-leopard', 'The Child and the Snow Leopard',
    'A brave journey across frozen mountains to discover courage and friendship.',
-   'https://picsum.photos/seed/leopard/600/450', '00000000-0000-0000-0000-0000000000a1', '9-12', 'published', false, 3, 6, now() - interval '20 days');
+   'https://picsum.photos/seed/leopard/600/450', '00000000-0000-0000-0000-0000000000a1', 'seeker', 'published', false, 3, 6, now() - interval '20 days');
 
 insert into story_pages (story_id, position, image_url, text) values
   ('00000000-0000-0000-0000-0000000000b1', 1, 'https://picsum.photos/seed/fox1/800/600', 'Fox woke up and sniffed the air. Something smelled sweet.'),
