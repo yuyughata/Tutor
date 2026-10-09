@@ -69,8 +69,12 @@ export function createDemoApi() {
     T('new_title', 'New title release', 'Announce a new or upcoming story.', 'New on Genova: {{story_title}}', 'Something new to read!\n\n# {{story_title}}\n{{synopsis}}\n\n[Read it now]({{story_url}})', ['story_title', 'synopsis', 'story_url'], false),
     T('broadcast', 'Admin broadcast', 'Free-form message to a group of parents.', 'A message from Genova', '{{message}}\n\nWith love from the Genova team at CUSTAR.', ['message'], false),
     T('cancellation', 'Cancellation', 'Sent when a subscription is cancelled.', 'Your Genova subscription was cancelled', 'Your Genova Premium subscription has been cancelled. You will not be charged again.\n\n- Premium stays on until {{access_until}}.', ['access_until'], true),
+    T('renewal_upcoming', 'Renewal coming up', 'Sent a few days before an active subscription renews (scheduled reminder).', 'Your Genova Premium renews on {{renew_date}}', 'A quick heads-up: your Genova Premium renews soon.\n\n# Renewal details\n- Plan: {{plan}}\n- Amount: {{amount}}\n- Renews on: {{renew_date}}', ['plan', 'amount', 'renew_date'], true),
+    T('access_ending', 'Premium ending (cancelled)', 'Sent a few days before a cancelled subscription runs out (scheduled reminder).', 'Your Genova Premium ends on {{access_until}}', 'You cancelled, so Premium will not renew. It stays on until {{access_until}}.', ['access_until'], true),
+    T('grace_ending', 'Last chance to renew', 'Sent when the 5-day grace period after a missed payment is about to end (scheduled reminder).', 'Last chance to keep Genova Premium', 'Your last payment did not go through. Premium stays on until {{access_until}}.\n\n[Renew now]({{site_url}}/account/)', ['plan', 'amount', 'access_until'], true),
     T('security_change', 'Passcode or password changed', 'Sent when a parent changes their passcode or password.', 'Your Genova {{what}} was changed', 'The {{what}} for {{parent_email}} was just changed.\n\n[Reset your password]({{site_url}}/forgot-password/)', ['what', 'parent_email'], true),
   ];
+  const reminderRules = [{ kind: 'access_ending', enabled: true, days: 3 }, { kind: 'grace_ending', enabled: true, days: 2 }, { kind: 'renewal_upcoming', enabled: true, days: 3 }];
   const mailLog = [{ id: 1, created_at: iso(-2), template: 'subscription_confirmation', campaign: 'automatic', recipient: 'amara@example.com', status: 'sent', error: null }];
   let requests = [
     { id: 'r1', email: 'amara@example.com', topic: 'subscription', message: 'I paid yesterday but my tablet still shows the free plan. Please help.', status: 'open', admin_note: null, created_at: iso(-1), resolved_at: null },
@@ -196,6 +200,15 @@ export function createDemoApi() {
       for (let i = 0; i < Math.min(n, 3); i++) mailLog.unshift({ id: Date.now() + i, created_at: new Date().toISOString(), template: p.template, campaign: p.campaign || p.template, recipient: p.audience === 'one' ? p.to : `parent${i + 1}@example.com`, status: 'sent', error: null });
       return delay({ sent: n, failed: 0, skipped: 0 });
     },
+    async listReminderRules() { return delay(reminderRules.map((r) => ({ ...r })).sort((a, b) => a.kind.localeCompare(b.kind))); },
+    async saveReminderRule(kind, enabled, days) { const r = reminderRules.find((x) => x.kind === kind); if (days < 1 || days > 14) throw new Error('Choose between 1 and 14 days.'); Object.assign(r, { enabled, days }); return delay({ ...r }); },
+    async runReminders(dryRun) {
+      if (dryRun) return delay({ due: 3, byKind: { renewal_upcoming: 2, grace_ending: 1 } });
+      if (!mail.enabled) return delay({ due: 3, sent: 0, failed: 0, skipped: 3, note: 'Email is not activated, so nothing was sent. Reminders will go out once it is.' });
+      mailLog.unshift({ id: Date.now(), created_at: new Date().toISOString(), template: 'renewal_upcoming', campaign: 'reminder:renewal_upcoming', recipient: 'amara@example.com', status: 'sent', error: null });
+      return delay({ due: 3, sent: 3, failed: 0, skipped: 0 });
+    },
+    async listReminderLog(limit = 30) { return delay(mailLog.filter((l) => (l.campaign || '').startsWith('reminder:')).slice(0, limit)); },
     async listEmailTemplates() { return delay(templates.map((t) => ({ ...t }))); },
     async saveEmailTemplate(key, subject, body) { const t = templates.find((x) => x.key === key); Object.assign(t, { subject, body, updated_at: new Date().toISOString() }); return delay({ ...t }); },
     async listEmailLog(limit = 50) { return delay(mailLog.slice(0, limit)); },

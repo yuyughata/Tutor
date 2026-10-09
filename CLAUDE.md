@@ -16,7 +16,7 @@ Read `README.md` for setup, `docs/MVP_BRIEF.md` for scope, `docs/HANDOFF.md` for
 - `app/` Expo SDK 57 / React Native 0.86 / expo-router, TypeScript. react + react-dom are pinned exactly (19.2.3); keep them equal.
 - `web/` Next.js 16 static export (`output: 'export'`, trailingSlash). Admin CMS is vanilla JS in `web/public/admin/` and shares the site's Supabase session.
 - `tools/qa/` browser tests (fake Supabase backend), screenshot and PDF scripts. `supabase/seed_legal.sql` = sample privacy policy.
-- `supabase/migrations/0001–0005` (all applied to the live project), `supabase/functions/` (paystack-checkout, paystack-webhook, paystack-manage, admin-user-support, send-email, support-request), `supabase/tests/`.
+- `supabase/migrations/0001–0006` (all applied to the live project), `supabase/functions/` (paystack-checkout, paystack-webhook, paystack-manage, admin-user-support, send-email, support-request, send-reminders), `supabase/tests/`.
 - Supabase project **GenovaStorybook**, ref `cjdrlddvbyfataumdztg`.
 
 ## Commands
@@ -43,9 +43,12 @@ Done: reading levels everywhere; library (Reading/Favourites/Finished/Saved, sea
 - 8 Passcode: `parent_passcodes` (salted hash only), `src/state/passcode.tsx`, `PinPad`, `app/passcode.tsx`; gate (`src/state/gate.tsx`) uses the PIN when signed in with a passcode, otherwise the number-word puzzle; 5 wrong tries lock for 60 s; "Forgot passcode?" re-checks the account password. The gate waits until the passcode state is known (never falls back to the puzzle on launch).
 - 9 Kiosk: `src/state/kiosk.tsx` + local native module `app/modules/genova-kiosk` (Android Lock Task Mode) + `docs/KIOSK.md`. **Kotlin not compiled or run on a device yet.**
 
+## Scheduled reminders (built, migration 0006)
+Daily pg_cron job `send-reminder-emails` (08:00 UTC = 09:00 Nigeria) -> pg_net -> edge function `send-reminders` (verify_jwt off; authenticates with the `x-job-secret` header = `job_secrets.reminders`, or an admin JWT for "Run now"). Rules in `email_reminder_rules` (renewal_upcoming 3 days, access_ending 3 days, grace_ending 2 days; editable in Admin > Email > Reminders). `reminder_candidates()` picks who is due; `email_reminders` records one send per (parent, kind, period_end) so nothing repeats; the claim is released if sending fails. Tests: `supabase/tests/reminders.test.mjs`. On a new project run `select private.schedule_reminders('https://<ref>.supabase.co/functions/v1');`.
+
 ## Backlog
-- Scheduled reminder emails (e.g. 3 days before access ends) need pg_cron + pg_net calling `send-email`; today reminders are sent from the Email tab (audience "Premium ending within 7 days") or by the webhook on a failed payment.
 - Email domain verification and the first real Resend test.
+- Paystack: the live secret key must be set as the Supabase secret `PAYSTACK_SECRET_KEY` (dashboard > Edge Functions > Secrets); it was shared in chat once, so roll it in the Paystack dashboard and set the new value. The webhook URL in Paystack must be the Supabase function URL, not another site's.
 
 ## Not yet verified (be honest about this)
 - Nothing has run against the live Supabase project or Paystack. Paystack webhook payload field names were written from docs; check one test-mode payment in `payment_events`.

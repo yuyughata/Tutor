@@ -212,6 +212,16 @@ export function createApi(sb) {
     },
     async listEmailLog(limit = 50) { return unwrap(await sb.from('email_log').select('id, created_at, template, campaign, recipient, status, error').order('created_at', { ascending: false }).limit(limit)); },
 
+    // ---------- scheduled reminders ----------
+    async listReminderRules() { return unwrap(await sb.from('email_reminder_rules').select('kind, enabled, days').order('kind')); },
+    async saveReminderRule(kind, enabled, days) {
+      return unwrap(await sb.from('email_reminder_rules').update({ enabled, days, updated_at: new Date().toISOString() }).eq('kind', kind).select('kind, enabled, days').single());
+    },
+    async runReminders(dryRun) { return invoke('send-reminders', { dryRun: !!dryRun }); },
+    async listReminderLog(limit = 30) {
+      return unwrap(await sb.from('email_log').select('id, created_at, template, campaign, recipient, status, error').like('campaign', 'reminder:%').order('created_at', { ascending: false }).limit(limit));
+    },
+
     // ---------- support inbox ----------
     async listSupportRequests(status) {
       let q = sb.from('support_requests').select('id, email, topic, message, status, admin_note, created_at, resolved_at').order('created_at', { ascending: false }).limit(200);
@@ -238,4 +248,5 @@ export const API_METHODS = [
   'getLegal', 'saveLegal', 'supportSendReset', 'supportSetPassword', 'listSupportActions', 'listAdmins', 'setAdmin',
   'emailStatus', 'emailSaveSettings', 'emailActivate', 'emailDeactivate', 'emailTest', 'emailPreview', 'emailCount', 'emailSend',
   'listEmailTemplates', 'saveEmailTemplate', 'listEmailLog', 'listSupportRequests', 'updateSupportRequest', 'openSupportCount',
+  'listReminderRules', 'saveReminderRule', 'runReminders', 'listReminderLog',
 ];

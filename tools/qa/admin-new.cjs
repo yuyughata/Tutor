@@ -68,6 +68,16 @@ const { chromium } = require(process.env.PW);
     await page.getByRole('button', { name: /^Send$/ }).last().click(); await page.getByRole('button', { name: 'Send now' }).click();
     await page.getByText(/Sent to \d+ people/).waitFor();
   });
+  await step('email: scheduled reminders', async () => {
+    await page.getByRole('button', { name: 'Reminders', exact: true }).click(); await page.getByRole('heading', { name: 'Scheduled reminders' }).waitFor();
+    await page.getByText('Renewal coming up').first().waitFor(); await page.getByText('Last chance after a missed payment').waitFor();
+    const days = page.getByLabel('Days before for Last chance after a missed payment'); await days.fill('9');
+    await page.getByRole('button', { name: 'Save' }).nth(1).click(); await page.getByText('Choose a whole number of days from 1 to 4.').waitFor();
+    await days.fill('3'); await page.getByRole('button', { name: 'Save' }).nth(1).click(); await page.getByText('Reminder saved').waitFor();
+    await page.getByRole('button', { name: 'Check who is due now' }).click(); await page.getByText('3 reminders due today').waitFor();
+    await page.getByRole('button', { name: 'Send due reminders now' }).click(); await page.getByRole('button', { name: 'Send now' }).click(); await page.getByText('Sent 3 reminders').waitFor();
+    await page.screenshot({ path: `${out}/email-reminders.png`, fullPage: true });
+  });
   await step('email: templates and history', async () => {
     await page.getByRole('button', { name: 'Templates', exact: true }).click(); await page.getByRole('heading', { name: 'Welcome' }).waitFor();
     const subj = page.locator('input[type=text]').first(); await subj.fill('Welcome to Genova!'); await page.getByRole('button', { name: 'Save template' }).click(); await page.getByText('Template saved').waitFor();

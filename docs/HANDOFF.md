@@ -23,7 +23,7 @@ With no `app/.env` the app runs on built-in sample stories. To use the live back
 | Service | What it is used for | Where the secret lives | Status |
 |---|---|---|---|
 | GitHub `yuyughata/Tutor` | Code | Your GitHub login | exists |
-| Supabase project **GenovaStorybook**, ref `cjdrlddvbyfataumdztg`, URL `https://cjdrlddvbyfataumdztg.supabase.co` | Auth, Postgres, storage, edge functions | Owner's Supabase account. Anon key is public (in `app/.env.example`, `web/lib/config.ts`, `web/public/config.js`). **Service-role key** is only inside Supabase (functions read it automatically); never commit it | exists, migrations 0001-0005 applied, 6 functions deployed |
+| Supabase project **GenovaStorybook**, ref `cjdrlddvbyfataumdztg`, URL `https://cjdrlddvbyfataumdztg.supabase.co` | Auth, Postgres, storage, edge functions | Owner's Supabase account. Anon key is public (in `app/.env.example`, `web/lib/config.ts`, `web/public/config.js`). **Service-role key** is only inside Supabase (functions read it automatically); never commit it | exists, migrations 0001-0006 applied, 7 functions deployed |
 | Paystack | Subscriptions on the web | `PAYSTACK_SECRET_KEY` as a Supabase function secret | **not set up yet** |
 | Resend | Receipts, welcome, reminders, broadcasts (Admin > Email) and, optionally, Supabase auth emails via SMTP | The API key is pasted into Admin > Email > Connection (stored server-side only). SMTP creds, if used, go in Supabase Auth settings | **not set up yet** |
 | Web hosting (Netlify / Cloudflare Pages / Vercel) | Hosts `web/out` | Host dashboard | **not deployed yet** |
@@ -32,7 +32,8 @@ With no `app/.env` the app runs on built-in sample stories. To use the live back
 **Moving to a different Supabase account** (or if the project is lost): follow section 4 on a new project, then replace the URL/anon key in `app/.env`, `web/lib/config.ts` (or `NEXT_PUBLIC_SUPABASE_*` env vars) and `web/public/config.js`.
 
 ## 4. Backend setup (new project, or to verify the existing one)
-1. **Database:** run `supabase/migrations/0001` to `0005` in order (SQL editor, or `supabase db push`). Then run `supabase/seed_legal.sql` (sample privacy policy). Optionally run `supabase/seed.sql` for three demo stories (they use placeholder picsum images).
+1. **Database:** run `supabase/migrations/0001` to `0006` in order (SQL editor, or `supabase db push`). Then run `supabase/seed_legal.sql` (sample privacy policy). Optionally run `supabase/seed.sql` for three demo stories (they use placeholder picsum images).
+   `0006` schedules the daily reminder job for ONE functions URL: on a new project run `select private.schedule_reminders('https://<project-ref>.supabase.co/functions/v1');` (it needs pg_cron and pg_net enabled).
    `0004` enables `pg_cron` and schedules the hourly job that moves lapsed subscribers to Free.
 2. **Storage:** buckets `covers` (public) and `pages` (private, signed URLs) are created by migration `0001`.
 3. **Auth settings** (Supabase > Authentication):
@@ -47,12 +48,13 @@ With no `app/.env` the app runs on built-in sample stories. To use the live back
    supabase functions deploy admin-user-support
    supabase functions deploy send-email
    supabase functions deploy support-request
+   supabase functions deploy send-reminders --no-verify-jwt   # called by the daily cron job with its own secret
    supabase functions deploy paystack-webhook --no-verify-jwt     # Paystack sends no Supabase JWT; its HMAC signature authenticates it
    supabase secrets set PAYSTACK_SECRET_KEY=sk_test_... WEB_URL=https://your-site \
      PAYSTACK_PLAN_MONTHLY=PLN_... PAYSTACK_PLAN_QUARTERLY=PLN_...
    ```
    (`SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` are provided to functions automatically.)
-5. **Paystack dashboard:** create two Plans (monthly ₦5,000, quarterly ₦12,000) and copy their `PLN_...` codes; Settings > API Keys & Webhooks: webhook URL `https://<ref>.supabase.co/functions/v1/paystack-webhook`.
+5. **Paystack dashboard:** Paystack allows ONE webhook URL per mode (test/live) per business. Use a Paystack business that is not already pointing its webhook at another site. Create two Plans (monthly ₦5,000, quarterly ₦12,000) and copy their `PLN_...` codes; Settings > API Keys & Webhooks: webhook URL `https://<ref>.supabase.co/functions/v1/paystack-webhook`.
    Prices shown on the site come from the `plans` table; the amount charged comes from the Paystack plan, so keep them equal.
 6. **First admin:** sign up once on the website, then run
    `update public.profiles set is_admin = true where email = 'you@example.com';`

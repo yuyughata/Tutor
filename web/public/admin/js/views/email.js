@@ -29,12 +29,12 @@ export async function render(ctx) {
   paintPill();
 
   const tabs = h('div', { class: 'seg', role: 'group', 'aria-label': 'Email sections' });
-  const paintTabs = () => tabs.replaceChildren(...[['send', 'Send'], ['templates', 'Templates'], ['connection', 'Connection'], ['history', 'History']].map(([id, label]) =>
+  const paintTabs = () => tabs.replaceChildren(...[['send', 'Send'], ['reminders', 'Reminders'], ['templates', 'Templates'], ['connection', 'Connection'], ['history', 'History']].map(([id, label]) =>
     h('button', { type: 'button', 'aria-pressed': String(tab === id), onclick: async () => { if (dirty && !window.confirm('You have unsaved changes. Leave without saving?')) return; dirty = false; tab = id; paintTabs(); await show(); } }, label)));
 
   async function show() {
     body.replaceChildren(h('p', { class: 'muted' }, 'Loading…'));
-    try { body.replaceChildren(await { send, templates: tpl, connection, history }[tab]()); } catch (e) { body.replaceChildren(h('div', { class: 'callout bad' }, e.message)); }
+    try { body.replaceChildren(await { send, reminders, templates: tpl, connection, history }[tab]()); } catch (e) { body.replaceChildren(h('div', { class: 'callout bad' }, e.message)); }
   }
   const preview = (frame, template, subject, text, vars) => async () => {
     const r = await api.emailPreview(template, subject, text, vars);
@@ -102,6 +102,50 @@ export async function render(ctx) {
         field('Template', tplSel), field('Send to', audSel, null), toField, h('p', { style: { margin: '-8px 0 14px' } }, count),
         field('Subject', subject), dyn, h('div', { class: 'row' }, sendBtn, prevBtn)),
       h('div', { class: 'card' }, h('h2', {}, 'Preview'), h('p', { class: 'small muted' }, 'Shown with sample details. Each parent gets their own.'), frame));
+  }
+
+  // ---------------- scheduled reminders ----------------
+  const RULES = {
+    renewal_upcoming: ['Renewal coming up', 'Before an active subscription renews: plan, amount and date, and a link to manage it.', 14],
+    access_ending: ['Premium ending after cancelling', 'Before a cancelled subscription runs out, with a link to subscribe again.', 14],
+    grace_ending: ['Last chance after a missed payment', 'In the 5-day grace period, shortly before the account moves to Free.', 4],
+  };
+  async function reminders() {
+    const [rules, log] = await Promise.all([api.listReminderRules(), api.listReminderLog(20)]);
+    const rows = rules.map((r) => {
+      const [name, desc, max] = RULES[r.kind];
+      const on = h('input', { type: 'checkbox', checked: r.enabled, 'aria-label': `Send "${name}" reminders`, style: { width: '22px', height: '22px' } });
+      const days = h('input', { type: 'number', min: 1, max, value: r.days, 'aria-label': `Days before for ${name}`, style: { width: '84px' } });
+      const save = h('button', { class: 'btn secondary sm', disabled: true }, 'Save');
+      const live = () => { save.disabled = on.checked === r.enabled && Number(days.value) === r.days; };
+      on.onchange = live; days.oninput = live;
+      save.onclick = busy(save, async () => {
+        const n = Number(days.value);
+        if (!Number.isInteger(n) || n < 1 || n > max) throw new Error(`Choose a whole number of days from 1 to ${max}.`);
+        const row = await api.saveReminderRule(r.kind, on.checked, n); r.enabled = row.enabled; r.days = row.days; live(); toast('Reminder saved');
+      });
+      return h('div', { class: 'row', style: { padding: '14px 0', borderTop: '1px solid var(--line)', alignItems: 'flex-start', flexWrap: 'nowrap' } }, on,
+        h('div', { class: 'grow' }, h('b', {}, name), h('div', { class: 'small muted' }, desc), h('div', { class: 'small muted' }, 'Email template: ', h('b', {}, templates.find((t) => t.key === r.kind)?.name || r.kind), ' (edit it on the Templates tab)')),
+        h('label', { class: 'small nowrap', style: { display: 'flex', gap: '6px', alignItems: 'center' } }, days, 'days before'), save);
+    });
+    const check = h('button', { class: 'btn secondary' }, 'Check who is due now');
+    check.onclick = busy(check, async () => { const r = await api.runReminders(true); toast(r.due ? `${r.due} reminder${r.due === 1 ? '' : 's'} due today` : 'No reminders are due right now'); });
+    const run = h('button', { class: 'btn' }, 'Send due reminders now');
+    run.onclick = busy(run, async () => {
+      const pre = await api.runReminders(true);
+      if (!pre.due) { toast('No reminders are due right now'); return; }
+      if (!(await ctx.confirm({ title: 'Send reminders now?', body: `${pre.due} parent${pre.due === 1 ? ' is' : 's are'} due a reminder. Each gets it once per billing period, so the daily run will not repeat it.`, confirmLabel: 'Send now' }))) return;
+      const r = await api.runReminders(false);
+      if (r.note) toast(r.note, 'err'); else if (r.failed) toast(`Sent ${r.sent}, ${r.failed} failed. See History.`, 'err'); else toast(`Sent ${r.sent} reminder${r.sent === 1 ? '' : 's'}`);
+      tab = 'reminders'; await show();
+    });
+    return h('div', { class: 'grid', style: { gap: '16px', maxWidth: '860px' } },
+      h('div', { class: 'card' }, h('h2', {}, 'Scheduled reminders'),
+        h('p', { class: 'muted', style: { marginTop: '4px' } }, 'Sent automatically every day at 09:00 Nigeria time (08:00 UTC) once email is on. Each parent gets each reminder once per billing period.'),
+        status.enabled ? null : h('div', { class: 'callout', style: { margin: '12px 0' } }, 'Email is not activated yet, so no reminders will be sent. Open the Connection tab to set up Resend.'),
+        h('div', {}, rows), h('div', { class: 'row', style: { marginTop: '16px' } }, run, check)),
+      h('div', { class: 'card', style: { padding: '8px 8px 4px' } }, h('h3', { style: { padding: '10px 12px 0' } }, 'Recently sent'),
+        log.length ? h('div', { class: 'table-wrap' }, h('table', {}, h('tbody', {}, log.map((r) => h('tr', {}, h('td', { class: 'small muted nowrap', title: fmtDateTime(r.created_at) }, ago(r.created_at)), h('td', {}, r.recipient), h('td', { class: 'small' }, (RULES[r.template] || [r.template])[0]), h('td', {}, h('span', { class: `pill ${STATUS_PILL[r.status]}` }, r.status))))))) : h('p', { class: 'muted small', style: { padding: '0 12px 12px' } }, 'No reminders sent yet.')));
   }
 
   // ---------------- templates ----------------
