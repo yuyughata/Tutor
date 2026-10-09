@@ -51,7 +51,7 @@ main { padding:32px clamp(16px,4vw,44px) 80px; max-width:1240px; width:100%; }
 .stat .l { color:var(--muted); font-weight:700; }
 .stat .ico { width:40px; height:40px; border-radius:12px; display:grid; place-items:center; margin-bottom:8px; }
 .stat .ico svg { width:22px; height:22px; }
-.btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; border:0; border-radius:99px; padding:10px 18px; font-weight:900; cursor:pointer; background:var(--purple); color:#fff; text-decoration:none; transition:transform .08s, filter .15s; }
+.btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; border:0; border-radius:99px; padding:10px 18px; font-weight:900; cursor:pointer; background:var(--amber); color:#232323; text-decoration:none; transition:transform .08s, filter .15s; }
 .btn:hover { filter:brightness(1.07); } .btn:active { transform:scale(.97); }
 .btn[disabled] { opacity:.5; cursor:default; }
 .btn.secondary { background:var(--teal-soft); color:var(--teal-deep); }
@@ -174,3 +174,12 @@ dialog h2 { margin-bottom:6px; } dialog .actions { display:flex; gap:10px; justi
 .legal h3 { margin:18px 0 6px; } .legal h3:first-child { margin-top:0; } .legal p { margin:0 0 10px; } .legal ul { margin:0 0 10px; padding-left:20px; } .legal li { margin-bottom:4px; }
 textarea.mono { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:13.5px; line-height:1.55; min-height:340px; }
 .log { display:grid; gap:8px; } .log .row { padding:8px 0; border-top:1px solid var(--line); font-size:14px; }
+
+/* ---------- email + support ---------- */
+.mail-preview { width:100%; min-height:460px; border:1px solid var(--line); border-radius:14px; background:#fff; margin-top:14px; }
+.tpl-layout { display:grid; grid-template-columns:260px 1fr; gap:18px; align-items:start; }
+.tpl-list { padding:8px; display:flex; flex-direction:column; gap:4px; }
+.tpl-item { text-align:left; border:0; background:none; padding:10px 12px; border-radius:12px; cursor:pointer; display:flex; flex-direction:column; }
+.tpl-item:hover { background:var(--bg); } .tpl-item.on { background:var(--purple-soft); }
+ol.steps { padding-left:20px; margin:12px 0; } ol.steps li { margin-bottom:8px; }
+@media (max-width:860px) { .tpl-layout { grid-template-columns:1fr; } }

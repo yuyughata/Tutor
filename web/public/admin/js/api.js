@@ -31,8 +31,8 @@ export function createApi(sb) {
     if (stale.length) await sb.storage.from(bucket).remove(stale);
   }
 
-  async function support(body) {
-    const { data, error } = await sb.functions.invoke('admin-user-support', { body });
+  async function invoke(name, body) {
+    const { data, error } = await sb.functions.invoke(name, { body });
     if (error) {
       let msg = error.message;
       try { const j = await error.context.json(); if (j?.error) msg = j.error; } catch { /* not json */ }
@@ -41,6 +41,8 @@ export function createApi(sb) {
     if (data?.error) throw new Error(data.error);
     return data;
   }
+  const support = (body) => invoke('admin-user-support', body);
+  const email = (body) => invoke('send-email', body);
 
   return {
     demo: false,
@@ -194,6 +196,36 @@ export function createApi(sb) {
     async listSupportActions() {
       return unwrap(await sb.from('admin_actions').select('id, action, target_email, created_at').order('created_at', { ascending: false }).limit(8));
     },
+
+    // ---------- email (Resend) ----------
+    async emailStatus() { const rows = unwrap(await sb.rpc('admin_email_status')); return (Array.isArray(rows) ? rows[0] : rows) || { configured: false, enabled: false }; },
+    async emailSaveSettings(s) { return email({ action: 'save_settings', ...s }); },
+    async emailActivate() { return email({ action: 'activate' }); },
+    async emailDeactivate() { return email({ action: 'deactivate' }); },
+    async emailTest(to) { return email({ action: 'test', to }); },
+    async emailPreview(template, subject, body, vars) { return email({ action: 'preview', template, subject, body, vars }); },
+    async emailCount(audience) { return (await email({ action: 'count', audience })).count; },
+    async emailSend(payload) { return email({ action: 'send', ...payload }); },
+    async listEmailTemplates() { return unwrap(await sb.from('email_templates').select('key, name, description, subject, body, variables, automatic, updated_at').order('name')); },
+    async saveEmailTemplate(key, subject, body) {
+      return unwrap(await sb.from('email_templates').update({ subject, body, updated_at: new Date().toISOString() }).eq('key', key).select('key, name, description, subject, body, variables, automatic, updated_at').single());
+    },
+    async listEmailLog(limit = 50) { return unwrap(await sb.from('email_log').select('id, created_at, template, campaign, recipient, status, error').order('created_at', { ascending: false }).limit(limit)); },
+
+    // ---------- support inbox ----------
+    async listSupportRequests(status) {
+      let q = sb.from('support_requests').select('id, email, topic, message, status, admin_note, created_at, resolved_at').order('created_at', { ascending: false }).limit(200);
+      if (status) q = q.eq('status', status);
+      return unwrap(await q);
+    },
+    async updateSupportRequest(id, patch) {
+      const row = { ...patch, ...(patch.status === 'resolved' ? { resolved_at: new Date().toISOString() } : patch.status === 'open' ? { resolved_at: null } : {}) };
+      return unwrap(await sb.from('support_requests').update(row).eq('id', id).select('id, email, topic, message, status, admin_note, created_at, resolved_at').single());
+    },
+    async openSupportCount() {
+      const { count, error } = await sb.from('support_requests').select('id', { count: 'exact', head: true }).eq('status', 'open');
+      if (error) throw friendly(error); return count ?? 0;
+    },
     async listAdmins() { return unwrap(await sb.from('profiles').select('id, email').eq('is_admin', true).order('email')); },
     async setAdmin(email, isAdmin) { unwrap(await sb.rpc('admin_set_admin', { p_email: email, p_admin: isAdmin })); },
   };
@@ -204,4 +236,6 @@ export const API_METHODS = [
   'setStoryStatus', 'deleteStory', 'uploadCover', 'uploadPageImage', 'pageImageUrl', 'listAuthors', 'listCategories',
   'saveCategory', 'deleteCategory', 'listFeatured', 'saveFeatured', 'deleteFeatured', 'listSubscribers', 'setEntitlement',
   'getLegal', 'saveLegal', 'supportSendReset', 'supportSetPassword', 'listSupportActions', 'listAdmins', 'setAdmin',
+  'emailStatus', 'emailSaveSettings', 'emailActivate', 'emailDeactivate', 'emailTest', 'emailPreview', 'emailCount', 'emailSend',
+  'listEmailTemplates', 'saveEmailTemplate', 'listEmailLog', 'listSupportRequests', 'updateSupportRequest', 'openSupportCount',
 ];

@@ -25,7 +25,9 @@ Deno.serve(async (req) => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user?.email) return json({ error: 'Sign in first.' }, 401);
 
-  const { plan: planId = 'monthly' } = await req.json().catch(() => ({}));
+  const { plan: planId = 'monthly', consent } = await req.json().catch(() => ({}));
+  // The parent must have read the privacy policy and agreed before paying (also enforced in the checkout page).
+  if (consent !== true) return json({ error: 'Please read the privacy policy and tick the consent box to continue.' }, 400);
   const { data: plan } = await supabase.from('plans').select('id, price_minor, currency, paystack_plan_code, billing_interval').eq('id', planId).eq('active', true).maybeSingle();
   if (!plan || !plan.billing_interval) return json({ error: 'That plan is not available.' }, 400);
   const code = plan.paystack_plan_code || ENV_CODE[plan.id];
@@ -50,5 +52,12 @@ Deno.serve(async (req) => {
   });
   const out = await res.json().catch(() => ({}));
   if (!res.ok || !out?.data?.authorization_url) return json({ error: out?.message ?? 'Could not start checkout.' }, 502);
+
+  // Keep a record of what the parent agreed to (service role: parents cannot write this table).
+  try {
+    const { data: doc } = await supabase.from('legal_documents').select('version').eq('slug', 'privacy-policy').maybeSingle();
+    const service = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } });
+    await service.from('consents').insert({ parent_id: user.id, document: 'privacy-policy', version: doc?.version ?? 0, plan: plan.id });
+  } catch { /* the payment page still opens; the consent was shown and ticked */ }
   return json({ url: out.data.authorization_url });
 });

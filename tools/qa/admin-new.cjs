@@ -47,6 +47,38 @@ const { chromium } = require(process.env.PW);
     const txt = await page.locator('body').innerText();
     if (/\b(2-4|5-8|9-12|Ages?)\b/.test(txt)) throw new Error('age text visible: ' + txt.match(/.{20}\b(2-4|5-8|9-12|Ages?)\b.{20}/)?.[0]);
   });
+  await step('email: connect, activate, test', async () => {
+    await nav('Email').click(); await page.getByRole('heading', { name: 'Resend connection' }).waitFor();
+    await page.getByRole('button', { name: 'Activate email' }).click(); await page.getByText('Add your Resend API key first.').waitFor();
+    await page.getByLabel('Resend API key').fill('sk_wrong'); await page.getByLabel('From email', { exact: false }).first().fill('hello@custar.com').catch(() => {});
+    await page.locator('input[type=email]').first().fill('hello@custar.com');
+    await page.getByRole('button', { name: 'Save settings' }).click(); await page.getByText('does not look like a Resend API key').waitFor();
+    await page.getByLabel('Resend API key').fill('re_testkey12345678'); await page.getByRole('button', { name: 'Save settings' }).click(); await page.getByText('Settings saved').waitFor();
+    await page.getByRole('button', { name: 'Activate email' }).click(); await page.getByText(/Email is on\. Verified/).waitFor();
+    await page.getByRole('button', { name: 'Send test email' }).click(); await page.getByText(/Test email sent to/).waitFor();
+    await page.screenshot({ path: `${out}/email-connection.png`, fullPage: true });
+  });
+  await step('email: send broadcast', async () => {
+    await page.getByRole('button', { name: 'Send', exact: true }).click(); await page.getByRole('heading', { name: 'Write an email' }).waitFor();
+    await page.getByRole('button', { name: /^Send$/ }).last().click();
+    await page.getByText('Fill in "Message" first.').waitFor();
+    await page.locator('[data-var=message]').fill('# Big news\nNew stories every week!');
+    await page.getByRole('button', { name: 'Preview' }).click(); await page.locator('iframe.mail-preview').waitFor({ state: 'visible' });
+    await page.screenshot({ path: `${out}/email-send.png`, fullPage: true });
+    await page.getByRole('button', { name: /^Send$/ }).last().click(); await page.getByRole('button', { name: 'Send now' }).click();
+    await page.getByText(/Sent to \d+ people/).waitFor();
+  });
+  await step('email: templates and history', async () => {
+    await page.getByRole('button', { name: 'Templates', exact: true }).click(); await page.getByRole('heading', { name: 'Welcome' }).waitFor();
+    const subj = page.locator('input[type=text]').first(); await subj.fill('Welcome to Genova!'); await page.getByRole('button', { name: 'Save template' }).click(); await page.getByText('Template saved').waitFor();
+    await page.screenshot({ path: `${out}/email-templates.png`, fullPage: true });
+    await page.getByRole('button', { name: 'History', exact: true }).click(); await page.getByText('parent1@example.com').first().waitFor();
+  });
+  await step('support inbox', async () => {
+    await nav('Support').click(); await page.getByText('I paid yesterday').waitFor();
+    await page.screenshot({ path: `${out}/support.png`, fullPage: true });
+    await page.getByRole('button', { name: 'Mark resolved' }).click(); await page.getByText('Marked resolved').waitFor(); await page.getByText('All caught up').waitFor();
+  });
   console.log(errs.length ? 'page errors: ' + errs.join('|') : 'no page errors', fails ? fails + ' FAILED' : 'ALL PASSED');
   await browser.close();
 })();

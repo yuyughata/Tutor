@@ -59,6 +59,23 @@ export function createDemoApi() {
   let legal = { slug: 'privacy-policy', title: 'Privacy Policy', version: 1, updated_at: iso(-3), body: 'SAMPLE TEXT: placeholder wording.\n\n# Our promise to families\nGenova is a children\'s storybook app made by CUSTAR. We do not show ads and we never sell personal information.\n\n# What we collect\n- Parent email address\n- A child\'s first name or nickname, avatar and reading level\n- Reading activity such as stories started and finished' };
   const supportLog = [{ id: 1, action: 'send_reset', target_email: 'amara@example.com', created_at: iso(-1) }];
   let admins = [{ id: 'me', email: 'you@custar.example' }];
+  let mail = { configured: false, key_hint: null, from_name: 'Genova', from_email: null, reply_to: null, notify_email: null, enabled: false, verified_at: null };
+  let mailKey = null;
+  const T = (key, name, description, subject, body, variables, automatic) => ({ key, name, description, subject, body, variables, automatic, updated_at: iso(-5) });
+  const templates = [
+    T('welcome', 'Welcome', 'Sent when a parent creates an account on the website.', 'Welcome to Genova', 'Hi there,\n\nWelcome to Genova, the storybook app by CUSTAR. Your account is ready.\n\n# Get started\n- Open the Genova app and sign in with {{parent_email}}.\n- Add a reader for each child.\n\n[See plans]({{site_url}}/plans/)', ['parent_email', 'site_url', 'support_email'], true),
+    T('subscription_confirmation', 'Subscription confirmation and receipt', 'Sent after a successful Paystack payment.', 'Your Genova Premium receipt', 'Thank you! Your payment was received and Premium is on.\n\n# Receipt\n- Plan: {{plan}}\n- Amount paid: {{amount}}\n- Premium is active until: {{access_until}}', ['parent_email', 'plan', 'amount', 'access_until'], true),
+    T('renewal_due', 'Expiration and amount due', 'Sent when a payment fails or a subscription is about to lapse.', 'Your Genova Premium needs renewing', 'Your Genova Premium ({{plan}}) payment is due.\n\n# What is due\n- Amount due: {{amount}}\n- Due date: {{due_date}}\n\n[Renew now]({{site_url}}/account/)', ['plan', 'amount', 'due_date', 'access_until'], true),
+    T('new_title', 'New title release', 'Announce a new or upcoming story.', 'New on Genova: {{story_title}}', 'Something new to read!\n\n# {{story_title}}\n{{synopsis}}\n\n[Read it now]({{story_url}})', ['story_title', 'synopsis', 'story_url'], false),
+    T('broadcast', 'Admin broadcast', 'Free-form message to a group of parents.', 'A message from Genova', '{{message}}\n\nWith love from the Genova team at CUSTAR.', ['message'], false),
+    T('cancellation', 'Cancellation', 'Sent when a subscription is cancelled.', 'Your Genova subscription was cancelled', 'Your Genova Premium subscription has been cancelled. You will not be charged again.\n\n- Premium stays on until {{access_until}}.', ['access_until'], true),
+    T('security_change', 'Passcode or password changed', 'Sent when a parent changes their passcode or password.', 'Your Genova {{what}} was changed', 'The {{what}} for {{parent_email}} was just changed.\n\n[Reset your password]({{site_url}}/forgot-password/)', ['what', 'parent_email'], true),
+  ];
+  const mailLog = [{ id: 1, created_at: iso(-2), template: 'subscription_confirmation', campaign: 'automatic', recipient: 'amara@example.com', status: 'sent', error: null }];
+  let requests = [
+    { id: 'r1', email: 'amara@example.com', topic: 'subscription', message: 'I paid yesterday but my tablet still shows the free plan. Please help.', status: 'open', admin_note: null, created_at: iso(-1), resolved_at: null },
+    { id: 'r2', email: 'kofi@example.com', topic: 'app', message: 'The reader keeps going back to page one after I close the app.', status: 'resolved', admin_note: 'Fixed in the latest update.', created_at: iso(-6), resolved_at: iso(-4) },
+  ];
   const state = (s) => (s.status === 'draft' ? 'draft' : new Date(s.published_at) <= new Date() ? 'live' : 'scheduled');
 
   const apply = (s) => { // what the database triggers do
@@ -158,6 +175,35 @@ export function createDemoApi() {
       supportLog.unshift({ id: Date.now(), action: 'set_password', target_email: email, created_at: new Date().toISOString() }); return delay({ ok: true });
     },
     async listSupportActions() { return delay(supportLog.slice(0, 8)); },
+    async emailStatus() { return delay({ ...mail }); },
+    async emailSaveSettings(v) {
+      if (v.api_key) { if (!/^re_/.test(v.api_key)) throw new Error('That does not look like a Resend API key (it starts with re_).'); mailKey = v.api_key; mail.key_hint = '••••' + v.api_key.slice(-4); mail.configured = true; mail.enabled = false; mail.verified_at = null; }
+      Object.assign(mail, { from_name: v.from_name || 'Genova', from_email: v.from_email || null, reply_to: v.reply_to || null, notify_email: v.notify_email || null });
+      return delay({ ok: true });
+    },
+    async emailActivate() { if (!mailKey) throw new Error('Add your Resend API key first.'); if (!mail.from_email) throw new Error('Add the "from" email address first.'); mail.enabled = true; mail.verified_at = new Date().toISOString(); return delay({ ok: true }); },
+    async emailDeactivate() { mail.enabled = false; return delay({ ok: true }); },
+    async emailTest(to) { if (!mail.enabled) throw new Error('Email is not activated yet.'); mailLog.unshift({ id: Date.now(), created_at: new Date().toISOString(), template: 'broadcast', campaign: 'test', recipient: to, status: 'sent', error: null }); return delay({ ok: true }); },
+    async emailPreview(template, subject, body) {
+      const t = templates.find((x) => x.key === template);
+      const esc = (x) => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+      return delay({ subject: (subject ?? t?.subject ?? '').replace(/\{\{\s*\w+\s*\}\}/g, '…'), html: '<div style="font-family:sans-serif;padding:24px;max-width:520px;margin:auto"><div style="background:#ab46d2;color:#fff;font-weight:900;font-size:24px;padding:16px;border-radius:14px 14px 0 0">Genova</div><div style="padding:16px;white-space:pre-wrap;line-height:1.5">' + esc(body ?? t?.body ?? '').replace(/\{\{\s*\w+\s*\}\}/g, '…') + '</div></div>' });
+    },
+    async emailCount(audience) { return delay({ all: 8, subscribers: 4, free: 4, past_due: 1, expiring: 2 }[audience] ?? 0); },
+    async emailSend(p) {
+      if (!mail.enabled) throw new Error('Email is not activated yet. Open the Connection tab and activate Resend.');
+      const n = p.audience === 'one' ? 1 : await this.emailCount(p.audience);
+      for (let i = 0; i < Math.min(n, 3); i++) mailLog.unshift({ id: Date.now() + i, created_at: new Date().toISOString(), template: p.template, campaign: p.campaign || p.template, recipient: p.audience === 'one' ? p.to : `parent${i + 1}@example.com`, status: 'sent', error: null });
+      return delay({ sent: n, failed: 0, skipped: 0 });
+    },
+    async listEmailTemplates() { return delay(templates.map((t) => ({ ...t }))); },
+    async saveEmailTemplate(key, subject, body) { const t = templates.find((x) => x.key === key); Object.assign(t, { subject, body, updated_at: new Date().toISOString() }); return delay({ ...t }); },
+    async listEmailLog(limit = 50) { return delay(mailLog.slice(0, limit)); },
+    async listSupportRequests(status) { return delay(requests.filter((r) => !status || r.status === status).map((r) => ({ ...r }))); },
+    async updateSupportRequest(id, patch) {
+      const r = requests.find((x) => x.id === id); Object.assign(r, patch, patch.status === 'resolved' ? { resolved_at: new Date().toISOString() } : patch.status === 'open' ? { resolved_at: null } : {}); return delay({ ...r });
+    },
+    async openSupportCount() { return delay(requests.filter((r) => r.status === 'open').length); },
     async listAdmins() { return delay(admins); },
     async setAdmin(email, isAdmin) {
       const p = people.find((x) => x.email.toLowerCase() === email.toLowerCase());

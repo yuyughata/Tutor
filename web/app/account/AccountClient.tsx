@@ -74,6 +74,8 @@ export function AccountClient() {
         <p className="muted small" style={{ fontWeight: 600 }}>Sign in on the Genova app with <b>{email}</b> and your Premium stories unlock on that device.</p>
       </div>
 
+      <SupportCard />
+
       <PasswordCard />
 
       <div className="row" style={{ marginTop: 28 }}>
@@ -98,6 +100,7 @@ function PasswordCard() {
     setBusy(false);
     if (error) return setMsg({ ok: false, text: friendly(error.message) });
     setPw(''); setPw2(''); setMsg({ ok: true, text: 'Password changed.' });
+    void getSupabase().functions.invoke('send-email', { body: { action: 'self', template: 'security_change', what: 'password' } }).catch(() => undefined);
   }
   return (
     <form className="card" style={{ marginTop: 24 }} onSubmit={save}>
@@ -106,6 +109,52 @@ function PasswordCard() {
       <div className="field"><label htmlFor="pw2">Repeat new password</label><input id="pw2" type="password" autoComplete="new-password" value={pw2} onChange={(e) => setPw2(e.target.value)} /></div>
       {msg && <div className={`notice ${msg.ok ? 'ok' : 'bad'}`} role="status" style={{ marginBottom: 14 }}>{msg.text}</div>}
       <button className="btn secondary" disabled={busy || !pw}>{busy ? 'Saving…' : 'Change password'}</button>
+    </form>
+  );
+}
+
+const TOPICS: [string, string][] = [['sign_in', 'Signing in'], ['subscription', 'Subscription or payment'], ['app', 'The app is not working'], ['story', 'A story'], ['other', 'Something else']];
+type Req = { id: string; topic: string; message: string; status: string; created_at: string };
+
+/** Contact support: sends a message to the admins, who see it in the dashboard (and by email when it is switched on). */
+function SupportCard() {
+  const [topic, setTopic] = useState('app');
+  const [message, setMessage] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [past, setPast] = useState<Req[]>([]);
+  const load = async () => {
+    const { data } = await getSupabase().from('support_requests').select('id, topic, message, status, created_at').order('created_at', { ascending: false }).limit(5);
+    setPast((data as Req[]) ?? []);
+  };
+  useEffect(() => { void load(); }, []);
+
+  async function send(e: React.FormEvent) {
+    e.preventDefault(); setMsg(null);
+    if (message.trim().length < 5) return setMsg({ ok: false, text: 'Please tell us a little more.' });
+    setBusy(true);
+    const { data, error } = await getSupabase().functions.invoke('support-request', { body: { topic, message } });
+    setBusy(false);
+    if (error || data?.error) return setMsg({ ok: false, text: error ? await functionError(error) : data.error });
+    setMessage(''); setMsg({ ok: true, text: 'Thank you. Our team has your message and will reply to your email address.' }); void load();
+  }
+  return (
+    <form className="card" id="support" style={{ marginTop: 24 }} onSubmit={send}>
+      <h3 style={{ marginBottom: 6 }}>Contact support</h3>
+      <p className="muted small" style={{ fontWeight: 700, marginBottom: 14 }}>Having a technical problem? Tell us what happened and our team will help.</p>
+      <div className="field"><label htmlFor="topic">What is it about?</label>
+        <select id="topic" value={topic} onChange={(e) => setTopic(e.target.value)}>{TOPICS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></div>
+      <div className="field"><label htmlFor="message">Your message</label><textarea id="message" value={message} maxLength={4000} onChange={(e) => setMessage(e.target.value)} placeholder="What were you doing, and what went wrong?" /></div>
+      {msg && <div className={`notice ${msg.ok ? 'ok' : 'bad'}`} role="status" style={{ marginBottom: 14 }}>{msg.text}</div>}
+      <button className="btn" disabled={busy || !message.trim()}>{busy ? 'Sending…' : 'Send to support'}</button>
+      {past.length > 0 && (
+        <>
+          <h4 style={{ margin: '22px 0 4px', fontSize: 15 }}>Your recent messages</h4>
+          <ul className="reqs">{past.map((r) => (
+            <li key={r.id}><div className="when">{new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} · {r.status === 'open' ? 'Open' : 'Resolved'}</div>{r.message.length > 140 ? `${r.message.slice(0, 140)}…` : r.message}</li>
+          ))}</ul>
+        </>
+      )}
     </form>
   );
 }

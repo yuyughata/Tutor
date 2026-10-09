@@ -48,17 +48,35 @@ const BASE = 'http://localhost:8096';
     await audit('checkout (free user)');
   });
   await step('pay with Paystack starts checkout and redirects', async () => {
-    await page.getByRole('button', { name: /Pay ₦12,000 with Paystack/ }).click(); await page.waitForURL(/paystack\.test/, { timeout: 8000 });
+    const payBtn = page.getByRole('button', { name: /Pay ₦12,000 with Paystack/ });
+    if (!(await payBtn.isDisabled())) throw new Error('Pay must stay disabled until the parent consents');
+    await page.getByRole('button', { name: 'privacy policy' }).click();
+    await page.getByRole('dialog').getByText('Version 3').waitFor(); await page.getByRole('dialog').getByText('Our promise to families').waitFor(); await audit('privacy dialog');
+    await page.getByRole('button', { name: 'I have read it and I agree' }).click();
+    if (!(await page.getByLabel(/I am the parent or guardian/).isChecked())) throw new Error('agreeing in the dialog should tick the consent box');
+    await audit('checkout (consent ticked)');
+    await payBtn.click(); await page.waitForURL(/paystack\.test/, { timeout: 8000 });
     const call = state.calls.find((c) => c.path === '/functions/v1/paystack-checkout');
-    if (!call || call.body.plan !== 'quarterly') throw new Error('checkout call: ' + JSON.stringify(call?.body));
+    if (!call || call.body.plan !== 'quarterly' || call.body.consent !== true) throw new Error('checkout call: ' + JSON.stringify(call?.body));
   });
   await step('checkout shows a clear message when the server refuses', async () => {
     state.checkoutError = 'You already have an active Premium subscription.'; await goto('/checkout/?plan=monthly');
+    await page.getByLabel(/I am the parent or guardian/).check();
     await page.getByRole('button', { name: /Pay ₦5,000/ }).click(); await page.getByRole('alert').getByText('already have an active Premium').waitFor(); state.checkoutError = null;
   });
   await step('account (free)', async () => {
     await goto('/account/'); await page.getByRole('heading', { name: 'Your account' }).waitFor(); await page.getByText('Free plan').first().waitFor(); await page.getByRole('link', { name: 'Get Premium' }).waitFor();
     if (await page.locator('.premium:not(:has-text("Free"))').count()) throw new Error('unexpected Premium badge'); await audit('account (free)');
+  });
+  await step('contact support from the account page', async () => {
+    await goto('/account/'); await page.getByRole('heading', { name: 'Contact support' }).waitFor();
+    await page.getByRole('button', { name: 'Send to support' }).isDisabled().then((d) => { if (!d) throw new Error('send should be disabled with no message'); });
+    await page.getByLabel('What is it about?').selectOption('subscription'); await page.getByLabel('Your message').fill('I paid but my app still shows Free.');
+    await page.getByRole('button', { name: 'Send to support' }).click(); await page.getByText('Our team has your message').waitFor();
+    const call = state.calls.find((c) => c.path === '/functions/v1/support-request');
+    if (!call || call.body.topic !== 'subscription') throw new Error('support call: ' + JSON.stringify(call?.body));
+    await page.getByText('Your recent messages').waitFor(); await page.getByText('I paid but my app still shows Free.').waitFor(); await audit('account support');
+    await page.getByRole('link', { name: 'Contact support' }).first().waitFor();
   });
   await step('Premium badge on checkout, plans, account and header', async () => {
     state.access = premium();
@@ -74,7 +92,7 @@ const BASE = 'http://localhost:8096';
     state.access = premium({ status: 'past_due', in_grace: true, current_period_end: new Date(Date.now() - 2 * 864e5).toISOString(), access_until: new Date(Date.now() + 3 * 864e5).toISOString() });
     await goto('/account/'); await page.getByText('Your last payment did not go through').waitFor(); await page.locator('main .premium.warn').waitFor();
     await page.getByText('Payment overdue (grace period)').waitFor(); await page.getByRole('link', { name: 'Renew now' }).waitFor();
-    await goto('/checkout/?plan=monthly'); await page.getByText('Your renewal is overdue').waitFor();
+    await goto('/checkout/?plan=monthly'); await page.getByText('Your renewal is overdue').waitFor(); await page.getByLabel(/I am the parent or guardian/).check();
     if (await page.getByRole('button', { name: /Pay ₦5,000/ }).isDisabled()) throw new Error('late payers must be able to pay');
   });
   await step('manage subscription opens Paystack', async () => {

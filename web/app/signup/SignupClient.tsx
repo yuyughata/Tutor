@@ -28,7 +28,11 @@ export function SignupClient() {
     const { data, error: err } = await getSupabase().auth.signUp({ email: email.trim(), password });
     setBusy(false);
     if (err) return setError(friendly(err.message));
-    if (data.session) router.replace(next); else setCheckEmail(true);
+    if (data.session) {
+      // best effort: welcome email (does nothing until email is activated in the admin)
+      void getSupabase().functions.invoke('send-email', { body: { action: 'self', template: 'welcome' } }).catch(() => undefined);
+      router.replace(next);
+    } else setCheckEmail(true);
   }
 
   if (checkEmail) {

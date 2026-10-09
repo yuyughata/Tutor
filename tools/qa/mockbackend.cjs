@@ -72,13 +72,23 @@ async function install(context, state, { host = 'mock.supabase.test' } = {}) {
     }
     if (p === '/rest/v1/legal_documents') return state.legalDown ? send(500, { message: 'down' }) : send(200, wantsObject ? POLICY : [POLICY]);
     if (p === '/rest/v1/plans') return send(200, PLANS);
+    if (p === '/rest/v1/support_requests' && method === 'GET') return send(200, state.supportRequests || []);
     if (p === '/rest/v1/rpc/my_access') return send(200, state.access ? [state.access] : []);
     if (p === '/rest/v1/child_profiles' && method === 'GET') return send(200, state.children || []);
     if (p === '/rest/v1/profiles') return send(200, wantsObject ? { id: state.user.id, email: state.user.email, is_admin: !!state.isAdmin } : [{ id: state.user.id, email: state.user.email, is_admin: !!state.isAdmin }]);
     if (p.startsWith('/rest/v1/')) return send(method === 'GET' ? 200 : 201, method === 'GET' ? [] : []);
     // ---- storage + functions ----
     if (p.startsWith('/storage/v1/object/sign/')) return send(200, [{ path: 'x', signedURL: '/object/sign/x?token=t' }]);
-    if (p === '/functions/v1/paystack-checkout') return state.checkoutError ? send(409, { error: state.checkoutError }) : send(200, { url: state.checkoutUrl });
+    if (p === '/functions/v1/paystack-checkout') {
+      if (body?.consent !== true) return send(400, { error: 'Please read the privacy policy and tick the consent box to continue.' });
+      return state.checkoutError ? send(409, { error: state.checkoutError }) : send(200, { url: state.checkoutUrl });
+    }
+    if (p === '/functions/v1/support-request') {
+      if (!body?.message || String(body.message).trim().length < 5) return send(400, { error: 'Please tell us a little more.' });
+      (state.supportRequests ||= []).unshift({ id: 'r' + Date.now(), topic: body.topic, message: body.message, status: 'open', created_at: new Date().toISOString() });
+      return send(200, { ok: true });
+    }
+    if (p === '/functions/v1/send-email') return send(200, { sent: 1, failed: 0, skipped: 0 });
     if (p === '/functions/v1/paystack-manage') return send(200, { url: state.manageUrl });
     return send(404, { message: 'unmocked ' + p });
   });
