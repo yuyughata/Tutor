@@ -9,6 +9,7 @@ Children's storybook app by CUSTAR. Product scope: [`docs/MVP_BRIEF.md`](docs/MV
 - `supabase/seed.sql` — three sample stories for local development; `supabase/seed_legal.sql` — sample privacy policy.
 - `tools/email/` — builds the email design previews (`docs/email-templates`, `docs/Genova_Email_Templates.pdf`) and the Supabase Auth email HTML (`supabase/auth-email-templates`).
 - `tools/qa/` — browser tests, screenshots and PDF build ([README](tools/qa/README.md)).
+- [`docs/LAUNCH_GUIDE.md`](docs/LAUNCH_GUIDE.md) — hosting the website, Apple App Store and Google Play, step by step.
 - `CLAUDE.md` and [`docs/HANDOFF.md`](docs/HANDOFF.md) — context, accounts, deploy and how to resume in a new chat or account.
 - `supabase/functions/` — `paystack-checkout`, `paystack-webhook`, `paystack-manage`, `admin-user-support`, `send-email`, `support-request`, `send-reminders`.
 - `supabase/tests/` — unit tests for the Paystack and support logic.

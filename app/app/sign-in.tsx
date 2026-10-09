@@ -3,11 +3,11 @@ import * as Linking from 'expo-linking';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput } from 'react-native';
 import { Button } from '../src/components/Button';
+import { WEB_URL } from '../src/lib/webLinks';
 import { useAuth } from '../src/state/auth';
 import { colors, fonts, radius, space, type, themed } from '../src/theme';
 import { useTheme } from '../src/state/theme';
 
-const WEB_URL = process.env.EXPO_PUBLIC_WEB_URL;
 
 export default function SignIn() {
   useTheme(); // re-render when the theme changes
@@ -26,8 +26,7 @@ export default function SignIn() {
     else router.replace({ pathname: '/passcode', params: { first: '1' } }); // asks for a passcode if there isn't one yet
   };
   const openWebsite = () => {
-    if (WEB_URL) Linking.openURL(`${WEB_URL.replace(/\/$/, '')}/signup`);
-    else setMsg('The Genova website address is not set up in this build yet.');
+    if (WEB_URL) Linking.openURL(`${WEB_URL}/signup`);
   };
 
   return (
@@ -43,8 +42,8 @@ export default function SignIn() {
 
         <Button label="Sign in" onPress={submit} loading={busy} disabled={!email.includes('@') || password.length < 6} style={{ marginTop: 8 }} />
         <Button label="Forgot password?" variant="ghost" onPress={() => router.push({ pathname: '/forgot-password', params: { email: email.trim() } })} />
-        <Button label="Create an account on the Genova website" icon="open-outline" variant="secondary" onPress={openWebsite} />
-        <Text style={styles.hint}>Register and subscribe on the website, then come back here and sign in.</Text>
+        {WEB_URL && <Button label="Create an account on the Genova website" icon="open-outline" variant="secondary" onPress={openWebsite} />}
+        {WEB_URL && <Text style={styles.hint}>Register on the website, then come back here and sign in.</Text>}
         <Button label="Cancel" variant="ghost" onPress={() => router.back()} />
       </ScrollView>
     </KeyboardAvoidingView>

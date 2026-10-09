@@ -1,3 +1,7 @@
 tools/qa/.work/
 tools/qa/node_modules/
 tools/email/.work/
+app/play-service-account.json
+*.p8
+*.jks
+*.keystore

@@ -63,6 +63,8 @@ With no `app/.env` the app runs on built-in sample stories. To use the live back
 7. **Smoke test on the live project** (never done yet): sign up, sign in on the admin, create and publish a story with images, read it in the app, run one Paystack test payment and check the row in `payment_events` and the Premium badge, then try the forgot-password code.
    Paystack's real webhook field names have not been verified; if anything differs adjust `supabase/functions/_shared/paystack.ts` (its tests are in `supabase/tests/`).
 
+> Full step-by-step for hosting and both app stores: **`docs/LAUNCH_GUIDE.md`**.
+
 ## 5. Deploy the website and admin
 ```sh
 cd web && npm run build          # static site in web/out (includes /admin/)

@@ -9,6 +9,7 @@ import { Button } from '../../src/components/Button';
 import { Tap } from '../../src/components/Tap';
 import { formatBytes, removeAll, useDownloads } from '../../src/data/downloads';
 import { levelFull } from '../../src/levels';
+import { SUPPORT_EMAIL, WEB_URL } from '../../src/lib/webLinks';
 import { useAuth } from '../../src/state/auth';
 import { useGate } from '../../src/state/gate';
 import { useKiosk } from '../../src/state/kiosk';
@@ -17,8 +18,6 @@ import { useProfiles } from '../../src/state/profiles';
 import { colors, radius, shadow, space, themeOptions, themes, type, themed } from '../../src/theme';
 import { useTheme as useThemeCtx } from '../../src/state/theme';
 
-const WEB_URL = process.env.EXPO_PUBLIC_WEB_URL;
-const SUPPORT_EMAIL = process.env.EXPO_PUBLIC_SUPPORT_EMAIL || 'support@custar.com';
 
 function Card({ children }: { children: React.ReactNode }) {
   return <View style={[styles.card, shadow.soft]}>{children}</View>;
@@ -85,9 +84,9 @@ export default function GrownUps() {
               <Text style={styles.body}>Renew on the website before {new Date(entitlement.until).toLocaleDateString(undefined, { day: 'numeric', month: 'long' })} to keep Premium. After that your account moves back to the Free plan.</Text>
             )}
             {WEB_URL && (
-              <Button label={entitlement.active ? 'Manage on the web' : 'Get Premium on the web'} icon="open-outline" variant="secondary" onPress={() => Linking.openURL(WEB_URL)} />
+              <Button label="Manage my account on the web" icon="open-outline" variant="secondary" onPress={() => Linking.openURL(`${WEB_URL}/account/`)} />
             )}
-            <Button label="Contact support" icon="chatbubble-ellipses-outline" variant="secondary" onPress={() => Linking.openURL(WEB_URL ? `${WEB_URL.replace(/\/$/, '')}/account/#support` : `mailto:${SUPPORT_EMAIL}`)} />
+            <Button label="Contact support" icon="chatbubble-ellipses-outline" variant="secondary" onPress={() => Linking.openURL(WEB_URL ? `${WEB_URL}/account/#support` : `mailto:${SUPPORT_EMAIL}`)} />
             <Button label="Sign out" variant="ghost" onPress={signOut} />
           </>
         ) : (
