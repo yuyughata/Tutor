@@ -298,7 +298,7 @@ const styles = themed(() => StyleSheet.create({
   // a comfortable reading column: on a tablet or computer the text stays centred instead of running edge to edge
   column: { width: '100%', maxWidth: 680, alignSelf: 'center' },
   textWrap: { paddingHorizontal: space.lg, paddingTop: space.lg, paddingBottom: 110 },
-  text: { fontFamily: fonts.bold, textAlign: 'left' },
+  text: { fontFamily: fonts.bold, textAlign: 'justify' },
   bottom: { position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: space.lg, paddingTop: 10 },
   size: { flexDirection: 'row', backgroundColor: colors.primarySoft, borderRadius: radius.pill, padding: 4 },
   sizeBtn: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center' },
