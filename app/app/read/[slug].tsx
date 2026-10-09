@@ -12,8 +12,10 @@ import { announce, useReducedMotion } from '../../src/lib/a11y';
 import { useAuth } from '../../src/state/auth';
 import { useLibrary } from '../../src/state/library';
 import { useReadingLevel } from '../../src/state/profiles';
-import { colors, fonts, radius, readerFontBase, readerThemes, shadow, space, type, type ReaderThemeName } from '../../src/theme';
+import { load, save } from '../../src/state/storage';
+import { colors, fonts, radius, readerFontBase, readerThemes, shadow, space, type, type ReaderThemeName, themed } from '../../src/theme';
 import type { Story, StoryPage } from '../../src/types';
+import { useTheme } from '../../src/state/theme';
 
 const MIN_DELTA = -4;
 const MAX_DELTA = 10;
@@ -22,6 +24,7 @@ const THEMES: ReaderThemeName[] = ['day', 'sepia', 'night'];
 type Item = { kind: 'page'; page: StoryPage } | { kind: 'end' };
 
 export default function Reader() {
+  useTheme(); // re-render when the theme changes
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -36,7 +39,10 @@ export default function Reader() {
   const [index, setIndex] = useState(0);
   const [start, setStart] = useState<number | null>(null);
   const [delta, setDelta] = useState(0);
-  const [themeName, setThemeName] = useState<ReaderThemeName>('day');
+  const [themeName, setThemeNameState] = useState<ReaderThemeName>('day');
+  // The reader remembers Day / Sepia / Night between stories (each app theme has its own set of three).
+  useEffect(() => { load<ReaderThemeName>('genova.readerMode.v1', 'day').then((m) => { if (THEMES.includes(m)) setThemeNameState(m); }); }, []);
+  const setThemeName = (m: ReaderThemeName) => { setThemeNameState(m); save('genova.readerMode.v1', m); };
   const theme = readerThemes[themeName];
 
   const [failed, setFailed] = useState(false);
@@ -77,12 +83,12 @@ export default function Reader() {
     onIndex(to);
   };
 
-  if (!pages) return <ActivityIndicator style={{ marginTop: 160 }} color={colors.purple} />;
+  if (!pages) return <ActivityIndicator style={{ marginTop: 160 }} color={colors.primary} />;
 
   if (failed) {
     return (
       <View style={styles.locked}>
-        <View style={styles.lockBadge}><Ionicons name="cloud-offline" size={36} color={colors.purpleDeep} /></View>
+        <View style={styles.lockBadge}><Ionicons name="cloud-offline" size={36} color={colors.primaryDeep} /></View>
         <Text style={styles.lockedTitle}>Can't open this story</Text>
         <Text style={styles.lockedText}>Check your connection and try again. Stories you saved for offline open without internet.</Text>
         <Button label="Try again" onPress={() => { setPages(null); setAttempt((n) => n + 1); }} />
@@ -93,7 +99,7 @@ export default function Reader() {
   if (pages.length === 0) {
     return (
       <View style={styles.locked}>
-        <View style={styles.lockBadge}><Ionicons name="lock-closed" size={36} color={colors.purpleDeep} /></View>
+        <View style={styles.lockBadge}><Ionicons name="lock-closed" size={36} color={colors.primaryDeep} /></View>
         <Text style={styles.lockedTitle}>{story?.title ?? 'This story'}</Text>
         <Text style={styles.lockedText}>This is a Premium story. Ask a grown-up to sign in to read it.</Text>
         <Button label="Back" onPress={() => router.back()} />
@@ -177,17 +183,17 @@ export default function Reader() {
         </View>
         <View style={{ flex: 1 }} />
         <Tap accessibilityRole="button" accessibilityLabel="Previous page" disabled={index === 0} onPress={() => go(index - 1)} style={[styles.nav, styles.prev, index === 0 && { opacity: 0.35 }]}>
-          <Ionicons name="arrow-back" size={26} color={colors.purpleDeep} />
+          <Ionicons name="arrow-back" size={26} color={colors.primaryDeep} />
         </Tap>
         <Tap accessibilityRole="button" accessibilityLabel={atEnd ? 'The end' : 'Next page'} disabled={atEnd} onPress={() => go(index + 1)} style={[styles.nav, styles.next, shadow.soft, atEnd && { opacity: 0.35 }]}>
-          <Ionicons name="arrow-forward" size={26} color={colors.onPurple} />
+          <Ionicons name="arrow-forward" size={26} color={colors.onAction} />
         </Tap>
       </View>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   top: { position: 'absolute', top: 0, left: 16, right: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   round: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.95)', alignItems: 'center', justifyContent: 'center' },
   dots: { flexDirection: 'row', gap: 6, backgroundColor: 'rgba(35,35,35,0.35)', paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.pill },
@@ -196,17 +202,17 @@ const styles = StyleSheet.create({
   textWrap: { paddingHorizontal: space.lg, paddingTop: space.lg, paddingBottom: 110 },
   text: { fontFamily: fonts.bold, textAlign: 'left' },
   bottom: { position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: space.md, paddingTop: 10 },
-  size: { flexDirection: 'row', backgroundColor: colors.purpleSoft, borderRadius: radius.pill, padding: 4 },
+  size: { flexDirection: 'row', backgroundColor: colors.primarySoft, borderRadius: radius.pill, padding: 4 },
   sizeBtn: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center' },
-  sizeTxt: { fontFamily: fonts.black, color: colors.purpleDeep },
+  sizeTxt: { fontFamily: fonts.black, color: colors.primaryDeep },
   nav: { width: 58, height: 58, borderRadius: 29, alignItems: 'center', justifyContent: 'center' },
-  prev: { backgroundColor: colors.purpleSoft },
-  next: { backgroundColor: colors.purple },
+  prev: { backgroundColor: colors.primarySoft },
+  next: { backgroundColor: colors.action },
   end: { alignItems: 'center', justifyContent: 'center', paddingBottom: 100 },
   endTitle: { ...type.display, fontSize: 40, marginTop: 8 },
   endSub: { ...type.body, textAlign: 'center', marginTop: 6, paddingHorizontal: space.lg },
   locked: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: space.xl, gap: 12, backgroundColor: colors.bg },
-  lockBadge: { width: 88, height: 88, borderRadius: 44, backgroundColor: colors.purpleSoft, alignItems: 'center', justifyContent: 'center' },
+  lockBadge: { width: 88, height: 88, borderRadius: 44, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' },
   lockedTitle: { ...type.title, color: colors.ink, textAlign: 'center' },
   lockedText: { ...type.body, color: colors.muted, textAlign: 'center', marginBottom: 8 },
-});
+}));

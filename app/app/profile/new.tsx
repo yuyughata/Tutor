@@ -6,11 +6,13 @@ import { Avatar } from '../../src/components/Avatar';
 import { Button } from '../../src/components/Button';
 import { Tap } from '../../src/components/Tap';
 import { useProfiles } from '../../src/state/profiles';
-import { avatars, colors, fonts, radius, space, type } from '../../src/theme';
+import { avatars, colors, fonts, radius, space, type, themed } from '../../src/theme';
 import { LEVELS } from '../../src/levels';
 import type { ReadingLevel } from '../../src/types';
+import { useTheme } from '../../src/state/theme';
 
 export default function ProfileEditor() {
+  useTheme(); // re-render when the theme changes
   const { first, id } = useLocalSearchParams<{ first?: string; id?: string }>();
   const { children: kids, add, update, remove } = useProfiles();
   const insets = useSafeAreaInsets();
@@ -52,7 +54,7 @@ export default function ProfileEditor() {
         <View style={styles.avatars}>
           {avatars.map((a) => (
             <Tap key={a.id} accessibilityRole="button" accessibilityLabel={a.id} accessibilityState={{ selected: avatar === a.id }} onPress={() => setAvatar(a.id)} style={styles.avatarCell}>
-              <Avatar id={a.id} size={64} ring={avatar === a.id ? colors.purple : 'transparent'} />
+              <Avatar id={a.id} size={64} ring={avatar === a.id ? colors.primary : 'transparent'} />
             </Tap>
           ))}
         </View>
@@ -94,17 +96,17 @@ export default function ProfileEditor() {
   );
 }
 
-const styles = StyleSheet.create({
-  kicker: { ...type.label, color: colors.purpleDeep },
+const styles = themed(() => StyleSheet.create({
+  kicker: { ...type.label, color: colors.primaryDeep },
   title: { ...type.display, color: colors.ink, marginBottom: 8 },
   label: { ...type.heading, color: colors.ink, marginTop: 18, marginBottom: 6 },
   input: { fontFamily: fonts.bold, fontSize: 20, color: colors.ink, backgroundColor: colors.surface, borderRadius: radius.md, borderWidth: 2, borderColor: colors.border, paddingHorizontal: 18, height: 58 },
   avatars: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   avatarCell: { padding: 2 },
   band: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14, borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: 2, borderColor: colors.border },
-  bandOn: { borderColor: colors.purple, backgroundColor: colors.purpleSoft },
+  bandOn: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
   bandTitle: { ...type.heading, color: colors.ink },
   bandHint: { ...type.small, color: colors.muted },
   radio: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: colors.lock },
-  radioOn: { borderColor: colors.purple, backgroundColor: colors.purple },
-});
+  radioOn: { borderColor: colors.primary, backgroundColor: colors.primary },
+}));

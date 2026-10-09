@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, View } from 'react-native';
 import { useOnline } from '../lib/net';
-import { colors, radius, space, type } from '../theme';
+import { colors, radius, space, type, themed } from '../theme';
 
 /** Shown only while the device is offline. Announced politely to screen readers. */
 export function OfflineBanner() {
@@ -15,7 +15,7 @@ export function OfflineBanner() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   bar: { flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: space.md, marginBottom: space.md, padding: 12, borderRadius: radius.md, backgroundColor: colors.amberSoft },
   text: { ...type.small, flex: 1, color: colors.amberDeep, fontFamily: 'Nunito_800ExtraBold' },
-});
+}));

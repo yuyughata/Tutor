@@ -71,6 +71,10 @@ async function install(context, state, { host = 'mock.supabase.test' } = {}) {
       return send(200, allowed ? PAGES[id] : []);
     }
     if (p === '/rest/v1/legal_documents') return state.legalDown ? send(500, { message: 'down' }) : send(200, wantsObject ? POLICY : [POLICY]);
+    if (p === '/rest/v1/parent_passcodes') {
+      if (method === 'GET') return send(200, state.passcode ? [state.passcode] : []);
+      state.passcode = Array.isArray(body) ? body[0] : body; state.passcodeWrites = (state.passcodeWrites || 0) + 1; return send(201, []);
+    }
     if (p === '/rest/v1/plans') return send(200, PLANS);
     if (p === '/rest/v1/support_requests' && method === 'GET') return send(200, state.supportRequests || []);
     if (p === '/rest/v1/rpc/my_access') return send(200, state.access ? [state.access] : []);

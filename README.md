@@ -5,11 +5,11 @@ Children's storybook app by CUSTAR. Product scope: [`docs/MVP_BRIEF.md`](docs/MV
 ## Layout
 - `app/` — Expo (React Native, TypeScript, Expo Router) mobile app.
 - `web/` — Next.js website (static export): landing, plans and checkout, account (Premium badge, manage subscription), sign-up / sign-in / forgot password, privacy policy, and the **admin dashboard / CMS** at `/admin/` (`web/public/admin`).
-- `supabase/migrations/` — `0001`–`0004` (schema + RLS, admin CMS, hardened helpers, reading levels / access rules / plans / legal documents).
+- `supabase/migrations/` — `0001`–`0005` (schema + RLS, admin CMS, hardened helpers, reading levels / access rules / plans / legal documents, support / consent / passcode / email).
 - `supabase/seed.sql` — three sample stories for local development; `supabase/seed_legal.sql` — sample privacy policy.
 - `tools/qa/` — browser tests, screenshots and PDF build ([README](tools/qa/README.md)).
 - `CLAUDE.md` and [`docs/HANDOFF.md`](docs/HANDOFF.md) — context, accounts, deploy and how to resume in a new chat or account.
-- `supabase/functions/` — `paystack-checkout`, `paystack-webhook`, `paystack-manage`, `admin-user-support`.
+- `supabase/functions/` — `paystack-checkout`, `paystack-webhook`, `paystack-manage`, `admin-user-support`, `send-email`, `support-request`.
 - `supabase/tests/` — unit tests for the Paystack and support logic.
 
 ## Reading levels, plans, access
@@ -47,6 +47,8 @@ What it does:
   a publish checklist, and **draft / live / scheduled** publishing. Unsaved-changes guard and Ctrl/Cmd+S.
 - **Featured** — schedule Title of the Week and Title of the Month; overlapping slots of the same kind are rejected by the database.
 - **Categories** — add, rename, reorder, delete.
+- **Email** — connect Resend (paste the API key, press Activate), send to groups (Premium, payment overdue, ending soon, Free, everyone, or one person), edit the 7 templates (welcome, receipt, payment due, new title, broadcast, cancellation, passcode/password changed), history. Receipts, payment-due and cancellation emails go out automatically from the Paystack webhook.
+- **Support** — inbox of messages parents send from their account; mark resolved, add notes, reply by email.
 - **Subscribers** — search parents, set access (partners, reviewers, support fixes), and help with passwords: send a reset email or set a temporary password. Every action is logged.
 - **Settings** — edit the **privacy policy** (shown in the app and on the website, with live preview and version numbers), add or remove admins, and view the support log.
 
@@ -64,7 +66,7 @@ Tests: `node --test web/tests/admin/api.test.mjs` (set `SUPABASE_JS` to the supa
 Project ref `cjdrlddvbyfataumdztg`. Applied migrations: `0001_init` (schema, RLS, storage buckets),
 `0002_admin_cms` (scheduled publishing, admin access, page counts, featured-slot overlap guard, admin functions, seed author and categories),
 `0003_harden_helpers` (access helpers moved to a private schema),
-`0004_levels_access_plans_policy` (reading levels, 5-day grace access rule, plans, privacy policy, admin support log, hourly expiry job). The repo's migration files are the source of truth.
+`0004_levels_access_plans_policy` (reading levels, 5-day grace access rule, plans, privacy policy, admin support log, hourly expiry job). `0005_support_email_passcode` (support requests, checkout consent, parent passcodes, Resend settings/templates/log + 7 email templates). The repo's migration files are the source of truth.
 Story art: covers go to the public `covers` bucket; page images go to the private `pages` bucket and are shown through signed URLs.
 Note: the Supabase tooling used here blocks `DROP`/`DELETE` statements, so `0002` uses `ALTER POLICY` instead of drop-and-recreate and page saving is done from the dashboard.
 
@@ -106,8 +108,9 @@ Built:
 - Admin: dashboard, stories CMS, featured, categories, subscribers (access + password help), settings (privacy editor, admins, support log).
 - Backend: schema + RLS, 5-day grace access rule, Paystack checkout/webhook/manage, admin password support.
 
-Not yet built: audio and video (Phase 2 and 3), plus the queued items: contact-support link, consent on checkout, Resend email templates,
-amber primary + teal theme + Day/Sepia/Night per theme, 4-digit passcode and kiosk mode.
+Also built: contact support, privacy consent at checkout, Resend email, amber main actions with purple and teal themes (Day/Sepia/Night reader modes in each), 4-digit parent passcode, and kiosk mode (see `docs/KIOSK.md`; the Android native part is untested on a device).
+
+Not yet built: audio and video (Phase 2 and 3).
 
 Verification caveat: everything was exercised against a fake Supabase backend that speaks the real wire format and with SQL rollback tests;
 nothing has been run against the live Supabase/Paystack (the build sandbox could not reach them), nor on a physical device.

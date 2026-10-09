@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { colors, space, type } from '../theme';
+import { colors, space, type, themed } from '../theme';
 
 export function EmptyState({ emoji, title, body }: { emoji: string; title: string; body: string }) {
   return (
@@ -11,9 +11,9 @@ export function EmptyState({ emoji, title, body }: { emoji: string; title: strin
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   wrap: { alignItems: 'center', paddingHorizontal: space.xl, paddingVertical: space.xxl },
   emoji: { fontSize: 56, marginBottom: 12 },
   title: { ...type.title, color: colors.ink, textAlign: 'center' },
   body: { ...type.body, color: colors.muted, textAlign: 'center', marginTop: 6 },
-});
+}));

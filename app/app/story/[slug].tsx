@@ -15,8 +15,9 @@ import { useAuth } from '../../src/state/auth';
 import { useGate } from '../../src/state/gate';
 import { useLibrary } from '../../src/state/library';
 import { useReadingLevel } from '../../src/state/profiles';
-import { colors, radius, shadow, space, type } from '../../src/theme';
+import { colors, radius, shadow, space, type, themed } from '../../src/theme';
 import type { Category, Story } from '../../src/types';
+import { useTheme } from '../../src/state/theme';
 
 function Fact({ icon, label, bg, fg }: { icon: keyof typeof Ionicons.glyphMap; label: string; bg: string; fg: string }) {
   return (
@@ -28,6 +29,7 @@ function Fact({ icon, label, bg, fg }: { icon: keyof typeof Ionicons.glyphMap; l
 }
 
 export default function StoryDetail() {
+  useTheme(); // re-render when the theme changes
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
@@ -45,7 +47,7 @@ export default function StoryDetail() {
     getHome(band).then((h) => setCats(h.categories)).catch(() => {});
   }, [slug, band]);
 
-  if (story === undefined) return <ActivityIndicator style={{ marginTop: 160 }} color={colors.purple} />;
+  if (story === undefined) return <ActivityIndicator style={{ marginTop: 160 }} color={colors.primary} />;
   if (story === null) {
     return (
       <View style={{ flex: 1, justifyContent: 'center' }}>
@@ -92,8 +94,8 @@ export default function StoryDetail() {
           <Text style={styles.by}>by {story.author}</Text>
 
           <View style={styles.facts}>
-            <Fact icon="sparkles" label={levelFull(story.level)} bg={colors.purpleSoft} fg={colors.purpleDeep} />
-            <Fact icon="albums" label={`${story.pageCount} pages`} bg={colors.tealSoft} fg="#0b6f6b" />
+            <Fact icon="sparkles" label={levelFull(story.level)} bg={colors.primarySoft} fg={colors.primaryDeep} />
+            <Fact icon="albums" label={`${story.pageCount} pages`} bg={colors.secondarySoft} fg={colors.secondaryDeep} />
             <Fact icon="time" label={`${story.readingMinutes} min`} bg={colors.amberSoft} fg="#7a5a00" />
           </View>
 
@@ -113,7 +115,7 @@ export default function StoryDetail() {
             ) : (
               <>
                 <View style={styles.premium}>
-                  <Ionicons name="lock-closed" size={18} color={colors.purpleDeep} />
+                  <Ionicons name="lock-closed" size={18} color={colors.primaryDeep} />
                   <Text style={styles.premiumText}>This is a Premium story. A grown-up can unlock it by signing in.</Text>
                 </View>
                 <Button label="Ask a grown-up" icon="shield-checkmark" onPress={unlock} />
@@ -155,14 +157,14 @@ export default function StoryDetail() {
           onPress={() => toggleFavorite(story)}
           style={[styles.round, shadow.soft]}
         >
-          <Ionicons name={fav ? 'heart' : 'heart-outline'} size={24} color={fav ? colors.purple : colors.ink} />
+          <Ionicons name={fav ? 'heart' : 'heart-outline'} size={24} color={fav ? colors.primary : colors.ink} />
         </Tap>
       </View>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   topShade: { position: 'absolute', top: 0, left: 0, right: 0 },
   sheet: { flexGrow: 1, paddingBottom: 48, marginTop: -36, backgroundColor: colors.bg, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: space.lg, paddingTop: space.lg },
   title: { ...type.display, fontSize: 28, color: colors.ink },
@@ -172,8 +174,8 @@ const styles = StyleSheet.create({
   factText: { ...type.heading, fontSize: 14 },
   synopsis: { ...type.body, fontSize: 17, lineHeight: 26, color: colors.ink, marginTop: 18 },
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 14 },
-  tag: { ...type.heading, fontSize: 14, color: colors.purpleDeep },
-  premium: { flexDirection: 'row', gap: 10, alignItems: 'center', backgroundColor: colors.purpleSoft, borderRadius: radius.md, padding: 14 },
+  tag: { ...type.heading, fontSize: 14, color: colors.primaryDeep },
+  premium: { flexDirection: 'row', gap: 10, alignItems: 'center', backgroundColor: colors.primarySoft, borderRadius: radius.md, padding: 14 },
   premiumText: { ...type.body, flex: 1, color: colors.ink },
   savedHint: { ...type.small, color: colors.muted, textAlign: 'center' },
   saveErr: { ...type.small, color: colors.danger, textAlign: 'center' },
@@ -182,4 +184,4 @@ const styles = StyleSheet.create({
   soonText: { ...type.heading, fontSize: 14, color: '#5a5360' },
   bar: { position: 'absolute', left: 16, right: 16, flexDirection: 'row', justifyContent: 'space-between' },
   round: { width: 46, height: 46, borderRadius: 23, backgroundColor: 'rgba(255,255,255,0.95)', alignItems: 'center', justifyContent: 'center' },
-});
+}));

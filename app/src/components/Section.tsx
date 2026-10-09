@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { colors, space, type } from '../theme';
+import { colors, space, type, themed } from '../theme';
 
 export function Section({ title, subtitle, children }: { title: string; subtitle?: string; children: ReactNode }) {
   return (
@@ -14,9 +14,9 @@ export function Section({ title, subtitle, children }: { title: string; subtitle
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   wrap: { marginTop: space.xl },
   head: { paddingHorizontal: space.md, marginBottom: 14 },
   title: { ...type.title, color: colors.ink },
   sub: { ...type.small, color: colors.muted, marginTop: 2 },
-});
+}));

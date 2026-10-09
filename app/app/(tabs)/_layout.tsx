@@ -4,7 +4,8 @@ import type { ComponentProps } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Tap } from '../../src/components/Tap';
-import { colors, fonts, radius, shadow } from '../../src/theme';
+import { colors, fonts, radius, shadow, themed } from '../../src/theme';
+import { useTheme } from '../../src/state/theme';
 
 // expo-router doesn't export the tab bar prop type, so derive it from <Tabs tabBar>.
 type BottomTabBarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>['tabBar']>>[0];
@@ -37,7 +38,7 @@ function TabBar({ state, navigation }: BottomTabBarProps) {
               }}
               style={[styles.item, focused && styles.itemOn]}
             >
-              <Ionicons name={focused ? meta.on : meta.off} size={22} color={focused ? colors.onPurple : colors.lock} />
+              <Ionicons name={focused ? meta.on : meta.off} size={22} color={focused ? colors.onPrimary : colors.lock} />
               {focused && <Text style={styles.label}>{meta.label}</Text>}
             </Tap>
           );
@@ -48,6 +49,7 @@ function TabBar({ state, navigation }: BottomTabBarProps) {
 }
 
 export default function TabsLayout() {
+  useTheme(); // re-render when the theme changes
   return (
     <Tabs tabBar={(props) => <TabBar {...props} />} screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: colors.bg } }}>
       <Tabs.Screen name="index" options={{ title: 'Home' }} />
@@ -57,10 +59,10 @@ export default function TabsLayout() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   outer: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
   bar: { flexDirection: 'row', alignItems: 'center', gap: 4, padding: 8, borderRadius: radius.pill, backgroundColor: colors.surface },
   item: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 48, minWidth: 56, paddingHorizontal: 16, borderRadius: radius.pill },
-  itemOn: { backgroundColor: colors.purple, paddingHorizontal: 20 },
-  label: { fontFamily: fonts.black, fontSize: 15, color: colors.onPurple },
-});
+  itemOn: { backgroundColor: colors.primary, paddingHorizontal: 20 },
+  label: { fontFamily: fonts.black, fontSize: 15, color: colors.onPrimary },
+}));

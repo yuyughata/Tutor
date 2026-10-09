@@ -18,8 +18,9 @@ import { getHome } from '../../src/data/repository';
 import { levelName } from '../../src/levels';
 import { useGate } from '../../src/state/gate';
 import { useReadingLevel, useProfiles } from '../../src/state/profiles';
-import { colors, fonts, radius, shadow, space, type } from '../../src/theme';
+import { colors, fonts, radius, shadow, space, type, themed } from '../../src/theme';
 import type { HomeData, Story } from '../../src/types';
+import { useTheme } from '../../src/state/theme';
 
 function Shelf({ stories }: { stories: Story[] }) {
   if (!stories.length) return <Text style={styles.none}>Nothing here yet. Try another category.</Text>;
@@ -51,7 +52,7 @@ function WeekHero({ story }: { story: Story }) {
         {/* the whole card is the button; this is only its visual label (no nested interactive element) */}
         <View style={{ flexDirection: 'row', marginTop: 14 }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
           <View style={styles.readNow}>
-            <Ionicons name="book" size={20} color={colors.onPurple} />
+            <Ionicons name="book" size={20} color={colors.onAction} />
             <Text style={styles.readNowText}>Read now</Text>
           </View>
         </View>
@@ -66,7 +67,7 @@ function MonthCard({ story }: { story: Story }) {
       <Picture uri={story.coverUrl} art={story.art} style={styles.monthArt} />
       <View style={{ flex: 1 }}>
         <View style={styles.tealPill}>
-          <Ionicons name="calendar" size={12} color={colors.onTeal} />
+          <Ionicons name="calendar" size={12} color={colors.onSecondary} />
           <Text style={styles.tealPillText}>TITLE OF THE MONTH</Text>
         </View>
         <Text style={styles.monthTitle} numberOfLines={2}>{story.title}</Text>
@@ -78,6 +79,7 @@ function MonthCard({ story }: { story: Story }) {
 }
 
 export default function Home() {
+  useTheme(); // re-render when the theme changes
   const band = useReadingLevel();
   const { active } = useProfiles();
   const ask = useGate();
@@ -98,8 +100,8 @@ export default function Home() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <LinearGradient colors={[colors.purpleSoft, colors.bg]} style={styles.wash} />
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 12, paddingBottom: 140 }} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.purple} colors={[colors.purple]} />}>
+      <LinearGradient colors={[colors.primarySoft, colors.bg]} style={styles.wash} />
+      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 12, paddingBottom: 140 }} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} colors={[colors.primary]} />}>
         <View style={styles.header}>
           <View style={{ flex: 1 }}>
             <Text accessibilityRole="header" style={styles.hi}>Hi{active ? `, ${active.name}` : ''}! 👋</Text>
@@ -148,7 +150,7 @@ export default function Home() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   wash: { position: 'absolute', top: 0, left: 0, right: 0, height: 320 },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: space.md, marginBottom: space.md },
   hi: { ...type.display, color: colors.ink },
@@ -159,16 +161,16 @@ const styles = StyleSheet.create({
   pill: { position: 'absolute', top: 16, left: 16, flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: colors.amber, paddingHorizontal: 12, paddingVertical: 6, borderRadius: radius.pill },
   pillText: { ...type.label, color: colors.onAmber },
   heroBody: { padding: 20 },
-  readNow: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 46, paddingHorizontal: 22, borderRadius: radius.pill, backgroundColor: colors.purple },
-  readNowText: { fontFamily: fonts.black, fontSize: 17, color: colors.onPurple },
+  readNow: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 46, paddingHorizontal: 22, borderRadius: radius.pill, backgroundColor: colors.action },
+  readNowText: { fontFamily: fonts.black, fontSize: 17, color: colors.onAction },
   heroTitle: { ...type.display, color: '#fff' },
   heroSub: { ...type.body, color: 'rgba(255,255,255,0.88)', marginTop: 4 },
   month: { flexDirection: 'row', alignItems: 'center', gap: 14, marginHorizontal: space.md, marginTop: 14, padding: 12, borderRadius: radius.lg, backgroundColor: colors.surface },
   monthArt: { width: 84, height: 84, borderRadius: radius.md },
-  tealPill: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.tealSoft, paddingHorizontal: 9, paddingVertical: 4, borderRadius: radius.pill },
-  tealPillText: { ...type.label, fontSize: 10, color: '#0b6f6b' },
+  tealPill: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.secondarySoft, paddingHorizontal: 9, paddingVertical: 4, borderRadius: radius.pill },
+  tealPillText: { ...type.label, fontSize: 10, color: colors.secondaryDeep },
   monthTitle: { ...type.heading, color: colors.ink, marginTop: 6 },
   monthMeta: { ...type.small, color: colors.muted, marginTop: 2 },
   chips: { paddingHorizontal: space.md, gap: 10 },
   none: { ...type.body, color: colors.muted, paddingHorizontal: space.md },
-});
+}));

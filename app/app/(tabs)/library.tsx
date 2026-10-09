@@ -10,8 +10,9 @@ import { getStories } from '../../src/data/repository';
 import { useDownloads } from '../../src/data/downloads';
 import { useLibrary } from '../../src/state/library';
 import { useReadingLevel } from '../../src/state/profiles';
-import { colors, fonts, radius, space, type } from '../../src/theme';
+import { colors, fonts, radius, space, type, themed } from '../../src/theme';
 import type { Story } from '../../src/types';
+import { useTheme } from '../../src/state/theme';
 
 type Tab = 'continue' | 'favorites' | 'finished' | 'saved';
 const COPY: Record<Tab, { emoji: string; title: string; body: string }> = {
@@ -25,6 +26,7 @@ const TABS: { id: Tab; label: string }[] = [
 ];
 
 export default function Library() {
+  useTheme(); // re-render when the theme changes
   const level = useReadingLevel();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
@@ -61,7 +63,7 @@ export default function Library() {
       contentContainerStyle={{ paddingTop: insets.top + 12, paddingBottom: 140 }}
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.purple} colors={[colors.purple]} />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} colors={[colors.primary]} />}
     >
       <Text accessibilityRole="header" style={styles.title}>My books</Text>
       <OfflineBanner />
@@ -99,13 +101,13 @@ export default function Library() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   title: { ...type.display, color: colors.ink, paddingHorizontal: space.md, marginBottom: space.md },
   search: { flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: space.md, paddingHorizontal: 16, minHeight: 50, borderRadius: radius.pill, backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.border },
   input: { flex: 1, fontFamily: fonts.bold, fontSize: 16, color: colors.ink, paddingVertical: 10 },
   tabs: { gap: 8, paddingHorizontal: space.md, marginTop: space.md, marginBottom: space.lg },
   grid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: space.md },
   track: { height: 6, borderRadius: 3, backgroundColor: colors.border, marginTop: 8, overflow: 'hidden' },
-  fill: { height: '100%', backgroundColor: colors.teal, borderRadius: 3 },
-  savedTag: { ...type.small, color: colors.tealDeep, fontFamily: fonts.bold, marginTop: 4 },
-});
+  fill: { height: '100%', backgroundColor: colors.secondary, borderRadius: 3 },
+  savedTag: { ...type.small, color: colors.secondaryDeep, fontFamily: fonts.bold, marginTop: 4 },
+}));

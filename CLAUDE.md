@@ -16,7 +16,7 @@ Read `README.md` for setup, `docs/MVP_BRIEF.md` for scope, `docs/HANDOFF.md` for
 - `app/` Expo SDK 57 / React Native 0.86 / expo-router, TypeScript. react + react-dom are pinned exactly (19.2.3); keep them equal.
 - `web/` Next.js 16 static export (`output: 'export'`, trailingSlash). Admin CMS is vanilla JS in `web/public/admin/` and shares the site's Supabase session.
 - `tools/qa/` browser tests (fake Supabase backend), screenshot and PDF scripts. `supabase/seed_legal.sql` = sample privacy policy.
-- `supabase/migrations/0001–0004` (all applied to the live project), `supabase/functions/` (paystack-checkout, paystack-webhook, paystack-manage, admin-user-support; all deployed), `supabase/tests/`.
+- `supabase/migrations/0001–0005` (all applied to the live project), `supabase/functions/` (paystack-checkout, paystack-webhook, paystack-manage, admin-user-support, send-email, support-request), `supabase/tests/`.
 - Supabase project **GenovaStorybook**, ref `cjdrlddvbyfataumdztg`.
 
 ## Commands
@@ -35,15 +35,20 @@ Read `README.md` for setup, `docs/MVP_BRIEF.md` for scope, `docs/HANDOFF.md` for
 ## Status
 Done: reading levels everywhere; library (Reading/Favourites/Finished/Saved, search); offline downloads and cached catalogue/access; accessibility; sign-in copy, website "Create an account" link, forgot-password email code; admin password help (reset email or temporary password, logged); privacy policy pop-up + admin editor; Next.js website (landing, plans, checkout, account with Premium badge, auth pages, privacy); `docs/Genova_UI_Screens.pdf` refreshed.
 
-## Backlog (user's exact asks, not yet built)
-- **5.1** Contact-support link on the parent's account.
-- **5.2** Privacy policy + parent-consent link/pop-up on the web checkout (same content as the app).
-- **6** In-app emailing to subscribers from admin using **Resend**, with templates: Welcome, Subscription confirmation/receipt, Expiration/due amount, New title release/upcoming, Admin broadcast, Cancellation, Passcode/password change.
-- **7** Amber `#ffbe00` as the primary action colour; keep the purple theme and add a teal `#10a19c` theme users can switch; each theme gets Day / Sepia / Night reader modes.
-- **8** Parental gate with a 4-digit passcode for parents with accounts; kiosk mode (Android Lock Task Mode / `startLockTask`), exit via the PIN, toggle in settings.
+## Batch 2 (built, session of 2026-10-09)
+- 5.1 Contact support: `support_requests` table, `support-request` function, website account card, admin **Support** inbox, link in the app's Grown-ups account card.
+- 5.2 Checkout consent: checkbox + privacy pop-up (`PrivacyDialog`), `paystack-checkout` requires `consent: true` and writes `consents`.
+- 6 Email (Resend): admin **Email** view (Connection = paste API key then Activate, Send to groups, Templates, History); `email_settings` (service-role only), `email_templates` (7), `email_log`; functions `send-email` (admin actions + `self` for welcome/passcode-changed) and the webhook sends receipt / cancellation / payment-due automatically. Shared code: `supabase/functions/_shared/email.ts`, `emailAdmin.ts` (tests: `supabase/tests/email.test.mjs`).
+- 7 Themes: main actions are amber (`colors.action`) everywhere (app, website, admin). Accent themes purple and teal (`colors.primary*` / `secondary*`), chosen in Grown-ups > Appearance. Mechanism: `colors` is a live mutable object, `applyTheme()` swaps it, `themed(() => StyleSheet.create(...))` rebuilds styles lazily, and screens call `useTheme()` to re-render. Any new screen must call `useTheme()` and use `themed()` for styles that use colours. Each theme has its own Day/Sepia/Night reader modes (`readerThemes`).
+- 8 Passcode: `parent_passcodes` (salted hash only), `src/state/passcode.tsx`, `PinPad`, `app/passcode.tsx`; gate (`src/state/gate.tsx`) uses the PIN when signed in with a passcode, otherwise the number-word puzzle; 5 wrong tries lock for 60 s; "Forgot passcode?" re-checks the account password. The gate waits until the passcode state is known (never falls back to the puzzle on launch).
+- 9 Kiosk: `src/state/kiosk.tsx` + local native module `app/modules/genova-kiosk` (Android Lock Task Mode) + `docs/KIOSK.md`. **Kotlin not compiled or run on a device yet.**
+
+## Backlog
+- Scheduled reminder emails (e.g. 3 days before access ends) need pg_cron + pg_net calling `send-email`; today reminders are sent from the Email tab (audience "Premium ending within 7 days") or by the webhook on a failed payment.
+- Email domain verification and the first real Resend test.
 
 ## Not yet verified (be honest about this)
 - Nothing has run against the live Supabase project or Paystack. Paystack webhook payload field names were written from docs; check one test-mode payment in `payment_events`.
 - Reset Password email template must include `{{ .Token }}`; configure SMTP (Resend) for real delivery.
-- Secrets unset: `PAYSTACK_SECRET_KEY`, `WEB_URL`, `PAYSTACK_PLAN_MONTHLY`, `PAYSTACK_PLAN_QUARTERLY`. `EXPO_PUBLIC_WEB_URL` blank until the site is deployed.
+- Secrets unset: `PAYSTACK_SECRET_KEY`, `WEB_URL`, `SUPPORT_EMAIL` (optional), `PAYSTACK_PLAN_MONTHLY`, `PAYSTACK_PLAN_QUARTERLY`. Resend key is entered in the admin, not as a secret. `EXPO_PUBLIC_WEB_URL` blank until the site is deployed.
 - No physical-device run (iOS/Android); no first admin created yet.

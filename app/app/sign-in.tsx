@@ -4,11 +4,13 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput } from 'react-native';
 import { Button } from '../src/components/Button';
 import { useAuth } from '../src/state/auth';
-import { colors, fonts, radius, space, type } from '../src/theme';
+import { colors, fonts, radius, space, type, themed } from '../src/theme';
+import { useTheme } from '../src/state/theme';
 
 const WEB_URL = process.env.EXPO_PUBLIC_WEB_URL;
 
 export default function SignIn() {
+  useTheme(); // re-render when the theme changes
   const { signIn } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -21,7 +23,7 @@ export default function SignIn() {
     const err = await signIn(email.trim(), password);
     setBusy(false);
     if (err) setMsg(/invalid login/i.test(err) ? 'That email or password is not right.' : err);
-    else router.back();
+    else router.replace({ pathname: '/passcode', params: { first: '1' } }); // asks for a passcode if there isn't one yet
   };
   const openWebsite = () => {
     if (WEB_URL) Linking.openURL(`${WEB_URL.replace(/\/$/, '')}/signup`);
@@ -49,11 +51,11 @@ export default function SignIn() {
   );
 }
 
-const styles = StyleSheet.create({
-  kicker: { ...type.label, color: colors.purpleDeep },
+const styles = themed(() => StyleSheet.create({
+  kicker: { ...type.label, color: colors.primaryDeep },
   title: { ...type.display, color: colors.ink },
   body: { ...type.body, color: colors.muted, marginBottom: 12 },
   input: { fontFamily: fonts.bold, fontSize: 17, color: colors.ink, backgroundColor: colors.surface, borderRadius: radius.md, borderWidth: 2, borderColor: colors.border, paddingHorizontal: 18, minHeight: 56, marginTop: 8 },
   msg: { ...type.body, color: colors.danger, marginTop: 4 },
   hint: { ...type.small, color: colors.muted, textAlign: 'center' },
-});
+}));

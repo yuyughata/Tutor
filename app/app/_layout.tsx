@@ -5,9 +5,12 @@ import { useEffect } from 'react';
 import { initDownloads } from '../src/data/downloads';
 import { useReducedMotion } from '../src/lib/a11y';
 import { GateProvider } from '../src/state/gate';
+import { KioskProvider } from '../src/state/kiosk';
+import { PasscodeProvider } from '../src/state/passcode';
 import { AuthProvider } from '../src/state/auth';
 import { LibraryProvider } from '../src/state/library';
 import { ProfilesProvider, useProfiles } from '../src/state/profiles';
+import { ThemeProvider, useTheme } from '../src/state/theme';
 import { colors } from '../src/theme';
 
 /** First launch: nobody is reading yet, so ask who is before showing anything else. */
@@ -21,6 +24,11 @@ function OnboardingGuard() {
 }
 
 export default function RootLayout() {
+  return <ThemeProvider><RootStack /></ThemeProvider>;
+}
+
+function RootStack() {
+  useTheme(); // re-render the navigator (background colour) when the theme changes
   const [loaded] = useFonts({ Nunito_600SemiBold, Nunito_800ExtraBold, Nunito_900Black });
   const reduceMotion = useReducedMotion();
   useEffect(() => { initDownloads(); }, []);
@@ -29,6 +37,8 @@ export default function RootLayout() {
     <AuthProvider>
       <ProfilesProvider>
         <LibraryProvider>
+          <PasscodeProvider>
+           <KioskProvider>
           <GateProvider>
             <StatusBar style="dark" />
             <OnboardingGuard />
@@ -41,8 +51,11 @@ export default function RootLayout() {
               <Stack.Screen name="sign-in" options={{ presentation: 'modal' }} />
               <Stack.Screen name="forgot-password" options={{ presentation: 'modal' }} />
               <Stack.Screen name="legal/privacy" options={{ presentation: 'modal' }} />
+              <Stack.Screen name="passcode" options={{ presentation: 'modal' }} />
             </Stack>
           </GateProvider>
+           </KioskProvider>
+          </PasscodeProvider>
         </LibraryProvider>
       </ProfilesProvider>
     </AuthProvider>

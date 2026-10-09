@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Animated, Platform, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useReducedMotion } from '../lib/a11y';
-import { colors, radius, space } from '../theme';
+import { colors, radius, space, themed } from '../theme';
 
 /** A softly pulsing placeholder. Holds still when the device asks for reduced motion. */
 export function Skeleton({ style }: { style?: StyleProp<ViewStyle> }) {
@@ -16,7 +16,7 @@ export function Skeleton({ style }: { style?: StyleProp<ViewStyle> }) {
     loop.start();
     return () => loop.stop();
   }, [reduced, o]);
-  return <Animated.View style={[{ backgroundColor: colors.purpleSoft, borderRadius: radius.lg, opacity: o }, style]} />;
+  return <Animated.View style={[{ backgroundColor: colors.primarySoft, borderRadius: radius.lg, opacity: o }, style]} />;
 }
 
 /** Placeholder for the home screen while stories load. */
@@ -29,4 +29,4 @@ export function HomeSkeleton() {
     </View>
   );
 }
-const styles = StyleSheet.create({ row: { flexDirection: 'row', gap: 14, marginTop: space.xl } });
+const styles = themed(() => StyleSheet.create({ row: { flexDirection: 'row', gap: 14, marginTop: space.xl } }));

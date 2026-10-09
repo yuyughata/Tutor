@@ -3,12 +3,14 @@ import { useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput } from 'react-native';
 import { Button } from '../src/components/Button';
 import { useAuth } from '../src/state/auth';
-import { colors, fonts, radius, space, type } from '../src/theme';
+import { colors, fonts, radius, space, type, themed } from '../src/theme';
+import { useTheme } from '../src/state/theme';
 
 type Step = 'email' | 'code' | 'password' | 'done';
 
 /** Reset a forgotten password with a code sent to the parent's email. */
 export default function ForgotPassword() {
+  useTheme(); // re-render when the theme changes
   const params = useLocalSearchParams<{ email?: string }>();
   const { requestReset, verifyReset, setNewPassword } = useAuth();
   const [step, setStep] = useState<Step>('email');
@@ -90,11 +92,11 @@ export default function ForgotPassword() {
   );
 }
 
-const styles = StyleSheet.create({
-  kicker: { ...type.label, color: colors.purpleDeep },
+const styles = themed(() => StyleSheet.create({
+  kicker: { ...type.label, color: colors.primaryDeep },
   title: { ...type.display, color: colors.ink },
   body: { ...type.body, color: colors.muted, marginBottom: 8 },
   input: { fontFamily: fonts.bold, fontSize: 17, color: colors.ink, backgroundColor: colors.surface, borderRadius: radius.md, borderWidth: 2, borderColor: colors.border, paddingHorizontal: 18, minHeight: 56, marginTop: 8 },
   code: { fontSize: 26, letterSpacing: 6, textAlign: 'center' },
   msg: { ...type.body, color: colors.danger, marginTop: 4 },
-});
+}));

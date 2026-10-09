@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { ActivityIndicator, StyleSheet, Text, type StyleProp, type ViewStyle } from 'react-native';
-import { colors, fonts, radius, shadow } from '../theme';
+import { colors, fonts, radius, shadow, themed } from '../theme';
 import { Tap } from './Tap';
 
 type Props = {
@@ -14,7 +14,7 @@ type Props = {
 };
 
 export function Button({ label, onPress, variant = 'primary', icon, loading, disabled, style }: Props) {
-  const v = variants[variant];
+  const v = variants()[variant];
   return (
     <Tap
       accessibilityRole="button"
@@ -34,14 +34,15 @@ export function Button({ label, onPress, variant = 'primary', icon, loading, dis
   );
 }
 
-const variants = {
-  primary: { box: { backgroundColor: colors.purple }, fg: colors.onPurple },
-  secondary: { box: { backgroundColor: colors.tealSoft }, fg: '#0b6f6b' },
-  ghost: { box: { backgroundColor: 'transparent' }, fg: colors.purpleDeep },
+// Read at render time so the buttons follow the current theme. Main actions are amber in every theme.
+const variants = () => ({
+  primary: { box: { backgroundColor: colors.action }, fg: colors.onAction },
+  secondary: { box: { backgroundColor: colors.secondarySoft }, fg: colors.secondaryDeep },
+  ghost: { box: { backgroundColor: 'transparent' }, fg: colors.primaryDeep },
   danger: { box: { backgroundColor: '#fdeceb' }, fg: colors.danger },
-} as const;
+}) as const;
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   base: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 52, paddingHorizontal: 22, borderRadius: radius.pill },
   label: { fontFamily: fonts.black, fontSize: 17 },
-});
+}));

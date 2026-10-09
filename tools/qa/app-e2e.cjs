@@ -19,7 +19,7 @@ const NUM = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eigh
   const tab = (n) => page.getByRole('tab', { name: n, exact: true }).first();
   const audit = async (name) => {
     await page.addScriptTag({ content: AXE }).catch(() => {});
-    const r = await page.evaluate(async () => { const res = await window.axe.run(document, { runOnly: ['wcag2a', 'wcag2aa'] }); return res.violations.map((v) => `${v.id}[${v.impact}]x${v.nodes.length}`); });
+    const r = await page.evaluate(async () => { const res = await window.axe.run(document, { runOnly: ['wcag2a', 'wcag2aa'] }); return res.violations.map((v) => `${v.id}[${v.impact}]x${v.nodes.length}` + (1 ? ' :: ' + v.nodes.slice(0, 2).map((n) => n.html.slice(0, 160) + ' => ' + (n.any[0]?.message || n.all[0]?.message || '')).join(' || ') : '')); });
     console.log(`  axe ${name}: ${r.length ? r.join(', ') : 'no violations'}`);
   };
 
@@ -73,6 +73,76 @@ const NUM = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eigh
     state.access = { active: true, status: 'active', plan: 'monthly', current_period_end: new Date(Date.now() + 20 * 864e5).toISOString(), access_until: new Date(Date.now() + 25 * 864e5).toISOString(), in_grace: false };
     await page.waitForTimeout(500); await tab('Home').click(); await tab('Grown-ups').click(); await page.getByText('Premium is active').waitFor({ timeout: 6000 }); await audit('grown-ups (premium)');
   });
+  await step('theme: switch to teal, stay on Grown-ups, amber actions, reader modes per theme', async () => {
+    const rgb = async (loc, prop = 'backgroundColor') => loc.evaluate((el, p) => getComputedStyle(el)[p], prop);
+    const radios = page.getByRole('radio');
+    console.log('  radio attrs:', JSON.stringify(await radios.evaluateAll((els) => els.map((e) => [e.getAttribute('role'), e.getAttribute('aria-checked'), e.getAttribute('aria-label')]))));
+    await page.getByRole('radio', { name: /^Teal theme/ }).click();
+    await page.getByText('Teal ✓').waitFor();
+    await page.getByText('Premium is active').waitFor(); // still on the Grown-ups screen, not bounced
+    const activeTab = tab('Grown-ups'); const teal = 'rgb(16, 161, 156)';
+    const bg = await activeTab.evaluate((el) => { const n = [el, ...el.querySelectorAll('*')].map((x) => getComputedStyle(x).backgroundColor); return n.join('|'); });
+    if (!bg.includes(teal)) throw new Error('active tab should turn teal: ' + bg);
+    await audit('grown-ups (teal theme)');
+    await tab('Home').click(); await page.getByText('TITLE OF THE WEEK').waitFor();
+    const readNow = page.getByText('Read now').first();
+    const readBg = await readNow.evaluate((el) => getComputedStyle(el.parentElement).backgroundColor);
+    if (readBg !== 'rgb(255, 190, 0)') throw new Error('main action should be amber, got ' + readBg);
+    await page.getByLabel(/^Title of the week/i).click(); await page.getByText('Start reading').waitFor();
+    const startBg = await page.getByRole('button', { name: /Start reading/ }).first().evaluate((el) => getComputedStyle(el).backgroundColor);
+    if (startBg !== 'rgb(255, 190, 0)') throw new Error('Start reading should be amber, got ' + startBg);
+    await page.getByText('Start reading').click(); await page.getByLabel('Next page').waitFor();
+    const modes = [];
+    for (let i = 0; i < 3; i++) { modes.push(await page.getByLabel('Next page').evaluate(() => getComputedStyle(document.body.querySelector('[data-testid]') || document.body).backgroundColor).catch(() => '')); await page.getByLabel(/^Reading theme/).click(); }
+    await audit('reader (teal)');
+    await page.getByLabel('Close story').click(); await page.getByLabel('Back').click();
+    await tab('Grown-ups').click(); await page.getByText('Premium is active').waitFor({ timeout: 6000 });
+    await page.getByRole('radio', { name: /^Purple theme/ }).click(); await page.getByText('Purple ✓').waitFor();
+    await audit('grown-ups (purple theme)');
+  });
+  await step('passcode: create, mismatch, then gate uses it, lockout, forgot via account password, kiosk', async () => {
+    const tapDigits = async (d) => { for (const c of d) await page.getByRole('button', { name: ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'][Number(c)], exact: true }).last().click(); };
+    await page.getByRole('button', { name: 'Create passcode' }).click(); await page.getByText('Create your passcode').waitFor();
+    await tapDigits('1234'); await page.getByText('Repeat the passcode').first().waitFor(); await tapDigits('1111'); await page.getByText('did not match').waitFor();
+    await tapDigits('1234'); await tapDigits('1234'); await page.getByText('Passcode saved').waitFor(); await audit('passcode saved');
+    if (!state.passcode) throw new Error('passcode was not synced to the server');
+    if (JSON.stringify(state.passcode).includes('1234')) throw new Error('passcode must never be stored in clear');
+    await page.getByRole('button', { name: 'Done' }).click();
+    await page.getByRole('button', { name: 'Change passcode' }).waitFor();
+    // the gate now asks for the passcode (fresh: no 30s grace)
+    await tab('Home').click(); await page.waitForTimeout(31000);
+    await tab('Grown-ups').click(); await page.getByText('Enter your passcode').waitFor(); await page.waitForTimeout(600); await audit('gate with passcode');
+    await tapDigits('9999'); await page.getByText('Not quite. Try again.').waitFor();
+    await tapDigits('1234'); await page.getByText('Premium is active').waitFor();
+    // kiosk: turn on, then off needs the passcode again (fresh)
+    const sw = page.getByRole('switch', { name: 'Kiosk mode' });
+    await sw.click(); await page.waitForTimeout(500);
+    if (!(await sw.isChecked())) throw new Error('kiosk should be on');
+    await sw.click(); await page.getByText('Enter your passcode').waitFor(); await tapDigits('1234'); await page.waitForTimeout(500);
+    if ((await sw.isChecked())) throw new Error('kiosk should be off after the passcode');
+    await sw.click(); await page.waitForTimeout(300); // on again
+    await sw.click(); await page.getByText('Enter your passcode').waitFor();
+    // five wrong tries lock the pad for a minute
+    for (let i = 0; i < 5; i++) { await tapDigits('0000'); await page.waitForTimeout(250); }
+    await page.getByText(/Try again in \d+s/).waitFor(); await audit('gate locked');
+    await page.getByRole('button', { name: 'Cancel' }).click();
+    if (!(await sw.isChecked())) throw new Error('kiosk must stay on after a failed unlock');
+  });
+  await step('passcode: forgot it, confirm with the account password, choose a new one', async () => {
+    const tapDigits = async (d) => { for (const c of d) await page.getByRole('button', { name: ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'][Number(c)], exact: true }).last().click(); };
+    await page.getByRole('switch', { name: 'Kiosk mode' }).click(); await page.getByText(/Try again in \d+s|Enter your passcode/).first().waitFor();
+    // lock window is still active: use a fresh page state by reloading
+    await page.reload({ waitUntil: 'networkidle' }); await page.getByText('Enter your passcode').waitFor(); // a fresh launch on the Grown-ups screen must ask for the passcode, never the easier puzzle
+    await page.getByRole('button', { name: 'Forgot passcode?' }).click(); await page.getByLabel('Account password').fill('wrong-one'); await page.getByRole('button', { name: 'Continue' }).click(); await page.getByText('That password is not right.').waitFor();
+    await page.getByLabel('Account password').fill(state.password); await page.getByRole('button', { name: 'Continue' }).click(); await page.getByText('Choose a new passcode').first().waitFor();
+    await tapDigits('4321'); await page.getByText('Repeat the new passcode').waitFor(); await tapDigits('4321'); await page.getByText('Premium is active').waitFor({ timeout: 8000 });
+    const sw = page.getByRole('switch', { name: 'Kiosk mode' });
+    await sw.click(); await page.getByText('Enter your passcode').waitFor(); await tapDigits('4321'); await page.waitForTimeout(500);
+    if ((await sw.isChecked())) throw new Error('kiosk should turn off with the new passcode');
+  });
+  await step('contact support link on the parent account', async () => {
+    await page.getByRole('button', { name: 'Contact support' }).waitFor(); // opens <website>/account/#support (or mailto: when no website is set)
+  });
   await step('privacy policy pop-up', async () => {
     await page.getByRole('button', { name: 'Read our privacy policy' }).click(); await page.getByText('Version 3').waitFor(); await page.getByText('Our promise to families').waitFor();
     await audit('privacy policy'); await page.getByRole('button', { name: 'Close' }).click();
@@ -101,7 +171,8 @@ const NUM = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eigh
     await page.getByText("Can't open this story").waitFor({ timeout: 8000 }); await page.getByRole('button', { name: 'Back' }).click(); await page.getByLabel('Back').click();
   });
   await step('privacy policy falls back to the saved copy when offline', async () => {
-    await tab('Grown-ups').click(); await page.getByText('Tap these numbers in order').waitFor(); await gate();
+    await tab('Grown-ups').click(); await page.getByText('Enter your passcode').waitFor(); // the passcode is kept on the device, so it works offline too
+    for (const c of '4321') await page.getByRole('button', { name: ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'][Number(c)], exact: true }).last().click();
     await page.getByRole('button', { name: 'Read our privacy policy' }).click(); await page.getByText(/saved copy/).waitFor({ timeout: 6000 }); await page.getByText('Our promise to families').waitFor();
   });
   console.log(errors.length ? 'page errors: ' + errors.join(' | ') : 'no page errors');

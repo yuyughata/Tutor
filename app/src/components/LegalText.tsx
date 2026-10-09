@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { colors, space, type } from '../theme';
+import { colors, space, type, themed } from '../theme';
 
 /** Renders the policy's simple format: "# Heading", "- bullet", blank-line separated paragraphs. */
 export function LegalText({ text }: { text: string }) {
@@ -13,9 +13,9 @@ export function LegalText({ text }: { text: string }) {
   return <View>{nodes}</View>;
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   h: { ...type.title, fontSize: 18, color: colors.ink, marginTop: space.lg, marginBottom: 6 },
   p: { ...type.body, color: colors.ink, flexShrink: 1, marginBottom: 8 },
   li: { flexDirection: 'row', gap: 8, paddingRight: 8 },
-  dot: { ...type.body, color: colors.purple },
-});
+  dot: { ...type.body, color: colors.primary },
+}));
