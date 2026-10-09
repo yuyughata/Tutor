@@ -72,6 +72,8 @@ export function createDemoApi() {
     T('renewal_upcoming', 'Renewal coming up', 'Sent a few days before an active subscription renews (scheduled reminder).', 'Your Genova Premium renews on {{renew_date}}', 'A quick heads-up: your Genova Premium renews soon.\n\n# Renewal details\n- Plan: {{plan}}\n- Amount: {{amount}}\n- Renews on: {{renew_date}}', ['plan', 'amount', 'renew_date'], true),
     T('access_ending', 'Premium ending (cancelled)', 'Sent a few days before a cancelled subscription runs out (scheduled reminder).', 'Your Genova Premium ends on {{access_until}}', 'You cancelled, so Premium will not renew. It stays on until {{access_until}}.', ['access_until'], true),
     T('grace_ending', 'Last chance to renew', 'Sent when the 5-day grace period after a missed payment is about to end (scheduled reminder).', 'Last chance to keep Genova Premium', 'Your last payment did not go through. Premium stays on until {{access_until}}.\n\n[Renew now]({{site_url}}/account/)', ['plan', 'amount', 'access_until'], true),
+    T('payment_failed', 'Payment failed', 'Sent when a renewal payment does not go through.', 'We could not take your Genova payment', '# We could not take your payment\n\n> Premium stays on until {{access_until}}.\n\n[Update payment details]({{site_url}}/account/)', ['plan', 'amount', 'access_until'], true),
+    T('support_received', 'Support message received', 'Sent to a parent right after they contact support.', 'We have your message', '# We have your message\n\n> {{message}}', ['message'], true),
     T('security_change', 'Passcode or password changed', 'Sent when a parent changes their passcode or password.', 'Your Genova {{what}} was changed', 'The {{what}} for {{parent_email}} was just changed.\n\n[Reset your password]({{site_url}}/forgot-password/)', ['what', 'parent_email'], true),
   ];
   const reminderRules = [{ kind: 'access_ending', enabled: true, days: 3 }, { kind: 'grace_ending', enabled: true, days: 2 }, { kind: 'renewal_upcoming', enabled: true, days: 3 }];
@@ -210,7 +212,7 @@ export function createDemoApi() {
     },
     async listReminderLog(limit = 30) { return delay(mailLog.filter((l) => (l.campaign || '').startsWith('reminder:')).slice(0, limit)); },
     async listEmailTemplates() { return delay(templates.map((t) => ({ ...t }))); },
-    async saveEmailTemplate(key, subject, body) { const t = templates.find((x) => x.key === key); Object.assign(t, { subject, body, updated_at: new Date().toISOString() }); return delay({ ...t }); },
+    async saveEmailTemplate(key, subject, body, eyebrow) { const t = templates.find((x) => x.key === key); Object.assign(t, { subject, body, eyebrow: eyebrow || null, updated_at: new Date().toISOString() }); return delay({ ...t }); },
     async listEmailLog(limit = 50) { return delay(mailLog.slice(0, limit)); },
     async listSupportRequests(status) { return delay(requests.filter((r) => !status || r.status === status).map((r) => ({ ...r }))); },
     async updateSupportRequest(id, patch) {

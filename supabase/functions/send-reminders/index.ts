@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
     getCaller: async (jwt) => { const { data } = await service.auth.getUser(jwt); return data.user ? { id: data.user.id } : null; },
     isAdmin: async (id) => { const { data } = await service.from('profiles').select('is_admin').eq('id', id).maybeSingle(); return !!data?.is_admin; },
     settings: async () => (await service.from('email_settings').select('api_key, from_name, from_email, reply_to, enabled').eq('id', true).maybeSingle()).data,
-    template: async (key) => (await service.from('email_templates').select('key, subject, body').eq('key', key).maybeSingle()).data,
+    template: async (key) => (await service.from('email_templates').select('key, subject, body, eyebrow').eq('key', key).maybeSingle()).data,
     log: async (row) => { await service.from('email_log').insert(row); },
     candidates: async () => { const { data, error } = await service.rpc('reminder_candidates'); if (error) throw new Error(error.message); return data ?? []; },
     claim: async (c) => { const { error } = await service.from('email_reminders').insert({ parent_id: c.parent_id, kind: c.kind, period_end: c.period_end }); return !error; },

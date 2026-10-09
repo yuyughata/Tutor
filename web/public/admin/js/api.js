@@ -203,12 +203,12 @@ export function createApi(sb) {
     async emailActivate() { return email({ action: 'activate' }); },
     async emailDeactivate() { return email({ action: 'deactivate' }); },
     async emailTest(to) { return email({ action: 'test', to }); },
-    async emailPreview(template, subject, body, vars) { return email({ action: 'preview', template, subject, body, vars }); },
+    async emailPreview(template, subject, body, vars, eyebrow) { return email({ action: 'preview', template, subject, body, vars, eyebrow }); },
     async emailCount(audience) { return (await email({ action: 'count', audience })).count; },
     async emailSend(payload) { return email({ action: 'send', ...payload }); },
-    async listEmailTemplates() { return unwrap(await sb.from('email_templates').select('key, name, description, subject, body, variables, automatic, updated_at').order('name')); },
-    async saveEmailTemplate(key, subject, body) {
-      return unwrap(await sb.from('email_templates').update({ subject, body, updated_at: new Date().toISOString() }).eq('key', key).select('key, name, description, subject, body, variables, automatic, updated_at').single());
+    async listEmailTemplates() { return unwrap(await sb.from('email_templates').select('key, name, description, subject, eyebrow, body, variables, automatic, updated_at').order('name')); },
+    async saveEmailTemplate(key, subject, body, eyebrow) {
+      return unwrap(await sb.from('email_templates').update({ subject, body, eyebrow: eyebrow || null, updated_at: new Date().toISOString() }).eq('key', key).select('key, name, description, subject, eyebrow, body, variables, automatic, updated_at').single());
     },
     async listEmailLog(limit = 50) { return unwrap(await sb.from('email_log').select('id, created_at, template, campaign, recipient, status, error').order('created_at', { ascending: false }).limit(limit)); },
 

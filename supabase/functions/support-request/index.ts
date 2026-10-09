@@ -29,16 +29,27 @@ Deno.serve(async (req) => {
   const { error } = await service.from('support_requests').insert({ parent_id: user.id, email: user.email, topic: TOPICS.includes(topic) ? topic : 'other', message: text });
   if (error) return json({ error: 'Could not send your message. Please try again.' }, 500);
 
-  // best effort: tell the support inbox
+  // best effort: acknowledge to the parent, and tell the support inbox
+  try {
+    const { data: ack } = await service.from('email_settings').select('api_key, from_name, from_email, reply_to, enabled').eq('id', true).maybeSingle();
+    if (ack?.enabled) {
+      const m = createMailer({
+        settings: async () => ack,
+        template: async (key) => (await service.from('email_templates').select('key, subject, body, eyebrow').eq('key', key).maybeSingle()).data,
+        log: async (row) => { await service.from('email_log').insert(row); },
+      });
+      await m.sendOne(user.email, { parent_email: user.email, message: text.replace(/\s+/g, ' ').slice(0, 300), site_url: (Deno.env.get('WEB_URL') ?? '').replace(/\/$/, ''), support_email: Deno.env.get('SUPPORT_EMAIL') ?? 'support@custar.com' }, { template: 'support_received', campaign: 'support' });
+    }
+  } catch { /* optional */ }
   try {
     const { data: s } = await service.from('email_settings').select('api_key, from_name, from_email, reply_to, notify_email, enabled').eq('id', true).maybeSingle();
     if (s?.enabled && s.notify_email) {
       const mailer = createMailer({
         settings: async () => s,
-        template: async () => ({ key: 'support_notice', subject: 'New Genova support request from {{parent_email}}', body: '# New support request\n- From: {{parent_email}}\n- Topic: {{topic}}\n\n{{message}}\n\n[Open the dashboard]({{site_url}}/admin/)' }),
+        template: async () => ({ key: 'support_notice', subject: 'New support request from {{parent_email}}', eyebrow: 'Support inbox', body: '# New support request\n\n## Details\n- From: {{parent_email}}\n- Topic: {{topic}}\n\n## Message\n> {{message}}\n\n[Open the dashboard]({{site_url}}/admin/)' }),
         log: async (row) => { await service.from('email_log').insert(row); },
       });
-      await mailer.sendOne(s.notify_email, { parent_email: user.email, topic: String(topic), message: text, site_url: (Deno.env.get('WEB_URL') ?? '').replace(/\/$/, '') }, { template: 'support_notice', campaign: 'support' });
+      await mailer.sendOne(s.notify_email, { parent_email: user.email, topic: String(topic), message: text.replace(/\s+/g, ' ').slice(0, 600), site_url: (Deno.env.get('WEB_URL') ?? '').replace(/\/$/, '') }, { template: 'support_notice', campaign: 'support' });
     }
   } catch { /* the request is saved; the notice is optional */ }
   return json({ ok: true });

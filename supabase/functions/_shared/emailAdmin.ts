@@ -94,9 +94,10 @@ export async function handleEmail(authHeader: string | null, input: unknown, dep
       const t = await deps.template(String(inp.template ?? ''));
       const subject = typeof inp.subject === 'string' ? inp.subject : t?.subject;
       const body = typeof inp.body === 'string' ? inp.body : t?.body;
+      const eyebrow = typeof inp.eyebrow === 'string' ? inp.eyebrow : t?.eyebrow;
       if (subject === undefined || body === undefined) return fail(404, 'Unknown template.');
-      const vars = { ...common, parent_email: 'parent@example.com', plan: 'Premium Monthly', amount: '₦5,000', access_until: '30 November 2026', due_date: '25 November 2026', what: 'passcode', story_title: 'Luna and the Firefly', synopsis: 'Luna follows a tiny light through the garden.', story_url: `${deps.siteUrl}/`, message: 'Your message appears here.', ...((inp.vars as Vars) ?? {}) };
-      const r = renderEmail(subject, body, vars);
+      const vars = { ...common, parent_email: 'parent@example.com', plan: 'Premium Monthly', amount: '₦5,000', access_until: '30 November 2026', paid_date: '1 November 2026', due_date: '25 November 2026', what: 'passcode', story_title: 'Luna and the Firefly', synopsis: 'Luna follows a tiny light through the garden.', story_url: `${deps.siteUrl}/`, message: 'Your message appears here.', ...((inp.vars as Vars) ?? {}) };
+      const r = renderEmail(subject, body, vars, { eyebrow });
       return { status: 200, body: { subject: r.subject, html: r.html } };
     }
     case 'count': {

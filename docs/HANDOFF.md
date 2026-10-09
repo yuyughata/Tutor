@@ -32,7 +32,7 @@ With no `app/.env` the app runs on built-in sample stories. To use the live back
 **Moving to a different Supabase account** (or if the project is lost): follow section 4 on a new project, then replace the URL/anon key in `app/.env`, `web/lib/config.ts` (or `NEXT_PUBLIC_SUPABASE_*` env vars) and `web/public/config.js`.
 
 ## 4. Backend setup (new project, or to verify the existing one)
-1. **Database:** run `supabase/migrations/0001` to `0006` in order (SQL editor, or `supabase db push`). Then run `supabase/seed_legal.sql` (sample privacy policy). Optionally run `supabase/seed.sql` for three demo stories (they use placeholder picsum images).
+1. **Database:** run `supabase/migrations/0001` to `0007` in order (SQL editor, or `supabase db push`). Then run `supabase/seed_legal.sql` (sample privacy policy). Optionally run `supabase/seed.sql` for three demo stories (they use placeholder picsum images).
    `0006` schedules the daily reminder job for ONE functions URL: on a new project run `select private.schedule_reminders('https://<project-ref>.supabase.co/functions/v1');` (it needs pg_cron and pg_net enabled).
    `0004` enables `pg_cron` and schedules the hourly job that moves lapsed subscribers to Free.
 2. **Storage:** buckets `covers` (public) and `pages` (private, signed URLs) are created by migration `0001`.
@@ -40,6 +40,7 @@ With no `app/.env` the app runs on built-in sample stories. To use the live back
    - Email provider on, "Confirm email" per your preference (the website/app handle both).
    - URL Configuration: Site URL = your website URL.
    - Email Templates > **Reset Password**: the message must contain `{{ .Token }}` (the 6-digit code the app and website ask for).
+   - Email Templates: paste the HTML files from `supabase/auth-email-templates/` (confirm-signup, reset-password, email-change) so account emails match the Genova designs. Suggested subjects are in `tools/email/auth.json`.
    - SMTP: configure custom SMTP (Resend recommended). Supabase's built-in sender is heavily rate-limited.
 4. **Edge functions** (`supabase login`, `supabase link --project-ref <ref>`):
    ```sh

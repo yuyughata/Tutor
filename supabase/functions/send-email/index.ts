@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
     saveSettings: async (patch) => { const { error } = await service.from('email_settings').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', true); if (error) throw new Error(error.message); },
     verifyKey: (key) => verifyResendKey(key),
     audience: async (kind) => { const { data, error } = await service.rpc('email_audience', { kind }); if (error) throw new Error(error.message); return data ?? []; },
-    template: async (key) => (await service.from('email_templates').select('key, subject, body').eq('key', key).maybeSingle()).data,
+    template: async (key) => (await service.from('email_templates').select('key, subject, body, eyebrow').eq('key', key).maybeSingle()).data,
     log: async (row) => { await service.from('email_log').insert(row); },
     recentSelfSends: async (recipient, template, since) => (await service.from('email_log').select('id', { count: 'exact', head: true }).eq('recipient', recipient).eq('template', template).gte('created_at', since)).count ?? 0,
     siteUrl: (Deno.env.get('WEB_URL') ?? '').replace(/\/$/, ''),

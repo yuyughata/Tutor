@@ -36,8 +36,8 @@ export async function render(ctx) {
     body.replaceChildren(h('p', { class: 'muted' }, 'Loading…'));
     try { body.replaceChildren(await { send, reminders, templates: tpl, connection, history }[tab]()); } catch (e) { body.replaceChildren(h('div', { class: 'callout bad' }, e.message)); }
   }
-  const preview = (frame, template, subject, text, vars) => async () => {
-    const r = await api.emailPreview(template, subject, text, vars);
+  const preview = (frame, template, subject, text, vars, eyebrow) => async () => {
+    const r = await api.emailPreview(template, subject, text, vars, eyebrow);
     frame.srcdoc = r.html; frame.hidden = false; frame.title = `Preview: ${r.subject}`;
   };
   const frameEl = () => h('iframe', { class: 'mail-preview', hidden: true, sandbox: '', title: 'Email preview' });
@@ -72,7 +72,7 @@ export async function render(ctx) {
       if (t.key === 'new_title') {
         const stories = (await api.listStories()).filter((s) => s.status === 'published');
         const pick = h('select', {}, h('option', { value: '' }, 'Pick a story to fill this in…'), stories.map((s) => h('option', { value: s.id }, s.title)));
-        pick.onchange = () => { const s = stories.find((x) => x.id === pick.value); if (!s) return; for (const [k, v] of [['story_title', s.title], ['synopsis', s.synopsis || ''], ['story_url', `${location.origin}/`]]) { values[k] = v; const el = dyn.querySelector(`[data-var="${k}"]`); if (el) el.value = v; } };
+        pick.onchange = () => { const s = stories.find((x) => x.id === pick.value); if (!s) return; for (const [k, v] of [['story_title', s.title], ['synopsis', s.synopsis || ''], ['story_url', `${location.origin}/`], ['cover_url', s.cover_url || '']]) { values[k] = v; const el = dyn.querySelector(`[data-var="${k}"]`); if (el) el.value = v; } };
         nodes.push(field('Story', pick));
       }
       for (const [k, label, kind, hint] of rows) {
@@ -159,19 +159,20 @@ export async function render(ctx) {
       const t = templates.find((x) => x.key === selected);
       const subject = h('input', { type: 'text', value: t.subject, maxlength: 160 });
       const text = h('textarea', { class: 'mono', rows: 16, 'aria-label': 'Email text' }); text.value = t.body;
+      const eyebrow = h('input', { type: 'text', value: t.eyebrow || '', maxlength: 40, placeholder: 'e.g. Receipt' });
       const frame = frameEl();
       const save = h('button', { class: 'btn', disabled: true }, 'Save template');
-      const live = () => { dirty = subject.value !== t.subject || text.value !== t.body; save.disabled = !dirty; };
-      subject.oninput = live; text.oninput = live;
+      const live = () => { dirty = subject.value !== t.subject || text.value !== t.body || eyebrow.value !== (t.eyebrow || ''); save.disabled = !dirty; };
+      subject.oninput = live; text.oninput = live; eyebrow.oninput = live;
       save.onclick = busy(save, async () => {
         if (!subject.value.trim() || !text.value.trim()) throw new Error('The template needs a subject and some text.');
-        const row = await api.saveEmailTemplate(t.key, subject.value.trim(), text.value);
+        const row = await api.saveEmailTemplate(t.key, subject.value.trim(), text.value, eyebrow.value.trim());
         templates = templates.map((x) => (x.key === row.key ? row : x)); dirty = false; paintList(); paintEditor(); toast('Template saved');
       });
       const prev = h('button', { class: 'btn secondary', type: 'button' }, 'Preview');
-      prev.onclick = busy(prev, () => preview(frame, t.key, subject.value, text.value)());
+      prev.onclick = busy(prev, () => preview(frame, t.key, subject.value, text.value, undefined, eyebrow.value)());
       editor.replaceChildren(h('div', { class: 'card' }, h('h2', {}, t.name), h('p', { class: 'small muted', style: { marginTop: 0 } }, t.description),
-        field('Subject', subject), field('Text', text, `Use "# Heading", "- bullet", a blank line between paragraphs, and "[Button label](https://link)" on its own line for a button. Details you can use: ${t.variables.map((v) => `{{${v}}}`).join(' ')}`),
+        field('Label above the title', eyebrow, 'A small caps label such as Receipt or Security.'), field('Subject', subject), field('Text', text, `Write like a normal email. "# Headline" is the big title, "## Section" a small heading, "- Label: value" lines make a receipt table, "> note" highlights a line, "![alt](https://picture)" adds a picture, and "[Button label](https://link)" on its own line makes an amber button. Details you can use: ${t.variables.map((v) => `{{${v}}}`).join(' ')}`),
         h('div', { class: 'row' }, save, prev), frame));
     }
     paintList(); paintEditor();

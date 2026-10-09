@@ -7,15 +7,42 @@ test('fill replaces variables and blanks unknown ones', () => {
   assert.equal(fill('Hi {{ name }}, {{missing}}!', { name: 'Ada' }), 'Hi Ada, !');
 });
 
-test('renderEmail builds headings, lists, buttons and escapes HTML', () => {
-  const r = renderEmail('Hello {{n}}', '# Receipt\n- Plan: {{p}}\n- Amount: ₦5,000\n\n<script>x</script> **bold**\n\n[Open]({{u}})', { n: 'Ada', p: 'Monthly', u: 'https://x.test/a' });
+test('renderEmail builds headline, sections, bullets, buttons and escapes HTML', () => {
+  const r = renderEmail('Hello {{n}}', '# Receipt for {{n}}\n\n## Next steps\n- Open the app\n- Add a reader\n\n<script>x</script> **bold**\n\n[Open]({{u}})', { n: 'Ada', u: 'https://x.test/a', site_url: 'https://x.test' }, { eyebrow: 'Receipt' });
   assert.equal(r.subject, 'Hello Ada');
-  assert.match(r.html, /<h2[^>]*>Receipt<\/h2>/);
-  assert.match(r.html, /<li[^>]*>Plan: Monthly<\/li>/);
+  assert.match(r.html, /<h1[^>]*>Receipt for Ada<\/h1>/);
+  assert.match(r.html, /<h2[^>]*>Next steps<\/h2>/);
+  assert.match(r.html, /<li[^>]*>Open the app<\/li>/);
   assert.match(r.html, /href="https:\/\/x\.test\/a"[^>]*>Open<\/a>/);
   assert.match(r.html, /&lt;script&gt;x&lt;\/script&gt; <strong>bold<\/strong>/);
   assert.doesNotMatch(r.html, /<script>/);
+  assert.match(r.html, />Receipt<\/p>/); // eyebrow label
+  assert.match(r.html, /prefers-color-scheme: dark/); // dark mode styles
+  assert.match(r.html, /href="https:\/\/x\.test\/account\/"/); // footer links
   assert.match(r.text, /Open: https:\/\/x\.test\/a/);
+});
+
+test('"Label: value" lists become a summary table and blank values are left out', () => {
+  const r = renderEmail('s', '# Receipt\n- Plan: Premium\n- Amount paid: ₦5,000\n- Discount:\n- Date: 1 Nov 2026', {});
+  assert.match(r.html, /<table[^>]*>.*Plan.*Premium.*Amount paid.*₦5,000.*Date.*1 Nov 2026/s);
+  assert.doesNotMatch(r.html, /Discount/);
+  assert.doesNotMatch(r.html, /<ul/);
+  assert.match(r.text, /Amount paid: ₦5,000/);
+});
+
+test('a note, a picture and a code box render, and an empty picture is skipped', () => {
+  const r = renderEmail('s', '![Cover](https://img.test/c.png)\n![none]()\n\n# Hi\n\n> Pay by Friday\n\n`123456`', {});
+  assert.match(r.html, /<img src="https:\/\/img\.test\/c\.png" alt="Cover"/);
+  assert.doesNotMatch(r.html, /alt="none"/);
+  assert.match(r.html, /Pay by Friday/);
+  assert.match(r.html, />123456<\/td>/);
+  assert.doesNotMatch(renderEmail('s', '![x](http://insecure.test/a.png)', {}).html, /<img src="http:/);
+});
+
+test('Supabase Auth placeholders survive rendering', () => {
+  const r = renderEmail('s', '`{{ .Token }}`\n\n[Confirm]({{ .ConfirmationURL }})', {});
+  assert.match(r.html, /\{\{ \.Token \}\}/);
+  assert.match(r.html, /href="\{\{ \.ConfirmationURL \}\}"/);
 });
 
 test('buttons only accept http(s) links', () => {

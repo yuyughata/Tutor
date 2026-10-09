@@ -1,0 +1,98 @@
+[
+ {
+  "key": "welcome",
+  "name": "Welcome",
+  "subject": "Welcome to Genova",
+  "eyebrow": "Welcome",
+  "description": "Sent when a parent creates an account on the website.",
+  "automatic": true
+ },
+ {
+  "key": "subscription_confirmation",
+  "name": "Subscription confirmation and receipt",
+  "subject": "Your Genova receipt",
+  "eyebrow": "Receipt",
+  "description": "Sent after a successful Paystack payment.",
+  "automatic": true
+ },
+ {
+  "key": "renewal_due",
+  "name": "Expiration and amount due",
+  "subject": "Your Genova Premium needs renewing",
+  "eyebrow": "Payment due",
+  "description": "Sent when a payment fails or a subscription is about to lapse.",
+  "automatic": true
+ },
+ {
+  "key": "payment_failed",
+  "name": "Payment failed",
+  "subject": "We could not take your Genova payment",
+  "eyebrow": "Payment unsuccessful",
+  "description": "Sent when a renewal payment does not go through.",
+  "automatic": true
+ },
+ {
+  "key": "cancellation",
+  "name": "Cancellation",
+  "subject": "Your Genova subscription was cancelled",
+  "eyebrow": "Subscription cancelled",
+  "description": "Sent when a subscription is cancelled.",
+  "automatic": true
+ },
+ {
+  "key": "new_title",
+  "name": "New title release",
+  "subject": "New on Genova: Luna and the Firefly",
+  "eyebrow": "New story",
+  "description": "Announce a new or upcoming story.",
+  "automatic": false
+ },
+ {
+  "key": "broadcast",
+  "name": "Admin broadcast",
+  "subject": "A message from Genova",
+  "eyebrow": "From the Genova team",
+  "description": "Free-form message to a group of parents.",
+  "automatic": false
+ },
+ {
+  "key": "security_change",
+  "name": "Passcode or password changed",
+  "subject": "Your Genova passcode was changed",
+  "eyebrow": "Security",
+  "description": "Sent when a parent changes their passcode or password.",
+  "automatic": true
+ },
+ {
+  "key": "renewal_upcoming",
+  "name": "Renewal coming up",
+  "subject": "Your Genova Premium renews on 9 January 2027",
+  "eyebrow": "Renewal reminder",
+  "description": "Sent a few days before an active subscription renews (scheduled reminder).",
+  "automatic": true
+ },
+ {
+  "key": "access_ending",
+  "name": "Premium ending (cancelled)",
+  "subject": "Your Genova Premium ends on 9 January 2027",
+  "eyebrow": "Premium ending",
+  "description": "Sent a few days before a cancelled subscription runs out (scheduled reminder).",
+  "automatic": true
+ },
+ {
+  "key": "grace_ending",
+  "name": "Last chance to renew",
+  "subject": "Last chance to keep Genova Premium",
+  "eyebrow": "Last chance",
+  "description": "Sent when the 5-day grace period after a missed payment is about to end (scheduled reminder).",
+  "automatic": true
+ },
+ {
+  "key": "support_received",
+  "name": "Support message received",
+  "subject": "We have your message",
+  "eyebrow": "Support",
+  "description": "Sent to a parent right after they contact support.",
+  "automatic": true
+ }
+]

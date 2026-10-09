@@ -1,0 +1,195 @@
+[
+ {
+  "key": "welcome",
+  "name": "Welcome",
+  "description": "Sent when a parent creates an account on the website.",
+  "subject": "Welcome to Genova",
+  "eyebrow": "Welcome",
+  "body": "# Welcome to Genova\n\nYour account is ready. Genova is where children read stories chosen for their level, one picture and a few lines at a time.\n\n## Get started\n- Open the Genova app and sign in with {{parent_email}}.\n- Add a reader for each child and choose their reading level.\n- Start with the free stories, or choose Premium for the whole library.\n\n[Explore plans]({{site_url}}/plans/)\n\nQuestions? Reply to this email or write to {{support_email}}.",
+  "variables": [
+   "parent_email",
+   "site_url",
+   "support_email"
+  ],
+  "automatic": true
+ },
+ {
+  "key": "subscription_confirmation",
+  "name": "Subscription confirmation and receipt",
+  "description": "Sent after a successful Paystack payment.",
+  "subject": "Your Genova receipt",
+  "eyebrow": "Receipt",
+  "body": "# Thank you. Premium is on.\n\nYour payment went through and every story is now unlocked for your readers.\n\n## Details\n- Plan: {{plan}}\n- Amount paid: {{amount}}\n- Date: {{paid_date}}\n- Premium until: {{access_until}}\n- Account: {{parent_email}}\n\nSign in to the Genova app with this email and your stories unlock on the device.\n\n[Manage subscription]({{site_url}}/account/)\n\nPlease keep this email as your receipt.",
+  "variables": [
+   "parent_email",
+   "plan",
+   "amount",
+   "paid_date",
+   "access_until",
+   "site_url",
+   "support_email"
+  ],
+  "automatic": true
+ },
+ {
+  "key": "renewal_due",
+  "name": "Expiration and amount due",
+  "description": "Sent when a payment fails or a subscription is about to lapse.",
+  "subject": "Your Genova Premium needs renewing",
+  "eyebrow": "Payment due",
+  "body": "# Your Premium payment is due\n\n> Amount due: {{amount}}. Please pay by {{due_date}} to keep Premium.\n\n## Details\n- Plan: {{plan}}\n- Amount due: {{amount}}\n- Due date: {{due_date}}\n- Premium stays on until: {{access_until}}\n\nAfter that date your account moves to the Free plan. Renew in a minute and nothing changes for your readers.\n\n[Renew now]({{site_url}}/account/)\n\nIf you have already paid, thank you, and please ignore this message.",
+  "variables": [
+   "parent_email",
+   "plan",
+   "amount",
+   "due_date",
+   "access_until",
+   "site_url",
+   "support_email"
+  ],
+  "automatic": true
+ },
+ {
+  "key": "payment_failed",
+  "name": "Payment failed",
+  "description": "Sent when a renewal payment does not go through.",
+  "subject": "We could not take your Genova payment",
+  "eyebrow": "Payment unsuccessful",
+  "body": "# We could not take your payment\n\nYour last Genova Premium payment did not go through. This can happen when a card has expired, has too little balance, or was declined by the bank.\n\n> Good news: Premium stays on until {{access_until}}. Update your payment details before then and nothing changes.\n\n## Details\n- Plan: {{plan}}\n- Amount due: {{amount}}\n- Premium stays on until: {{access_until}}\n\n[Update payment details]({{site_url}}/account/)\n\nIf you need a hand, write to {{support_email}} and we will help.",
+  "variables": [
+   "parent_email",
+   "plan",
+   "amount",
+   "access_until",
+   "site_url",
+   "support_email"
+  ],
+  "automatic": true
+ },
+ {
+  "key": "cancellation",
+  "name": "Cancellation",
+  "description": "Sent when a subscription is cancelled.",
+  "subject": "Your Genova subscription was cancelled",
+  "eyebrow": "Subscription cancelled",
+  "body": "# Your subscription has been cancelled\n\nYou will not be charged again. Premium stays on until {{access_until}}, so your readers can keep going until then.\n\n## What happens next\n- After {{access_until}} your account moves to the Free plan.\n- Reader profiles and favourites are kept.\n- Stories you saved offline that need Premium will lock.\n\nChanged your mind? You can come back any time.\n\n[Subscribe again]({{site_url}}/plans/)\n\nWe would love to know how we can do better. Just reply to this email.",
+  "variables": [
+   "parent_email",
+   "plan",
+   "access_until",
+   "site_url",
+   "support_email"
+  ],
+  "automatic": true
+ },
+ {
+  "key": "new_title",
+  "name": "New title release",
+  "description": "Announce a new or upcoming story.",
+  "subject": "New on Genova: {{story_title}}",
+  "eyebrow": "New story",
+  "body": "![{{story_title}}]({{cover_url}})\n\n# {{story_title}}\n\n{{synopsis}}\n\n[Read it now]({{story_url}})\n\nHappy reading from all of us at CUSTAR.",
+  "variables": [
+   "story_title",
+   "synopsis",
+   "story_url",
+   "cover_url",
+   "site_url"
+  ],
+  "automatic": false
+ },
+ {
+  "key": "broadcast",
+  "name": "Admin broadcast",
+  "description": "Free-form message to a group of parents.",
+  "subject": "A message from Genova",
+  "eyebrow": "From the Genova team",
+  "body": "{{message}}\n\nWith love from the Genova team at CUSTAR.",
+  "variables": [
+   "message",
+   "site_url"
+  ],
+  "automatic": false
+ },
+ {
+  "key": "security_change",
+  "name": "Passcode or password changed",
+  "description": "Sent when a parent changes their passcode or password.",
+  "subject": "Your Genova {{what}} was changed",
+  "eyebrow": "Security",
+  "body": "# Your {{what}} was changed\n\nThe {{what}} for {{parent_email}} was just updated.\n\n> If this was you, there is nothing more to do. If it was not, reset your password now and tell us.\n\n[Reset your password]({{site_url}}/forgot-password/)\n\nNeed help? Write to {{support_email}}.",
+  "variables": [
+   "parent_email",
+   "what",
+   "site_url",
+   "support_email"
+  ],
+  "automatic": true
+ },
+ {
+  "key": "renewal_upcoming",
+  "name": "Renewal coming up",
+  "description": "Sent a few days before an active subscription renews (scheduled reminder).",
+  "subject": "Your Genova Premium renews on {{renew_date}}",
+  "eyebrow": "Renewal reminder",
+  "body": "# Your Premium renews soon\n\nA quick heads-up, no action needed.\n\n## Renewal details\n- Plan: {{plan}}\n- Amount: {{amount}}\n- Renews on: {{renew_date}}\n\nYour card is charged automatically and Premium carries on without a break. You can change or cancel any time before then.\n\n[Manage subscription]({{site_url}}/account/)\n\nQuestions? Write to {{support_email}}.",
+  "variables": [
+   "parent_email",
+   "plan",
+   "amount",
+   "renew_date",
+   "access_until",
+   "site_url",
+   "support_email"
+  ],
+  "automatic": true
+ },
+ {
+  "key": "access_ending",
+  "name": "Premium ending (cancelled)",
+  "description": "Sent a few days before a cancelled subscription runs out (scheduled reminder).",
+  "subject": "Your Genova Premium ends on {{access_until}}",
+  "eyebrow": "Premium ending",
+  "body": "# Your Premium ends on {{access_until}}\n\nYou cancelled, so it will not renew. Your readers keep full access until that date.\n\n## What happens next\n- After {{access_until}} your account moves to the Free plan.\n- Reader profiles and favourites are kept.\n- Stories you saved offline that need Premium will lock.\n\nChanged your mind? Subscribe again and Premium carries on.\n\n[Subscribe again]({{site_url}}/plans/)\n\nThank you for reading with us.",
+  "variables": [
+   "parent_email",
+   "plan",
+   "access_until",
+   "site_url",
+   "support_email"
+  ],
+  "automatic": true
+ },
+ {
+  "key": "grace_ending",
+  "name": "Last chance to renew",
+  "description": "Sent when the 5-day grace period after a missed payment is about to end (scheduled reminder).",
+  "subject": "Last chance to keep Genova Premium",
+  "eyebrow": "Last chance",
+  "body": "# Last chance to keep Premium\n\n> Your last payment did not go through. Premium stays on until {{access_until}}.\n\n## To keep Premium\n- Plan: {{plan}}\n- Amount due: {{amount}}\n- Renew before: {{access_until}}\n\nAfter that your account moves to the Free plan automatically.\n\n[Renew now]({{site_url}}/account/)\n\nIf you have already paid, thank you, and please ignore this message. Need help? Write to {{support_email}}.",
+  "variables": [
+   "parent_email",
+   "plan",
+   "amount",
+   "access_until",
+   "site_url",
+   "support_email"
+  ],
+  "automatic": true
+ },
+ {
+  "key": "support_received",
+  "name": "Support message received",
+  "description": "Sent to a parent right after they contact support.",
+  "subject": "We have your message",
+  "eyebrow": "Support",
+  "body": "# We have your message\n\nThank you for getting in touch. Our team will reply to {{parent_email}}, usually within one working day.\n\n## What you sent\n> {{message}}\n\nIn the meantime you can manage your account any time.\n\n[Open your account]({{site_url}}/account/)",
+  "variables": [
+   "parent_email",
+   "message",
+   "site_url",
+   "support_email"
+  ],
+  "automatic": true
+ }
+]

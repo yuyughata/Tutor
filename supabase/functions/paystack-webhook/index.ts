@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
 
   const mailer = createMailer({
     settings: async () => (await admin.from('email_settings').select('api_key, from_name, from_email, reply_to, enabled').eq('id', true).maybeSingle()).data,
-    template: async (key) => (await admin.from('email_templates').select('key, subject, body').eq('key', key).maybeSingle()).data,
+    template: async (key) => (await admin.from('email_templates').select('key, subject, body, eyebrow').eq('key', key).maybeSingle()).data,
     log: async (row) => { await admin.from('email_log').insert(row); },
   });
   const siteUrl = (Deno.env.get('WEB_URL') ?? '').replace(/\/$/, '');
@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
     const eventName = String(body.event ?? '');
     const template = eventName === 'charge.success' && evt.action === 'activate' ? 'subscription_confirmation'
       : eventName === 'subscription.disable' ? 'cancellation'
-      : eventName === 'invoice.payment_failed' ? 'renewal_due' : null;
+      : eventName === 'invoice.payment_failed' ? 'payment_failed' : null;
     if (template) {
       const { data: profile } = await admin.from('profiles').select('email').eq('id', parentId).maybeSingle();
       const { data: access } = await admin.from('entitlements').select('plan, current_period_end').eq('parent_id', parentId).maybeSingle();
@@ -85,8 +85,8 @@ Deno.serve(async (req) => {
       if (profile?.email) {
         await mailer.sendOne(profile.email, {
           parent_email: profile.email, plan: plan?.name ?? evt.plan ?? 'Premium', amount: minor ? money(minor, plan?.currency ?? 'NGN') : '',
-          access_until: longDate(access?.current_period_end ? new Date(Date.parse(access.current_period_end) + (template === 'renewal_due' ? 5 * 86_400_000 : 0)).toISOString() : null),
-          due_date: longDate(access?.current_period_end), site_url: siteUrl, support_email: Deno.env.get('SUPPORT_EMAIL') ?? 'support@custar.com',
+          access_until: longDate(access?.current_period_end ? new Date(Date.parse(access.current_period_end) + (template === 'payment_failed' ? 5 * 86_400_000 : 0)).toISOString() : null),
+          due_date: longDate(access?.current_period_end), paid_date: longDate(new Date().toISOString()), site_url: siteUrl, support_email: Deno.env.get('SUPPORT_EMAIL') ?? 'support@custar.com',
         }, { template, campaign: 'automatic' });
       }
     }

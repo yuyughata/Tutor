@@ -7,6 +7,7 @@ Children's storybook app by CUSTAR. Product scope: [`docs/MVP_BRIEF.md`](docs/MV
 - `web/` — Next.js website (static export): landing, plans and checkout, account (Premium badge, manage subscription), sign-up / sign-in / forgot password, privacy policy, and the **admin dashboard / CMS** at `/admin/` (`web/public/admin`).
 - `supabase/migrations/` — `0001`–`0006` (schema + RLS, admin CMS, hardened helpers, reading levels / access rules / plans / legal documents, support / consent / passcode / email, scheduled reminders).
 - `supabase/seed.sql` — three sample stories for local development; `supabase/seed_legal.sql` — sample privacy policy.
+- `tools/email/` — builds the email design previews (`docs/email-templates`, `docs/Genova_Email_Templates.pdf`) and the Supabase Auth email HTML (`supabase/auth-email-templates`).
 - `tools/qa/` — browser tests, screenshots and PDF build ([README](tools/qa/README.md)).
 - `CLAUDE.md` and [`docs/HANDOFF.md`](docs/HANDOFF.md) — context, accounts, deploy and how to resume in a new chat or account.
 - `supabase/functions/` — `paystack-checkout`, `paystack-webhook`, `paystack-manage`, `admin-user-support`, `send-email`, `support-request`, `send-reminders`.
@@ -67,7 +68,7 @@ Tests: `node --test web/tests/admin/api.test.mjs` (set `SUPABASE_JS` to the supa
 Project ref `cjdrlddvbyfataumdztg`. Applied migrations: `0001_init` (schema, RLS, storage buckets),
 `0002_admin_cms` (scheduled publishing, admin access, page counts, featured-slot overlap guard, admin functions, seed author and categories),
 `0003_harden_helpers` (access helpers moved to a private schema),
-`0004_levels_access_plans_policy` (reading levels, 5-day grace access rule, plans, privacy policy, admin support log, hourly expiry job). `0006_scheduled_reminders` (reminder rules, sent-log, daily cron job, 3 templates), `0005_support_email_passcode` (support requests, checkout consent, parent passcodes, Resend settings/templates/log + 7 email templates). The repo's migration files are the source of truth.
+`0004_levels_access_plans_policy` (reading levels, 5-day grace access rule, plans, privacy policy, admin support log, hourly expiry job). `0007_email_designs` (minimal email layout, 12 templates incl. payment failed and support received), `0006_scheduled_reminders` (reminder rules, sent-log, daily cron job, 3 templates), `0005_support_email_passcode` (support requests, checkout consent, parent passcodes, Resend settings/templates/log + 7 email templates). The repo's migration files are the source of truth.
 Story art: covers go to the public `covers` bucket; page images go to the private `pages` bucket and are shown through signed URLs.
 Note: the Supabase tooling used here blocks `DROP`/`DELETE` statements, so `0002` uses `ALTER POLICY` instead of drop-and-recreate and page saving is done from the dashboard.
 
