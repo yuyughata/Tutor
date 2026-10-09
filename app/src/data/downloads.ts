@@ -2,7 +2,7 @@ import { Directory, File, Paths } from 'expo-file-system';
 import { useSyncExternalStore } from 'react';
 import { Platform } from 'react-native';
 import { load, save } from '../state/storage';
-import type { Art, Story, StoryPage } from '../types';
+import type { Art, Story, StoryPage, StoryWord } from '../types';
 
 /**
  * Stories saved for offline reading. Text and story details are kept in app storage; on iOS and Android the
@@ -16,6 +16,7 @@ export type SavedStory = {
   imagesOffline: boolean;
   coverLocal?: string;
   pages: StoryPage[]; // imageUrl points at a local file when imagesOffline
+  words?: StoryWord[]; // the word explorer words, so they work offline
 };
 
 const KEY = 'genova.downloads.v1';
@@ -46,9 +47,9 @@ async function fetchTo(dir: Directory, name: string, url: string): Promise<{ uri
 }
 
 /** Save a story for offline reading. `pages` must already be loaded (the caller checked access). */
-export async function saveStory(story: Story, pages: StoryPage[]): Promise<void> {
+export async function saveStory(story: Story, pages: StoryPage[], words: StoryWord[] = []): Promise<void> {
   busy = { ...busy, [story.slug]: 0 }; emit();
-  let bytes = JSON.stringify(pages).length;
+  let bytes = JSON.stringify(pages).length + JSON.stringify(words).length;
   let coverLocal: string | undefined;
   let outPages = pages;
   let imagesOffline = false;
@@ -73,7 +74,7 @@ export async function saveStory(story: Story, pages: StoryPage[]): Promise<void>
       }
       if (!pages.some((p) => p.imageUrl)) imagesOffline = true; // sample art is drawn on the device
     }
-    state = { ...state, [story.slug]: { story, savedAt: new Date().toISOString(), bytes, imagesOffline: native ? imagesOffline : false, coverLocal, pages: outPages } };
+    state = { ...state, [story.slug]: { story, savedAt: new Date().toISOString(), bytes, imagesOffline: native ? imagesOffline : false, coverLocal, pages: outPages, words } };
     persist();
   } finally {
     const { [story.slug]: _gone, ...rest } = busy; busy = rest; emit();

@@ -43,6 +43,7 @@ const ICONS = {
   baby: '<path d="M9 12h.01M15 12h.01M10 16c.7.6 1.3.9 2 .9s1.3-.3 2-.9M12 3a5 5 0 0 0-5 5v1H5a2 2 0 0 0 0 4h1a6 6 0 0 0 12 0h1a2 2 0 0 0 0-4h-2V8a5 5 0 0 0-5-5z"/>',
   mail: '<path d="M3 5h18v14H3zM3 7l9 6 9-6"/>',
   help: '<path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.7M12 17h.01"/>',
+  trophy: '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/>',
   logout: '<path d="M9 21H5V3h4m7 4 5 5-5 5m5-5H9"/>',
 };
 export function icon(name) {

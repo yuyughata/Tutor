@@ -9,14 +9,15 @@ import { EmptyState } from '../../src/components/EmptyState';
 import { Picture } from '../../src/components/Picture';
 import { Tap } from '../../src/components/Tap';
 import { formatBytes, removeStory, saveStory, useDownloads } from '../../src/data/downloads';
-import { getHome, getPages, getStory } from '../../src/data/repository';
+import { getChapters, getHome, getPages, getStory, getWords } from '../../src/data/repository';
 import { levelFull } from '../../src/levels';
 import { useAuth } from '../../src/state/auth';
 import { useGate } from '../../src/state/gate';
 import { useLibrary } from '../../src/state/library';
 import { useReadingLevel } from '../../src/state/profiles';
-import { colors, radius, shadow, space, type, themed } from '../../src/theme';
-import type { Category, Story } from '../../src/types';
+import { colors, fonts, radius, shadow, space, type, themed } from '../../src/theme';
+import type { Chapter } from '../../src/lib/story';
+import type { Category, Story, StoryWord } from '../../src/types';
 import { useTheme } from '../../src/state/theme';
 
 function Fact({ icon, label, bg, fg }: { icon: keyof typeof Ionicons.glyphMap; label: string; bg: string; fg: string }) {
@@ -39,6 +40,8 @@ export default function StoryDetail() {
   const { isFavorite, toggleFavorite, progress } = useLibrary();
   const [story, setStory] = useState<Story | null | undefined>(undefined);
   const [cats, setCats] = useState<Category[]>([]);
+  const [chapters, setChapters] = useState<Chapter[]>([]);
+  const [words, setWords] = useState<StoryWord[]>([]);
   const downloads = useDownloads();
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -46,6 +49,12 @@ export default function StoryDetail() {
     getStory(slug).then(setStory).catch(() => setStory(null));
     getHome(band).then((h) => setCats(h.categories)).catch(() => {});
   }, [slug, band]);
+
+  useEffect(() => {
+    if (!story) return;
+    getChapters(story).then(setChapters).catch(() => setChapters([]));
+    getWords(story).then(setWords).catch(() => setWords([]));
+  }, [story]);
 
   if (story === undefined) return <ActivityIndicator style={{ marginTop: 160 }} color={colors.primary} />;
   if (story === null) {
@@ -71,12 +80,12 @@ export default function StoryDetail() {
     try {
       const pages = await getPages(story, { fresh: true });
       if (!pages.length) throw new Error('empty');
-      await saveStory(story, pages);
+      await saveStory(story, pages, await getWords(story));
     } catch {
       setSaveError("Couldn't save this story. Check your connection and try again.");
     }
   };
-  const read = () => router.push({ pathname: '/read/[slug]', params: { slug: story.slug } });
+  const read = (page?: number) => router.push({ pathname: '/read/[slug]', params: page === undefined ? { slug: story.slug } : { slug: story.slug, page: String(page) } });
   const unlock = async () => {
     if (await ask()) router.dismissTo('/grownups');
   };
@@ -109,9 +118,40 @@ export default function StoryDetail() {
             </View>
           )}
 
+          {chapters.length > 0 && (
+            <View style={styles.block}>
+              <Text style={styles.blockTitle} accessibilityRole="header">Chapters</Text>
+              {chapters.map((c) => (
+                <Tap
+                  key={c.index}
+                  accessibilityRole="button"
+                  accessibilityLabel={readable ? `Read chapter ${c.index}: ${c.title}` : `Chapter ${c.index}: ${c.title}`}
+                  accessibilityState={{ disabled: !readable }}
+                  disabled={!readable}
+                  onPress={() => read(c.firstPage)}
+                  style={styles.chapterRow}
+                >
+                  <View style={styles.chapterNum}><Text style={styles.chapterNumText}>{c.index}</Text></View>
+                  <Text style={styles.chapterName}>{c.title}</Text>
+                  {readable && <Ionicons name="chevron-forward" size={18} color={colors.muted} />}
+                </Tap>
+              ))}
+            </View>
+          )}
+
+          {words.length > 0 && (
+            <View style={styles.wordsCard} accessibilityLabel={`New ${words.length === 1 ? 'word' : 'words'} to explore: ${words.map((w) => w.word).join(', ')}`}>
+              <Ionicons name="search" size={18} color={colors.secondaryDeep} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.wordsTitle}>{words.length === 1 ? 'A new word to explore' : `${words.length} new words to explore`}</Text>
+                <Text style={styles.wordsList}>{words.map((w) => w.word).join(' · ')}</Text>
+              </View>
+            </View>
+          )}
+
           <View style={{ marginTop: space.lg, gap: 10 }}>
             {readable ? (
-              <Button label={resume ? `Continue from page ${p.page + 1}` : p?.finished ? 'Read again' : 'Start reading'} icon="book" onPress={read} />
+              <Button label={resume ? `Continue from page ${p.page + 1}` : p?.finished ? 'Read again' : 'Start reading'} icon="book" onPress={() => read()} />
             ) : (
               <>
                 <View style={styles.premium}>
@@ -175,6 +215,15 @@ const styles = themed(() => StyleSheet.create({
   synopsis: { ...type.body, fontSize: 17, lineHeight: 26, color: colors.ink, marginTop: 18 },
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 14 },
   tag: { ...type.heading, fontSize: 14, color: colors.primaryDeep },
+  block: { marginTop: space.lg, gap: 8 },
+  blockTitle: { ...type.title, color: colors.ink, marginBottom: 2 },
+  chapterRow: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 52, paddingHorizontal: 12, borderRadius: radius.md, backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.border },
+  chapterNum: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
+  chapterNumText: { fontFamily: fonts.black, fontSize: 15, color: colors.onPrimary },
+  chapterName: { ...type.heading, flex: 1, color: colors.ink },
+  wordsCard: { flexDirection: 'row', gap: 12, alignItems: 'center', marginTop: space.lg, padding: 14, borderRadius: radius.md, backgroundColor: colors.secondarySoft },
+  wordsTitle: { ...type.heading, color: colors.secondaryDeep },
+  wordsList: { fontFamily: fonts.black, fontSize: 17, color: colors.ink, marginTop: 2 },
   premium: { flexDirection: 'row', gap: 10, alignItems: 'center', backgroundColor: colors.primarySoft, borderRadius: radius.md, padding: 14 },
   premiumText: { ...type.body, flex: 1, color: colors.ink },
   savedHint: { ...type.small, color: colors.muted, textAlign: 'center' },

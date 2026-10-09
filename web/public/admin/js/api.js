@@ -7,6 +7,8 @@ const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 function friendly(error) {
   const code = error?.code;
   const msg = error?.message || 'Something went wrong';
+  if (code === '23505' && /story_words/.test(error.message)) return new Error('Each word can only be used once in a story.');
+  if (code === '23505' && /reader_awards/.test(error.message)) return new Error('This reader already has that award.');
   if (code === '23505') return new Error(/slug/.test(error.message + (error.details || '')) ? 'That URL name (slug) is already used by another story.' : 'That already exists.');
   if (code === '23P01') return new Error('That overlaps an existing slot of the same kind. Pick different dates.');
   if (code === '42501' || /row-level security/i.test(msg)) return new Error('Your account is not allowed to do that.');
@@ -79,18 +81,19 @@ export function createApi(sb) {
     },
     async getStory(id) {
       const story = unwrap(await sb.from('stories')
-        .select('id, slug, title, synopsis, cover_url, author_id, reading_level, status, is_free, reading_minutes, published_at, updated_at, story_categories(category_id)')
+        .select('id, slug, title, synopsis, cover_url, author_id, reading_level, status, is_free, has_chapters, reading_minutes, published_at, updated_at, story_categories(category_id)')
         .eq('id', id).maybeSingle());
       if (!story) return null;
-      const pages = unwrap(await sb.from('story_pages').select('id, position, image_url, text').eq('story_id', id).order('position'));
-      return { ...story, categoryIds: story.story_categories.map((c) => c.category_id), pages };
+      const pages = unwrap(await sb.from('story_pages').select('id, position, image_url, text, chapter_title').eq('story_id', id).order('position'));
+      const words = unwrap(await sb.from('story_words').select('id, word, meaning, example, page_position, sort_order').eq('story_id', id).order('sort_order'));
+      return { ...story, categoryIds: story.story_categories.map((c) => c.category_id), pages, words };
     },
 
-    /** Saves metadata, categories and pages; `pages` is the new order. Returns the story id. */
-    async saveStory(story, categoryIds, pages) {
+    /** Saves metadata, categories, pages and Word Explorer words; `pages` is the new order. Returns the story id. */
+    async saveStory(story, categoryIds, pages, words = []) {
       const row = {
         id: story.id, slug: story.slug, title: story.title, synopsis: story.synopsis, cover_url: story.cover_url || null,
-        author_id: story.author_id || null, reading_level: story.reading_level, status: story.status, is_free: !!story.is_free,
+        author_id: story.author_id || null, reading_level: story.reading_level, status: story.status, is_free: !!story.is_free, has_chapters: !!story.has_chapters,
         reading_minutes: story.reading_minutes, published_at: story.published_at || null,
       };
       unwrap(await sb.from('stories').upsert(row, { onConflict: 'id' }));
@@ -111,13 +114,26 @@ export function createApi(sb) {
       const kept = pages.map((p, i) => ({ p, position: i + 1 })).filter(({ p }) => p.id);
       if (kept.length) {
         unwrap(await sb.from('story_pages').upsert(kept.map(({ p, position }) => (
-          { id: p.id, story_id: story.id, position: 10000 + position, image_url: p.image_url, text: p.text })), { onConflict: 'id' }));
+          { id: p.id, story_id: story.id, position: 10000 + position, image_url: p.image_url, text: p.text, chapter_title: p.chapter_title?.trim() || null })), { onConflict: 'id' }));
       }
-      const finalRows = pages.map((p, i) => ({ ...(p.id ? { id: p.id } : {}), story_id: story.id, position: i + 1, image_url: p.image_url || '', text: p.text || '' }));
+      const finalRows = pages.map((p, i) => ({ ...(p.id ? { id: p.id } : {}), story_id: story.id, position: i + 1, image_url: p.image_url || '', text: p.text || '', chapter_title: p.chapter_title?.trim() || null }));
       const withId = finalRows.filter((r) => r.id);
       const fresh = finalRows.filter((r) => !r.id);
       if (withId.length) unwrap(await sb.from('story_pages').upsert(withId, { onConflict: 'id' }));
       if (fresh.length) unwrap(await sb.from('story_pages').insert(fresh));
+
+      // Word Explorer: update kept words in place (children's "learned" marks hang off the word id), remove the dropped ones, add the new ones.
+      // The database allows 1 word for Spark and 3 for Seeker, none for Sunrise.
+      const wanted = words.filter((w) => w.word.trim()).map((w, i) => ({ id: w.id || null, word: w.word.trim(), meaning: w.meaning.trim(), example: w.example?.trim() || null, page_position: w.page_position || null, sort_order: i + 1 }));
+      const haveWords = unwrap(await sb.from('story_words').select('id').eq('story_id', story.id)).map((w) => w.id);
+      const goneWords = haveWords.filter((id) => !wanted.some((w) => w.id === id));
+      if (goneWords.length) unwrap(await sb.from('story_words').delete().in('id', goneWords));
+      for (const w of wanted.filter((x) => x.id)) {
+        const { id, ...patch } = w;
+        unwrap(await sb.from('story_words').update(patch).eq('id', id));
+      }
+      const freshWords = wanted.filter((x) => !x.id).map(({ id: _id, ...w }) => ({ ...w, story_id: story.id }));
+      if (freshWords.length) unwrap(await sb.from('story_words').insert(freshWords));
 
       // tidy up page images that are no longer referenced (best effort)
       try { await removeFolder('pages', story.id, pages.map((p) => p.image_url).filter(Boolean)); } catch { /* ignore */ }
@@ -236,6 +252,13 @@ export function createApi(sb) {
       const { count, error } = await sb.from('support_requests').select('id', { count: 'exact', head: true }).eq('status', 'open');
       if (error) throw friendly(error); return count ?? 0;
     },
+    // ---------- reader leaderboard and awards ----------
+    /** period: 'week' | 'month' | 'all_time'. Different stories finished, Monday-start weeks, Nigerian time. */
+    async listLeaderboard(period, limit = 20) { return unwrap(await sb.rpc('admin_leaderboard', { p_period: period, p_limit: limit })); },
+    async giveAward({ child_id, kind, period_label, stories, note }) {
+      const { session } = unwrap(await sb.auth.getSession());
+      unwrap(await sb.from('reader_awards').insert({ child_id, kind, period_label, stories: stories ?? null, note: note?.trim() || null, awarded_by: session?.user?.id }));
+    },
     async listAdmins() { return unwrap(await sb.from('profiles').select('id, email').eq('is_admin', true).order('email')); },
     async setAdmin(email, isAdmin) { unwrap(await sb.rpc('admin_set_admin', { p_email: email, p_admin: isAdmin })); },
   };
@@ -248,5 +271,5 @@ export const API_METHODS = [
   'getLegal', 'saveLegal', 'supportSendReset', 'supportSetPassword', 'listSupportActions', 'listAdmins', 'setAdmin',
   'emailStatus', 'emailSaveSettings', 'emailActivate', 'emailDeactivate', 'emailTest', 'emailPreview', 'emailCount', 'emailSend',
   'listEmailTemplates', 'saveEmailTemplate', 'listEmailLog', 'listSupportRequests', 'updateSupportRequest', 'openSupportCount',
-  'listReminderRules', 'saveReminderRule', 'runReminders', 'listReminderLog',
+  'listReminderRules', 'saveReminderRule', 'runReminders', 'listReminderLog', 'listLeaderboard', 'giveAward',
 ];

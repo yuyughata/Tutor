@@ -2,7 +2,8 @@ import { supabase } from '../lib/supabase';
 import { load, save } from '../state/storage';
 import { getSaved, listSaved } from './downloads';
 import * as mock from './mock';
-import type { ReadingLevel, HomeData, Story, StoryPage } from '../types';
+import { chaptersOf, type Chapter } from '../lib/story';
+import type { ReadingLevel, HomeData, Story, StoryPage, StoryWord } from '../types';
 
 // A reader sees stories at their level and the levels below it; harder levels are hidden.
 const levelOrder: ReadingLevel[] = ['sunrise', 'spark', 'seeker'];
@@ -11,13 +12,13 @@ const inBand = (s: Story, band: ReadingLevel) => levelOrder.indexOf(s.level) <= 
 // ---------- Supabase source ----------
 type StoryRow = {
   id: string; slug: string; title: string; synopsis: string; cover_url: string | null;
-  reading_level: ReadingLevel; is_free: boolean; page_count: number; reading_minutes: number; published_at: string;
+  reading_level: ReadingLevel; is_free: boolean; page_count: number; reading_minutes: number; published_at: string; has_chapters: boolean;
   authors: { name: string } | null;
   story_categories: { categories: { slug: string } | null }[];
 };
 
 const STORY_SELECT =
-  'id, slug, title, synopsis, cover_url, reading_level, is_free, page_count, reading_minutes, published_at,' +
+  'id, slug, title, synopsis, cover_url, reading_level, is_free, page_count, reading_minutes, published_at, has_chapters,' +
   ' authors(name), story_categories(categories(slug))';
 
 function toStory(r: StoryRow, reads: Map<string, number>): Story {
@@ -26,7 +27,7 @@ function toStory(r: StoryRow, reads: Map<string, number>): Story {
     author: r.authors?.name ?? 'CUSTAR', level: r.reading_level, isFree: r.is_free,
     pageCount: r.page_count, readingMinutes: r.reading_minutes, publishedAt: r.published_at,
     categories: r.story_categories.flatMap((c) => (c.categories ? [c.categories.slug] : [])),
-    reads30d: reads.get(r.id) ?? 0,
+    reads30d: reads.get(r.id) ?? 0, hasChapters: !!r.has_chapters,
   };
 }
 
@@ -137,7 +138,7 @@ export async function getPages(story: Story, opts: { fresh?: boolean } = {}): Pr
   }
   const { data, error } = await supabase
     .from('story_pages')
-    .select('position, image_url, text')
+    .select('position, image_url, text, chapter_title')
     .eq('story_id', story.id)
     .order('position');
   if (error) throw error;
@@ -149,5 +150,47 @@ export async function getPages(story: Story, opts: { fresh?: boolean } = {}): Pr
     const { data: urls } = await supabase.storage.from('pages').createSignedUrls(paths, 3600);
     for (const u of urls ?? []) if (u.path && u.signedUrl) signed.set(u.path, u.signedUrl);
   }
-  return rows.map((p) => ({ position: p.position, imageUrl: signed.get(p.image_url) ?? p.image_url, text: p.text }));
+  return rows.map((p) => ({
+    position: p.position, imageUrl: signed.get(p.image_url) ?? p.image_url, text: p.text,
+    ...(story.hasChapters && p.chapter_title ? { chapterTitle: p.chapter_title as string } : {}),
+  }));
+}
+
+/**
+ * The new words to explore in a story (1 for Spark, 3 for Seeker). Read from the saved copy when the story is
+ * downloaded; falls back to [] when offline so the story itself still opens.
+ */
+export async function getWords(story: Story): Promise<StoryWord[]> {
+  const saved = getSaved(story.slug);
+  if (saved?.words) return saved.words;
+  if (!supabase) return mock.words[story.slug] ?? [];
+  try {
+    const { data, error } = await supabase
+      .from('story_words')
+      .select('id, word, meaning, example, page_position')
+      .eq('story_id', story.id)
+      .order('sort_order');
+    if (error) throw error;
+    return (data ?? []).map((w) => ({
+      id: w.id as string, word: w.word as string, meaning: w.meaning as string,
+      example: (w.example as string | null) ?? undefined, page: (w.page_position as number | null) ?? undefined,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+/** Chapter list for the detail screen. Titles are public, so a locked book still shows its contents. */
+export async function getChapters(story: Story): Promise<Chapter[]> {
+  if (!story.hasChapters) return [];
+  const saved = getSaved(story.slug);
+  if (saved) return chaptersOf(saved.pages);
+  if (!supabase) return chaptersOf(mock.pages[story.slug] ?? []);
+  try {
+    const { data, error } = await supabase.rpc('story_chapter_list', { p_story: story.id });
+    if (error) throw error;
+    return ((data ?? []) as { chapter: number; title: string; first_page: number }[]).map((c) => ({ index: c.chapter, title: c.title, firstPage: c.first_page - 1 }));
+  } catch {
+    return [];
+  }
 }

@@ -34,6 +34,18 @@ export function createDemoApi() {
     mk('s5', 'Bedtime for Bear', 'sunrise', true, 'draft', null, 'bear', art.bear, ['c3'], ['Bear yawned a great big yawn.']),
     mk('s6', 'Captain Pip and the Paper Boat', 'spark', false, 'draft', null, 'boat', '', [], []),
   ];
+  const leopard = stories.find((s) => s.id === 's3');
+  leopard.has_chapters = true; leopard.pages[0].chapter_title = 'The Icy Climb'; leopard.pages[2].chapter_title = 'Side by Side';
+  leopard.words = [{ id: uid(), word: 'howled', meaning: 'made a long, loud sound', example: 'The wolf howled.', page_position: 1, sort_order: 1 }, { id: uid(), word: 'silent', meaning: 'making no sound', example: null, page_position: 2, sort_order: 2 }, { id: uid(), word: 'afraid', meaning: 'feeling scared', example: null, page_position: 3, sort_order: 3 }];
+  stories.find((s) => s.id === 's2').words = [{ id: uid(), word: 'sparkle', meaning: 'a tiny flash of light', example: 'Stars sparkle at night.', page_position: 2, sort_order: 1 }];
+  const readers = [
+    { child_id: 'k1', child_name: 'Ada', avatar: 'fox', reading_level: 'spark', parent_email: 'amara@example.com', week: 4, month: 9, all_time: 31, last: -0.2 },
+    { child_id: 'k2', child_name: 'Tobi', avatar: 'bear', reading_level: 'seeker', parent_email: 'kofi@example.com', week: 3, month: 11, all_time: 42, last: -1 },
+    { child_id: 'k3', child_name: 'Zee', avatar: 'moon', reading_level: 'sunrise', parent_email: 'zainab@example.com', week: 3, month: 5, all_time: 12, last: -0.5 },
+    { child_id: 'k4', child_name: 'Kemi', avatar: 'boat', reading_level: 'spark', parent_email: 'tunde@example.com', week: 1, month: 2, all_time: 8, last: -3 },
+  ];
+  const awardsGiven = [];
+  const weekLabel = '2026-W41', monthLabel = '2026-10';
   const featured = [
     { id: 'f1', type: 'week', story_id: 's2', starts_at: iso(-2), ends_at: iso(5) },
     { id: 'f2', type: 'month', story_id: 's3', starts_at: iso(-10), ends_at: iso(20) },
@@ -124,10 +136,13 @@ export function createDemoApi() {
     async listStories() {
       return delay(stories.map((s) => ({ ...s, pages: undefined, authors: { name: 'CUSTAR' }, story_categories: s.categoryIds.map((category_id) => ({ category_id })) })));
     },
-    async getStory(id) { const s = stories.find((x) => x.id === id); return delay(s || null); },
-    async saveStory(story, categoryIds, pages) {
+    async getStory(id) { const s = stories.find((x) => x.id === id); return delay(s ? { ...s, words: s.words || [] } : null); },
+    async saveStory(story, categoryIds, pages, words = []) {
+      const allowed = { sunrise: 0, spark: 1, seeker: 3 }[story.reading_level] ?? 0;
+      const kept = words.filter((w) => w.word.trim());
+      if (kept.length > allowed) throw new Error(`A ${story.reading_level} story can have ${allowed} word(s) in the word explorer.`);
       if (stories.some((s) => s.slug === story.slug && s.id !== story.id)) throw new Error('That URL name (slug) is already used by another story.');
-      const next = { ...story, categoryIds: [...categoryIds], pages: pages.map((p, i) => ({ id: p.id || uid(), position: i + 1, image_url: p.image_url, text: p.text })) };
+      const next = { ...story, categoryIds: [...categoryIds], words: kept.map((w, i) => ({ id: w.id || uid(), word: w.word.trim(), meaning: w.meaning.trim(), example: w.example?.trim() || null, page_position: w.page_position || null, sort_order: i + 1 })), pages: pages.map((p, i) => ({ id: p.id || uid(), position: i + 1, image_url: p.image_url, text: p.text, chapter_title: p.chapter_title?.trim() || null })) };
       apply(next);
       const i = stories.findIndex((s) => s.id === story.id);
       if (i >= 0) stories[i] = next; else stories.unshift(next);
@@ -219,6 +234,21 @@ export function createDemoApi() {
       const r = requests.find((x) => x.id === id); Object.assign(r, patch, patch.status === 'resolved' ? { resolved_at: new Date().toISOString() } : patch.status === 'open' ? { resolved_at: null } : {}); return delay({ ...r });
     },
     async openSupportCount() { return delay(requests.filter((r) => r.status === 'open').length); },
+    async listLeaderboard(period, limit = 20) {
+      const label = period === 'week' ? weekLabel : period === 'month' ? monthLabel : 'all-time';
+      const key = period === 'all_time' ? 'all_time' : period;
+      const rows = readers.filter((r) => r[key] > 0).sort((a, b) => b[key] - a[key] || b.last - a.last).slice(0, limit);
+      let pos = 0, prev = null;
+      return delay(rows.map((r, i) => {
+        if (r[key] !== prev) { pos = i + 1; prev = r[key]; }
+        const start = new Date(); start.setDate(start.getDate() - ((start.getDay() + 6) % 7)); start.setHours(0, 0, 0, 0);
+        return { pos, child_id: r.child_id, child_name: r.child_name, avatar: r.avatar, reading_level: r.reading_level, parent_email: r.parent_email, stories: r[key], last_completed: iso(r.last), period_start: period === 'week' ? start.toISOString() : period === 'month' ? new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString() : null, period_label: label, awarded: awardsGiven.some((a) => a.child_id === r.child_id && a.kind === period && a.period_label === label) };
+      }));
+    },
+    async giveAward({ child_id, kind, period_label, stories, note }) {
+      if (awardsGiven.some((a) => a.child_id === child_id && a.kind === kind && a.period_label === period_label)) throw new Error('This reader already has that award.');
+      awardsGiven.push({ child_id, kind, period_label, stories, note }); await delay(0);
+    },
     async listAdmins() { return delay(admins); },
     async setAdmin(email, isAdmin) {
       const p = people.find((x) => x.email.toLowerCase() === email.toLowerCase());

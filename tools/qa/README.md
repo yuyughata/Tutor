@@ -35,7 +35,8 @@ export PW=$PWD/node_modules/playwright AXE=$PWD/node_modules/axe-core/axe.min.js
 mkdir -p $OUT
 node app-e2e.cjs        # app: levels, sign-in, forgot password, privacy, offline, axe audits  (needs :8097)
 node site-e2e.cjs       # website: plans, checkout, account, badge, grace state, admin gate, axe audits (needs :8096)
-node admin-new.cjs      # admin demo mode: access dialog, password help, privacy editor       (needs :8098)
+node reader-e2e.cjs     # app reader: chapters, Word Explorer, long page text scrolls, stats (needs :8097)
+node admin-new.cjs      # admin demo mode: access dialog, password help, privacy editor, chapters + words editor, Readers leaderboard + award (needs :8098)
 ```
 Each prints `ok`/`FAIL` per step and `ALL PASSED`. Failures leave a `fail-*.png` in `OUT`.
 Stop servers with their PID (`kill %1`), not `pkill -f`.

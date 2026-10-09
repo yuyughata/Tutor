@@ -1,4 +1,4 @@
-import type { Art, Category, Story, StoryPage } from '../types';
+import type { Art, Category, Story, StoryPage, StoryWord } from '../types';
 
 // Sample catalogue that works fully offline: illustrations are drawn from `art`, not downloaded.
 export const categories: Category[] = [
@@ -30,7 +30,7 @@ const seeds: Seed[] = [
     level: 'spark', isFree: true, readingMinutes: 4, publishedAt: ago(9), categories: ['bedtime', 'fantasy'], reads30d: 87 },
   { id: 'b3', slug: 'the-child-and-the-snow-leopard', title: 'The Child and the Snow Leopard', artKey: 'leopard',
     synopsis: 'A brave journey across frozen mountains to discover courage and friendship.',
-    level: 'seeker', isFree: false, readingMinutes: 6, publishedAt: ago(20), categories: ['adventure', 'animals', 'fantasy'], reads30d: 64 },
+    level: 'seeker', isFree: false, readingMinutes: 6, publishedAt: ago(20), categories: ['adventure', 'animals', 'fantasy'], reads30d: 64, hasChapters: true },
   { id: 'b4', slug: 'bedtime-for-bear', title: 'Bedtime for Bear', artKey: 'bear',
     synopsis: 'Bear has counted every star twice. Why is sleep so hard to find tonight?',
     level: 'sunrise', isFree: true, readingMinutes: 2, publishedAt: ago(1), categories: ['bedtime', 'animals'], reads30d: 52 },
@@ -60,9 +60,9 @@ export const pages: Record<string, StoryPage[]> = {
     { position: 3, art: scene('firefly', '🌿', ['✨', '✨', '🧒']), text: 'Luna followed the tiny light into the garden, where dozens more were waiting among the leaves.' },
   ],
   'the-child-and-the-snow-leopard': [
-    { position: 1, art: scene('leopard', '🏔️', ['❄️', '🧒']), text: 'The mountain wind howled as Kai tightened his scarf and took his first step onto the ice.' },
+    { position: 1, art: scene('leopard', '🏔️', ['❄️', '🧒']), chapterTitle: 'The Icy Climb', text: 'The mountain wind howled as Kai tightened his scarf and took his first step onto the ice.' },
     { position: 2, art: scene('leopard', '🐆', ['❄️', '🌨️']), text: 'Two pale eyes watched from the ridge. A snow leopard, silent as falling snow, was following him.' },
-    { position: 3, art: scene('leopard', '🌄', ['🐆', '🧒']), text: 'By nightfall, Kai had stopped being afraid. Side by side, they walked on toward the sunrise.' },
+    { position: 3, art: scene('leopard', '🌄', ['🐆', '🧒']), chapterTitle: 'Side by Side', text: 'By nightfall, Kai had stopped being afraid. Side by side, they walked on toward the sunrise.' },
   ],
   'bedtime-for-bear': [
     { position: 1, art: scene('bear', '🐻', ['🌛', '⭐']), text: 'Bear yawned a great big yawn. But his eyes would not close.' },
@@ -82,3 +82,21 @@ export const pages: Record<string, StoryPage[]> = {
 };
 
 export const featured = { week: 'luna-and-the-firefly', month: 'the-dragon-who-hated-fire' };
+
+// Word explorer: 1 word per Spark story, 3 per Seeker story, none for Sunrise.
+export const words: Record<string, StoryWord[]> = {
+  'luna-and-the-firefly': [
+    { id: 'w-luna-gentle', word: 'gentle', meaning: 'soft and kind, not rough or loud', example: 'The gentle breeze barely moved the leaves.', page: 2 },
+  ],
+  'the-dragon-who-hated-fire': [
+    { id: 'w-dragon-declared', word: 'declared', meaning: 'said something out loud so that everyone could hear', example: 'The teacher declared the winner.', page: 3 },
+  ],
+  'captain-pip-and-the-paper-boat': [
+    { id: 'w-pip-adventure', word: 'adventure', meaning: 'an exciting trip or happening, often a little bit scary', example: 'Our trip to the forest was a big adventure.', page: 3 },
+  ],
+  'the-child-and-the-snow-leopard': [
+    { id: 'w-leo-howled', word: 'howled', meaning: 'made a long, loud, wailing sound', example: 'The wolf howled at the moon.', page: 1 },
+    { id: 'w-leo-silent', word: 'silent', meaning: 'making no sound at all', example: 'The library was silent.', page: 2 },
+    { id: 'w-leo-afraid', word: 'afraid', meaning: 'feeling scared of something', example: 'She was afraid of the dark.', page: 3 },
+  ],
+};

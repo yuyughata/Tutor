@@ -155,3 +155,36 @@ test('password support goes through the edge function and surfaces its error mes
   assert.deepEqual(calls.filter((c) => c.path === '/functions/v1/admin-user-support')[1].body, { action: 'set_password', email: 'a@b.c', password: 'Temp-pass-123' });
   await assert.rejects(() => api.supportSendReset('nobody@x.com'), /No account found/);
 });
+
+test('saveStory: chapters and Word Explorer words are saved (kept words updated in place, dropped ones removed, new ones added)', async () => {
+  const { api, calls } = harness((c) => {
+    if (c.method === 'GET' && rest(c, 'story_words')) return [200, [{ id: 'w1' }, { id: 'w2' }, { id: 'w3' }]];
+    if (c.method === 'GET') return [200, []];
+    return [201, []];
+  });
+  const story = { id: 's1', slug: 'trek', title: 'Trek', synopsis: 'x', cover_url: 'https://c/x.png', reading_level: 'seeker', status: 'draft', is_free: false, has_chapters: true, reading_minutes: 3, published_at: null };
+  await api.saveStory(story, [], [{ id: null, image_url: 'a.png', text: 'one', chapter_title: ' The Climb ' }, { id: null, image_url: 'b.png', text: 'two', chapter_title: '' }], [
+    { id: 'w1', word: ' howled ', meaning: 'loud sound', example: '', page_position: 1 },
+    { id: null, word: 'cavern', meaning: 'a big cave', example: 'A bat lives in the cavern.', page_position: null },
+    { id: null, word: '', meaning: '', example: '', page_position: null }, // an empty slot is ignored
+  ]);
+  const writes = calls.filter((c) => c.method !== 'GET' && c.path.startsWith('/rest/v1/'));
+  assert.equal(writes[0].body.has_chapters, true);
+  const pageInsert = writes.find((c) => c.method === 'POST' && rest(c, 'story_pages'));
+  assert.deepEqual(pageInsert.body.map((r) => r.chapter_title), ['The Climb', null], 'chapter titles are trimmed; empty means "continues the chapter"');
+  const delWords = writes.find((c) => c.method === 'DELETE' && rest(c, 'story_words'));
+  assert.equal(delWords.query.id, 'in.(w2,w3)');
+  const patch = writes.find((c) => c.method === 'PATCH' && rest(c, 'story_words'));
+  assert.equal(patch.query.id, 'eq.w1');
+  assert.deepEqual(patch.body, { word: 'howled', meaning: 'loud sound', example: null, page_position: 1, sort_order: 1 });
+  const insert = writes.find((c) => c.method === 'POST' && rest(c, 'story_words'));
+  assert.deepEqual(insert.body, [{ word: 'cavern', meaning: 'a big cave', example: 'A bat lives in the cavern.', page_position: null, sort_order: 2, story_id: 's1' }]);
+  assert.ok(calls.indexOf(delWords) < calls.indexOf(insert), 'removals come before inserts so the per-level word limit is never exceeded');
+});
+
+test('leaderboard and awards use the right function and table', async () => {
+  const { api, calls } = harness((c) => (c.path.endsWith('/rpc/admin_leaderboard') ? [200, [{ pos: 1, child_name: 'Ada', stories: 4 }]] : c.path.endsWith('/auth/v1/user') ? [200, {}] : [201, []]));
+  const rows = await api.listLeaderboard('week', 10);
+  assert.equal(rows[0].child_name, 'Ada');
+  assert.deepEqual(calls.find((c) => c.path === '/rest/v1/rpc/admin_leaderboard').body, { p_period: 'week', p_limit: 10 });
+});

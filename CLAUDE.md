@@ -16,11 +16,12 @@ Read `README.md` for setup, `docs/MVP_BRIEF.md` for scope, `docs/HANDOFF.md` for
 - `app/` Expo SDK 57 / React Native 0.86 / expo-router, TypeScript. react + react-dom are pinned exactly (19.2.3); keep them equal.
 - `web/` Next.js 16 static export (`output: 'export'`, trailingSlash). Admin CMS is vanilla JS in `web/public/admin/` and shares the site's Supabase session.
 - `tools/qa/` browser tests (fake Supabase backend), screenshot and PDF scripts. `supabase/seed_legal.sql` = sample privacy policy.
-- `supabase/migrations/0001–0007` (all applied to the live project), `supabase/functions/` (paystack-checkout, paystack-webhook, paystack-manage, admin-user-support, send-email, support-request, send-reminders), `supabase/tests/`.
+- `supabase/migrations/0001–0008` (all applied to the live project), `supabase/functions/` (paystack-checkout, paystack-webhook, paystack-manage, admin-user-support, send-email, support-request, send-reminders), `supabase/tests/`.
 - Supabase project **GenovaStorybook**, ref `cjdrlddvbyfataumdztg`.
 
 ## Commands
 - App: `cd app && npm start`, `npm run typecheck`. Web: `cd web && npm run dev | build | typecheck | test` (`npm test` needs `app/node_modules` installed).
+- App unit tests (chapters, words, stats helpers): `cd app && npm test`.
 - Function tests: `cd supabase && node --experimental-strip-types --test tests/support.test.mjs tests/paystack.test.mjs` (pass files, not a directory).
 - App web export for browser tests: `npx expo export -p web --clear` (use `--clear` or EXPO_PUBLIC env vars are stale).
 
@@ -42,6 +43,13 @@ Done: reading levels everywhere; library (Reading/Favourites/Finished/Saved, sea
 - 7 Themes: main actions are amber (`colors.action`) everywhere (app, website, admin). Accent themes purple and teal (`colors.primary*` / `secondary*`), chosen in Grown-ups > Appearance. Mechanism: `colors` is a live mutable object, `applyTheme()` swaps it, `themed(() => StyleSheet.create(...))` rebuilds styles lazily, and screens call `useTheme()` to re-render. Any new screen must call `useTheme()` and use `themed()` for styles that use colours. Each theme has its own Day/Sepia/Night reader modes (`readerThemes`).
 - 8 Passcode: `parent_passcodes` (salted hash only), `src/state/passcode.tsx`, `PinPad`, `app/passcode.tsx`; gate (`src/state/gate.tsx`) uses the PIN when signed in with a passcode, otherwise the number-word puzzle; 5 wrong tries lock for 60 s; "Forgot passcode?" re-checks the account password. The gate waits until the passcode state is known (never falls back to the puzzle on launch).
 - 9 Kiosk: `src/state/kiosk.tsx` + local native module `app/modules/genova-kiosk` (Android Lock Task Mode) + `docs/KIOSK.md`. **Kotlin not compiled or run on a device yet.**
+
+## Batch 3 (built, session of 2026-10-09; migration 0008 applied live)
+- **Chapters:** `stories.has_chapters` + `story_pages.chapter_title` (a titled page starts a chapter; title on page 1 required, >= 2 chapters). Public titles via RPC `story_chapter_list`. App: chapter list on the story page (tap = open at that chapter via `?page=`), chapter heading in the reader (tap = chapter sheet). Admin editor: "This book has chapters" switch + per-page title.
+- **Word Explorer:** `story_words` (trigger limit: Sunrise 0, Spark 1, Seeker 3), `child_words` (learned). Admin editor card with word/meaning/example/page; the checklist requires the full count for Spark/Seeker before Live. App: glowing tappable word on its page (`splitByWords` in `src/lib/story.ts`), `WordSheet` ("I learned it"), end-screen words, My books > Words tab; words stored in the offline copy (`SavedStory.words`). Admin save updates words in place by id (never delete+reinsert, children's learned marks hang off the id).
+- **Leaderboard and awards:** `story_completions` (one row per child/story/Lagos day, written when a reader reaches The End while signed in), RPC `admin_leaderboard('week'|'month'|'all_time')` (admin only; counts different stories, Monday-start weeks and calendar months in Africa/Lagos), `reader_awards` (admin gives, parent reads own). Admin **Readers** view (Give award + optional `reader_award` email). App My books shows week/month/all-time counts (device time, from local completions) and Rewards.
+- **Long page text scrolls:** fixed a real web bug (page items in the horizontal list grew to fit their text so the inner ScrollView never scrolled). Reader pages now get an explicit height from `onLayout`. Test: `tools/qa/reader-e2e.cjs` (long-text page in the mock backend).
+- Existing live stories have no words yet: saving a Spark/Seeker story as Live now requires its word(s).
 
 ## Launch (see docs/LAUNCH_GUIDE.md)
 `app/eas.json` (profiles preview / production / production-android), store fields and placeholder icons in `app/app.json` + `app/assets`, public `/support/` page, `web/public/_headers` + `robots.txt`. **Store-policy switch:** `EXPO_PUBLIC_WEB_LINKS=off` (see `src/lib/webLinks.ts`) hides every link-out; the Android production profile sets it. The app's only account link says "Manage my account on the web" (no "Get Premium"). Not yet built: self-service account deletion, Terms page, final brand icon.

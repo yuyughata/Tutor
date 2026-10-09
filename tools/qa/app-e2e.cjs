@@ -153,8 +153,10 @@ const NUM = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eigh
     await page.getByText('Start reading').click(); await page.getByText('Ember was a dragon with a secret.').waitFor(); await audit('reader');
     await page.getByLabel('Close story').click(); await page.getByLabel('Back').click();
   });
-  await step('my books: saved tab, search', async () => {
-    await tab('My books').click(); await page.getByRole('button', { name: 'Saved' }).click(); await page.getByText('The Dragon Who Hated Fire').first().waitFor();
+  await step('my books: saved tab, search, rewards from the team', async () => {
+    state.awards = [{ kind: 'week', period_label: '2026-W41', stories: 3, note: 'Well done, Ada!', created_at: new Date().toISOString() }];
+    await page.reload({ waitUntil: 'networkidle' });
+    await tab('My books').click(); await page.getByText('Top reader of the week').waitFor({ timeout: 6000 }); await page.getByText('Well done, Ada!').waitFor(); await page.getByRole('button', { name: 'Saved' }).click(); await page.getByText('The Dragon Who Hated Fire').first().waitFor();
     await page.getByLabel('Search my books').fill('zzz'); await page.getByText('No matches').waitFor(); await page.getByLabel('Search my books').fill(''); await audit('my books');
   });
   await step('backend down: catalogue from cache, saved story still reads', async () => {

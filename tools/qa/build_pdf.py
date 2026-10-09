@@ -28,6 +28,17 @@ MOBILE = [
         ('m09-reader-night-large', 'Night, larger text', 'Night theme with the A+ control used once, for bedtime reading.'),
         ('m10-reader-end', 'The End', 'A finish screen: read again, or go back for more stories. Progress is saved as the child reads.'),
     ]),
+    ('Chapters', 'A book can have chapters. The story page lists them, and the reader shows the chapter and can jump between chapters.', [
+        ('m36-story-chapters-words', 'Story page', 'Chapters are listed (tap one to start there) along with the new words to explore.'),
+        ('m37-reader-chapter-word', 'In the reader', 'The chapter heading sits above the text. The new word glows and can be tapped.'),
+        ('m39-chapter-sheet', 'Chapter list', 'Tap the chapter heading to jump to any chapter.'),
+        ('m40-long-text-scrolls', 'Long pages scroll', 'When a page has a lot of text it scrolls under the picture, and the last line stays clear of the buttons.'),
+    ]),
+    ('Word Explorer and reading stats', 'Spark stories have one new word and Seeker stories have three. Finished stories are counted per week, month and all time, and the team can reward the top readers.', [
+        ('m38-word-sheet', 'Word Explorer', 'Meaning and an example sentence; "I learned it" saves the word.'),
+        ('m41-end-words-stats', 'The End', 'The new words of the story and how many stories were finished this week.'),
+        ('m42-mybooks-words', 'My words', 'Counts for this week, this month and all time, and a Words shelf. Rewards from the team show here too.'),
+    ]),
     ('My books', 'A personal shelf for every reader on the device, with search.', [
         ('m05-mybooks-empty', 'Empty state', 'Friendly empty states explain what will appear here.'),
         ('m11-mybooks-reading', 'Reading', 'Stories in progress, with a progress bar under each cover.'),
@@ -79,6 +90,9 @@ ADMIN_PAIRS = [
     ('Dashboard', 'How Genova is doing today: stories, subscribers, readers, reads over time, top stories, upcoming releases and recent Paystack payments, with warnings that need attention.', 'single', ['a02-dashboard']),
     ('Stories', 'Search and filter the library by status and reading level. Publish or unpublish in one click; open any row to edit.', 'single', ['a03-stories']),
     ('Story editor', 'Edit a live story (left) and build a new one (right): cover and page image upload, drag-to-reorder pages, categories, free or Premium, reading level, draft/live/scheduled publishing, a live reader preview and a readiness checklist.', 'tall', ['a04-story-editor', 'a05-new-story-ready']),
+    ('Chapters and Word Explorer', 'Switch on "This book has chapters" and give the first page of each chapter a title. Spark stories take one Word Explorer word and Seeker stories three, each with a meaning, an example and the page it shows on. The checklist makes sure they are complete.', 'single', ['a20-editor-chapters-words']),
+    ('Top readers', 'Who finished the most different stories this week, this month and all time (Nigerian time, weeks start on Monday). Only admins see the names.', 'single', ['a21-readers']),
+    ('Give an award', 'Reward a reader as time goes on: add a note and optionally email the parent. The award shows up in the reader\'s My books page.', 'single', ['a22-readers-award']),
     ('Publish checklist', 'The checklist blocks "Live" until the story has a title, synopsis, cover and at least one complete page. Drafts can always be saved.', 'single', ['a06-publish-checklist']),
     ('Featured', 'Title of the Week and Title of the Month, with what is on now and what is scheduled next.', 'single', ['a07-featured']),
     ('Schedule a featured story', 'Pick a live or scheduled story and a date range. The database rejects overlapping slots of the same kind, so the home screen always has one clear winner.', 'single', ['a08-schedule-featured']),
@@ -97,6 +111,7 @@ ADMIN_PAIRS = [
 ]
 ADMIN_CAP = {
     'a02-dashboard': 'Dashboard', 'a03-stories': 'Stories', 'a04-story-editor': 'Editing a live story', 'a05-new-story-ready': 'New story, ready to publish',
+    'a20-editor-chapters-words': 'Editor: chapters and Word Explorer', 'a21-readers': 'Top readers', 'a22-readers-award': 'Give an award',
     'a06-publish-checklist': 'Checklist blocks an incomplete story', 'a11-manage-access': 'Manage subscriber access', 'a11b-password-help': 'Password help',
     'a07-featured': 'Featured slots', 'a08-schedule-featured': 'Schedule a featured story', 'a09-categories': 'Categories', 'a10-subscribers': 'Subscribers',
     'a01-login': 'Admin sign in', 'a15-email-connection': 'Email: connect Resend', 'a16-email-send': 'Email: write and preview', 'a17-email-templates': 'Email: templates', 'a19-email-reminders': 'Email: scheduled reminders', 'a18-support': 'Support inbox', 'a12-settings': 'Settings: privacy policy, admins, support log', 'a13-mobile-dashboard': 'Dashboard on mobile', 'a14-mobile-editor': 'Editor on mobile',

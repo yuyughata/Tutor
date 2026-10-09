@@ -20,9 +20,17 @@ export type Story = {
   publishedAt: string;
   categories: string[]; // category slugs
   reads30d: number;
+  /** The book is split into chapters (a page with a chapter title starts one). */
+  hasChapters?: boolean;
 };
 
-export type StoryPage = { position: number; imageUrl?: string; art?: Art; text: string };
+export type StoryPage = { position: number; imageUrl?: string; art?: Art; text: string; /** Set on the first page of a chapter. */ chapterTitle?: string };
+
+/** A new word to explore in a story (1 for Spark stories, 3 for Seeker stories). */
+export type StoryWord = { id: string; word: string; meaning: string; example?: string; /** Page position (1-based) where the word appears. */ page?: number };
+
+/** A word a reader has explored, kept on the device. */
+export type LearnedWord = { wordId: string; word: string; meaning: string; example?: string; storySlug: string; storyTitle: string; at: string };
 
 export type HomeData = {
   week: Story | null;

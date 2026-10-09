@@ -14,9 +14,27 @@ const STORIES = [
   { id: '00000000-0000-0000-0000-00000000a002', slug: 'the-dragon-who-hated-fire', title: 'The Dragon Who Hated Fire', synopsis: 'Ember would rather bake cakes than burn castles.', cover_url: 'https://img.test/cover2.png', reading_level: 'spark', is_free: false, page_count: 2, reading_minutes: 5, published_at: new Date(Date.now() - 5 * day).toISOString(), authors: { name: 'CUSTAR' }, story_categories: [{ categories: { slug: 'fantasy' } }] },
   { id: '00000000-0000-0000-0000-00000000a003', slug: 'bedtime-for-bear', title: 'Bedtime for Bear', synopsis: 'Bear has counted every star twice.', cover_url: 'https://img.test/cover3.png', reading_level: 'sunrise', is_free: true, page_count: 2, reading_minutes: 2, published_at: new Date(Date.now() - 1 * day).toISOString(), authors: { name: 'CUSTAR' }, story_categories: [{ categories: { slug: 'bedtime' } }] },
 ];
+// A Seeker book with chapters, three explorer words and one page with a very long text (to prove the page text scrolls).
+const LONG = Array.from({ length: 40 }, (_, i) => `Sentence ${i + 1}: the wind pushed against the mountain and the silent snow kept falling.`).join(' ') + ' THE-VERY-LAST-LINE';
+STORIES.push({ id: '00000000-0000-0000-0000-00000000a004', slug: 'the-snow-trek', title: 'The Snow Trek', synopsis: 'A long walk across the mountain.', cover_url: 'https://img.test/cover4.png', reading_level: 'seeker', is_free: true, page_count: 4, reading_minutes: 8, has_chapters: true, published_at: new Date(Date.now() - 2 * day).toISOString(), authors: { name: 'CUSTAR' }, story_categories: [{ categories: { slug: 'fantasy' } }] });
+STORIES.forEach((s) => { s.has_chapters = !!s.has_chapters; });
+const WORDS = {
+  [STORIES[0].id]: [{ id: '00000000-0000-0000-0000-0000000000c1', word: 'sparkle', meaning: 'a tiny flash of light', example: 'The stars sparkle at night.', page_position: 2, sort_order: 1 }],
+  [STORIES[3].id]: [
+    { id: '00000000-0000-0000-0000-0000000000d1', word: 'howled', meaning: 'made a long, loud sound', example: 'The wolf howled.', page_position: 1, sort_order: 1 },
+    { id: '00000000-0000-0000-0000-0000000000d2', word: 'silent', meaning: 'making no sound', example: null, page_position: 2, sort_order: 2 },
+    { id: '00000000-0000-0000-0000-0000000000d3', word: 'cavern', meaning: 'a big cave', example: null, page_position: 3, sort_order: 3 },
+  ],
+};
 const PAGES = {
   [STORIES[0].id]: [{ position: 1, image_url: 'https://img.test/p1.png', text: 'Late one evening, Luna sat by her window.' }, { position: 2, image_url: 'https://img.test/p2.png', text: 'A soft sparkle danced across her room.' }],
   [STORIES[1].id]: [{ position: 1, image_url: 'https://img.test/p3.png', text: 'Ember was a dragon with a secret.' }, { position: 2, image_url: 'https://img.test/p4.png', text: 'She baked the fluffiest cakes in the kingdom.' }],
+  [STORIES[3].id]: [
+    { position: 1, image_url: 'https://img.test/p7.png', chapter_title: 'The Icy Climb', text: 'The wind howled across the ridge.' },
+    { position: 2, image_url: 'https://img.test/p8.png', chapter_title: null, text: LONG },
+    { position: 3, image_url: 'https://img.test/p9.png', chapter_title: 'The Cave', text: 'Deep inside the cavern it was dark and cool.' },
+    { position: 4, image_url: 'https://img.test/p10.png', chapter_title: null, text: 'At last they saw the sunrise.' },
+  ],
   [STORIES[2].id]: [{ position: 1, image_url: 'https://img.test/p5.png', text: 'Bear yawned a great big yawn.' }, { position: 2, image_url: 'https://img.test/p6.png', text: 'Then Mama hummed and Bear fell asleep.' }],
 };
 const POLICY = { slug: 'privacy-policy', title: 'Privacy Policy', body: 'SAMPLE TEXT: placeholder.\n\n# Our promise to families\nWe do not show ads.\n\n# What we collect\n- Parent email\n- Child first name or nickname', version: 3, updated_at: '2026-10-09T10:00:00Z' };
@@ -70,6 +88,15 @@ async function install(context, state, { host = 'mock.supabase.test' } = {}) {
       const allowed = story && (story.is_free || state.access?.active);
       return send(200, allowed ? PAGES[id] : []);
     }
+    if (p === '/rest/v1/story_words') {
+      const id = (url.searchParams.get('story_id') || '').replace('eq.', '');
+      return send(200, WORDS[id] || []);
+    }
+    if (p === '/rest/v1/rpc/story_chapter_list') {
+      const rows = (PAGES[body?.p_story] || []).filter((x) => x.chapter_title).map((x, i) => ({ chapter: i + 1, title: x.chapter_title, first_page: x.position }));
+      return send(200, rows);
+    }
+    if (p === '/rest/v1/reader_awards' && method === 'GET') return send(200, state.awards || []);
     if (p === '/rest/v1/legal_documents') return state.legalDown ? send(500, { message: 'down' }) : send(200, wantsObject ? POLICY : [POLICY]);
     if (p === '/rest/v1/parent_passcodes') {
       if (method === 'GET') return send(200, state.passcode ? [state.passcode] : []);
@@ -99,4 +126,4 @@ async function install(context, state, { host = 'mock.supabase.test' } = {}) {
   return state;
 }
 
-module.exports = { install, createState, STORIES, PLANS, POLICY };
+module.exports = { install, createState, STORIES, PLANS, POLICY, WORDS, LONG };

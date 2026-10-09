@@ -8,21 +8,24 @@ import { OfflineBanner } from '../../src/components/OfflineBanner';
 import { StoryCard } from '../../src/components/StoryCard';
 import { getStories } from '../../src/data/repository';
 import { useDownloads } from '../../src/data/downloads';
-import { useLibrary } from '../../src/state/library';
+import { useLibrary, type Award } from '../../src/state/library';
 import { useReadingLevel } from '../../src/state/profiles';
 import { colors, fonts, radius, space, type, themed } from '../../src/theme';
 import type { Story } from '../../src/types';
 import { useTheme } from '../../src/state/theme';
 
-type Tab = 'continue' | 'favorites' | 'finished' | 'saved';
+type Tab = 'continue' | 'favorites' | 'finished' | 'words' | 'saved';
 const COPY: Record<Tab, { emoji: string; title: string; body: string }> = {
   continue: { emoji: '📖', title: 'Nothing in progress', body: 'Start a story and it will wait for you here.' },
   favorites: { emoji: '💜', title: 'No favourites yet', body: 'Tap the heart on any story to keep it close.' },
   finished: { emoji: '🏆', title: 'No finished stories yet', body: 'Reach The End and your story lands here.' },
+  words: { emoji: '🔍', title: 'No words yet', body: 'Tap a glowing word in a story, then press "I learned it" to collect it here.' },
   saved: { emoji: '⬇️', title: 'Nothing saved for offline', body: 'Open a story and choose "Save for offline" to read it without a connection.' },
 };
+const awardTitle = (a: Award) =>
+  a.kind === 'week' ? 'Top reader of the week' : a.kind === 'month' ? 'Top reader of the month' : a.kind === 'all_time' ? 'All-time top reader' : 'Special reading reward';
 const TABS: { id: Tab; label: string }[] = [
-  { id: 'continue', label: 'Reading' }, { id: 'favorites', label: 'Favourites' }, { id: 'finished', label: 'Finished' }, { id: 'saved', label: 'Saved' },
+  { id: 'continue', label: 'Reading' }, { id: 'favorites', label: 'Favourites' }, { id: 'finished', label: 'Finished' }, { id: 'words', label: 'Words' }, { id: 'saved', label: 'Saved' },
 ];
 
 export default function Library() {
@@ -30,7 +33,7 @@ export default function Library() {
   const level = useReadingLevel();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const { favorites, progress } = useLibrary();
+  const { favorites, progress, stats, learnedWords, awards } = useLibrary();
   const downloads = useDownloads();
   const [tab, setTab] = useState<Tab>('continue');
   const [q, setQ] = useState('');
@@ -41,11 +44,17 @@ export default function Library() {
   useEffect(() => { fetchAll(); }, [fetchAll]);
   const onRefresh = async () => { setRefreshing(true); await fetchAll(); setRefreshing(false); };
 
+  const words = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    return needle ? learnedWords.filter((w) => w.word.toLowerCase().includes(needle) || w.storyTitle.toLowerCase().includes(needle)) : learnedWords;
+  }, [learnedWords, q]);
+
   const shown = useMemo(() => {
     const by = (s: Story) => progress[s.slug];
     // Saved stories come from the device, so this tab works with no connection at all.
     let list: Story[] =
-      tab === 'saved' ? downloads.list.map((d) => d.story)
+      tab === 'words' ? []
+      : tab === 'saved' ? downloads.list.map((d) => d.story)
       : tab === 'favorites' ? stories.filter((s) => favorites.includes(s.slug))
       : tab === 'finished' ? stories.filter((s) => by(s)?.finished)
       : stories.filter((s) => by(s) && !by(s).finished);
@@ -73,11 +82,51 @@ export default function Library() {
         <TextInput value={q} onChangeText={setQ} placeholder="Search my books" placeholderTextColor={colors.lock} accessibilityLabel="Search my books" returnKeyType="search" style={styles.input} />
       </View>
 
+      <View style={styles.stats} accessibilityRole="summary" accessibilityLabel={`Stories finished: ${stats.week} this week, ${stats.month} this month, ${stats.all} in total`}>
+        {([['This week', stats.week], ['This month', stats.month], ['All time', stats.all]] as const).map(([label, n]) => (
+          <View key={label} style={styles.stat}>
+            <Text style={styles.statNum}>{n}</Text>
+            <Text style={styles.statLabel}>{label}</Text>
+          </View>
+        ))}
+      </View>
+      {awards.length > 0 && (
+        <View style={styles.trophies}>
+          <Text style={styles.trophyHead} accessibilityRole="header">Rewards</Text>
+          <View style={{ gap: 8 }}>
+            {awards.map((a) => (
+              <View key={`${a.kind}-${a.periodLabel}`} style={styles.trophy} accessibilityLabel={`${awardTitle(a)}${a.note ? `. ${a.note}` : ''}`}>
+                <Text style={{ fontSize: 26 }}>🏆</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.trophyTitle}>{awardTitle(a)}</Text>
+                  {!!a.note && <Text style={styles.trophyNote}>{a.note}</Text>}
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
+
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabs}>
         {TABS.map((t) => <Chip key={t.id} label={t.label} active={tab === t.id} onPress={() => setTab(t.id)} />)}
       </ScrollView>
 
-      {shown.length === 0 ? (
+      {tab === 'words' ? (
+        words.length === 0 ? (
+          <EmptyState {...(q.trim() ? { emoji: '🔎', title: 'No matches', body: `Nothing in this list matches "${q.trim()}".` } : COPY.words)} />
+        ) : (
+          <View style={styles.wordList}>
+            <Text style={styles.wordCount}>{learnedWords.length === 1 ? '1 word explored' : `${learnedWords.length} words explored`}</Text>
+            {words.map((w) => (
+              <View key={w.wordId} style={styles.wordCard}>
+                <Text style={styles.wordName}>{w.word}</Text>
+                <Text style={styles.wordMeaning}>{w.meaning}</Text>
+                <Text style={styles.wordFrom}>from {w.storyTitle}</Text>
+              </View>
+            ))}
+          </View>
+        )
+      ) : shown.length === 0 ? (
         <EmptyState {...(q.trim() ? { emoji: '🔎', title: 'No matches', body: `Nothing in this list matches "${q.trim()}".` } : COPY[tab])} />
       ) : (
         <View style={[styles.grid, { gap }]}>
@@ -106,6 +155,21 @@ const styles = themed(() => StyleSheet.create({
   search: { flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: space.md, paddingHorizontal: 16, minHeight: 50, borderRadius: radius.pill, backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.border },
   input: { flex: 1, fontFamily: fonts.bold, fontSize: 16, color: colors.ink, paddingVertical: 10 },
   tabs: { gap: 8, paddingHorizontal: space.md, marginTop: space.md, marginBottom: space.lg },
+  stats: { flexDirection: 'row', gap: 10, marginHorizontal: space.md, marginTop: space.md },
+  stat: { flex: 1, alignItems: 'center', paddingVertical: 12, borderRadius: radius.md, backgroundColor: colors.primarySoft },
+  statNum: { fontFamily: fonts.black, fontSize: 28, color: colors.primaryDeep },
+  statLabel: { ...type.small, color: colors.ink, fontFamily: fonts.bold },
+  trophies: { marginHorizontal: space.md, marginTop: space.md },
+  trophyHead: { ...type.heading, color: colors.ink, marginBottom: 6 },
+  trophy: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: radius.md, backgroundColor: colors.amberSoft },
+  trophyTitle: { ...type.heading, color: colors.ink },
+  trophyNote: { ...type.small, color: colors.ink, marginTop: 2 },
+  wordList: { paddingHorizontal: space.md, gap: 10 },
+  wordCount: { ...type.heading, color: colors.muted },
+  wordCard: { padding: 14, borderRadius: radius.md, backgroundColor: colors.secondarySoft, gap: 2 },
+  wordName: { fontFamily: fonts.black, fontSize: 22, color: colors.ink },
+  wordMeaning: { ...type.body, color: colors.ink },
+  wordFrom: { ...type.small, color: colors.secondaryDeep, fontFamily: fonts.bold, marginTop: 2 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: space.md },
   track: { height: 6, borderRadius: 3, backgroundColor: colors.border, marginTop: 8, overflow: 'hidden' },
   fill: { height: '100%', backgroundColor: colors.secondary, borderRadius: 3 },

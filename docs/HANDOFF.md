@@ -23,7 +23,7 @@ With no `app/.env` the app runs on built-in sample stories. To use the live back
 | Service | What it is used for | Where the secret lives | Status |
 |---|---|---|---|
 | GitHub `yuyughata/Tutor` | Code | Your GitHub login | exists |
-| Supabase project **GenovaStorybook**, ref `cjdrlddvbyfataumdztg`, URL `https://cjdrlddvbyfataumdztg.supabase.co` | Auth, Postgres, storage, edge functions | Owner's Supabase account. Anon key is public (in `app/.env.example`, `web/lib/config.ts`, `web/public/config.js`). **Service-role key** is only inside Supabase (functions read it automatically); never commit it | exists, migrations 0001-0006 applied, 7 functions deployed |
+| Supabase project **GenovaStorybook**, ref `cjdrlddvbyfataumdztg`, URL `https://cjdrlddvbyfataumdztg.supabase.co` | Auth, Postgres, storage, edge functions | Owner's Supabase account. Anon key is public (in `app/.env.example`, `web/lib/config.ts`, `web/public/config.js`). **Service-role key** is only inside Supabase (functions read it automatically); never commit it | exists, migrations 0001-0008 applied, 7 functions deployed |
 | Paystack | Subscriptions on the web | `PAYSTACK_SECRET_KEY` as a Supabase function secret | **not set up yet** |
 | Resend | Receipts, welcome, reminders, broadcasts (Admin > Email) and, optionally, Supabase auth emails via SMTP | The API key is pasted into Admin > Email > Connection (stored server-side only). SMTP creds, if used, go in Supabase Auth settings | **not set up yet** |
 | Web hosting (Netlify / Cloudflare Pages / Vercel) | Hosts `web/out` | Host dashboard | **not deployed yet** |
