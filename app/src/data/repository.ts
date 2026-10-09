@@ -194,3 +194,10 @@ export async function getChapters(story: Story): Promise<Chapter[]> {
     return [];
   }
 }
+
+/** Category slugs for the "Explorer" badge. Read from the saved copy only (never the network), so it costs nothing. */
+export async function getCategorySlugs(): Promise<string[]> {
+  if (!supabase) return mock.categories.map((c) => c.slug);
+  const cached = await load<{ categories?: { slug: string }[] } | null>(CACHE_HOME, null);
+  return (cached?.categories ?? []).map((c) => c.slug);
+}

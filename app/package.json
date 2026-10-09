@@ -8,7 +8,7 @@
     "ios": "expo start --ios",
     "android": "expo start --android",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test tests/story.test.mjs"
+    "test": "node --experimental-strip-types --test tests/story.test.mjs tests/badges.test.mjs"
   },
   "dependencies": {
     "@expo-google-fonts/nunito": "^0.4.2",

@@ -9,8 +9,10 @@ import { Picture } from '../../src/components/Picture';
 import { Tap } from '../../src/components/Tap';
 import { getPages, getStory, getWords } from '../../src/data/repository';
 import { ChapterSheet } from '../../src/components/ChapterSheet';
+import { StarBurst } from '../../src/components/StarBurst';
 import { WordSheet } from '../../src/components/WordSheet';
 import { announce, useReducedMotion } from '../../src/lib/a11y';
+import { unseenBadges, type BadgeState } from '../../src/lib/badges';
 import { chaptersOf, chapterAt, splitByWords, wordPageIndex, type Chapter } from '../../src/lib/story';
 import { useAuth } from '../../src/state/auth';
 import { useLibrary } from '../../src/state/library';
@@ -53,7 +55,7 @@ export default function Reader() {
   // its text, and the page text could not scroll when it was long.
   const [listH, setListH] = useState(height);
   const band = useReadingLevel();
-  const { progress, saveProgress, trackStart, stats, hasLearned } = useLibrary();
+  const { progress, saveProgress, trackStart, stats, hasLearned, badges, badgesSeen, markBadgesSeen } = useLibrary();
   const { canRead, accessReady } = useAuth();
   const reduceMotion = useReducedMotion();
   const listRef = useRef<FlatList<Item>>(null);
@@ -72,6 +74,11 @@ export default function Reader() {
   const [words, setWords] = useState<StoryWord[]>([]);
   const [wordSheet, setWordSheet] = useState<StoryWord[] | null>(null);
   const [chapterSheet, setChapterSheet] = useState(false);
+
+  // The End: a one-time star burst, and a card for badges earned that the reader has not seen yet.
+  const [freshBadges, setFreshBadges] = useState<BadgeState[]>([]);
+  const burstDone = useRef(false);
+  const [burst, setBurst] = useState(false);
 
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -106,6 +113,19 @@ export default function Reader() {
   const chapters = story?.hasChapters && pages ? chaptersOf(pages) : [];
   // Where each explorer word shows (the page it was assigned to, else the first page that has it).
   const wordPages = pages ? words.map((w) => ({ w, at: wordPageIndex(pages, w.word, w.page) })) : [];
+
+  const atTheEnd = !!pages && pages.length > 0 && index === pages.length;
+  useEffect(() => {
+    if (!atTheEnd) { setFreshBadges([]); return; }
+    if (!burstDone.current) { burstDone.current = true; setBurst(true); }
+    const fresh = unseenBadges(badges, badgesSeen);
+    if (fresh.length) {
+      setFreshBadges(fresh);
+      markBadgesSeen(fresh.map((b) => b.id));
+      announce(`New ${fresh.length === 1 ? 'badge' : 'badges'}: ${fresh.map((b) => b.title).join(', ')}`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [atTheEnd]);
 
   const onIndex = useCallback((i: number) => {
     setIndex(i);
@@ -207,10 +227,25 @@ export default function Reader() {
                 </ScrollView>
               </View>
             ) : (
-              <ScrollView style={{ width, height: listH }} contentContainerStyle={[styles.end, { paddingTop: insets.top + 80 }]}>
-                <Text style={{ fontSize: 76 }}>🌟</Text>
+              <ScrollView style={{ width, height: listH }} contentContainerStyle={[styles.end, { paddingTop: insets.top + 56 }]}>
+                {burst && at === last && <StarBurst />}
+                <Text style={{ fontSize: 64 }}>🌟</Text>
                 <Text style={[styles.endTitle, { color: theme.ink }]}>The End</Text>
                 <Text style={[styles.endSub, { color: theme.muted }]}>You finished "{story?.title}". Great reading!</Text>
+                {freshBadges.length > 0 && (
+                  <View style={styles.newBadge} accessibilityLiveRegion="polite">
+                    <Text style={styles.newBadgeKick}>NEW {freshBadges.length === 1 ? 'BADGE' : 'BADGES'}!</Text>
+                    {freshBadges.map((b) => (
+                      <View key={b.id} style={styles.newBadgeRow} accessibilityLabel={`${b.title}. ${b.hint}`}>
+                        <Text style={{ fontSize: 34 }}>{b.emoji}</Text>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.newBadgeTitle}>{b.title}</Text>
+                          <Text style={styles.newBadgeHint}>{b.hint}</Text>
+                        </View>
+                      </View>
+                    ))}
+                  </View>
+                )}
                 {stats.week > 0 && (
                   <Text style={[styles.endStat, { color: theme.ink }]}>{stats.week === 1 ? '1 story' : `${stats.week} stories`} finished this week</Text>
                 )}
@@ -313,6 +348,11 @@ const styles = themed(() => StyleSheet.create({
   explore: { flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start', minHeight: 44, paddingHorizontal: 16, marginTop: space.lg, borderRadius: radius.pill, backgroundColor: colors.secondarySoft },
   exploreText: { fontFamily: fonts.bold, fontSize: 15, color: colors.secondaryDeep },
   end: { alignItems: 'center', justifyContent: 'center', paddingBottom: 120, flexGrow: 1 },
+  newBadge: { alignSelf: 'stretch', marginHorizontal: space.lg, marginTop: space.md, padding: 14, borderRadius: radius.lg, backgroundColor: colors.amberSoft, gap: 8 },
+  newBadgeKick: { ...type.label, color: '#7a5a00', textAlign: 'center' },
+  newBadgeRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  newBadgeTitle: { ...type.heading, color: colors.ink },
+  newBadgeHint: { ...type.small, color: colors.ink },
   endStat: { ...type.heading, marginTop: 14 },
   endWords: { alignItems: 'center', marginTop: space.lg, paddingHorizontal: space.lg },
   endWordsTitle: { ...type.heading },

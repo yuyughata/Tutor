@@ -3,6 +3,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Chip } from '../../src/components/Chip';
+import { ProgressRing } from '../../src/components/ProgressRing';
+import { gardenFor, goalProgress, unseenBadges } from '../../src/lib/badges';
 import { EmptyState } from '../../src/components/EmptyState';
 import { OfflineBanner } from '../../src/components/OfflineBanner';
 import { StoryCard } from '../../src/components/StoryCard';
@@ -33,7 +35,7 @@ export default function Library() {
   const level = useReadingLevel();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const { favorites, progress, stats, learnedWords, awards } = useLibrary();
+  const { favorites, progress, stats, learnedWords, awards, badges, badgesSeen, markBadgesSeen } = useLibrary();
   const downloads = useDownloads();
   const [tab, setTab] = useState<Tab>('continue');
   const [q, setQ] = useState('');
@@ -43,6 +45,17 @@ export default function Library() {
   const fetchAll = useCallback(() => getStories(level).then(setStories).catch(() => setStories([])), [level]);
   useEffect(() => { fetchAll(); }, [fetchAll]);
   const onRefresh = async () => { setRefreshing(true); await fetchAll(); setRefreshing(false); };
+
+  // Badges earned since the reader last looked get a "New" tag; they count as seen once this screen has shown them.
+  const [newBadgeIds, setNewBadgeIds] = useState<string[]>([]);
+  useEffect(() => {
+    const fresh = unseenBadges(badges, badgesSeen).map((b) => b.id);
+    if (fresh.length) { setNewBadgeIds((cur) => [...cur, ...fresh.filter((i) => !cur.includes(i))]); markBadgesSeen(fresh); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [badges, badgesSeen]);
+  const goal = goalProgress(stats.week);
+  const garden = gardenFor(learnedWords.length);
+  const earnedCount = badges.filter((b) => b.earned).length;
 
   const words = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -90,6 +103,40 @@ export default function Library() {
           </View>
         ))}
       </View>
+      <View style={styles.goal} accessibilityLabel={goal.reached ? `Weekly goal reached: ${goal.count} stories this week` : `Weekly goal: ${goal.count} of ${goal.goal} stories this week`}>
+        <ProgressRing pct={goal.pct} label={`${Math.min(goal.count, 99)}`} sub={`of ${goal.goal}`} />
+        <View style={{ flex: 1 }}>
+          <Text style={styles.goalTitle}>{goal.reached ? 'Weekly goal reached! 🎉' : 'Weekly reading goal'}</Text>
+          <Text style={styles.goalText}>
+            {goal.reached ? `${goal.count} stories this week. Keep going if you like!`
+              : goal.count === 0 ? `Finish ${goal.goal} stories this week.`
+              : `${goal.count} ${goal.count === 1 ? 'story' : 'stories'} so far. ${goal.left} more to go!`}
+          </Text>
+          <Text style={styles.goalNote}>A fresh start every Monday.</Text>
+        </View>
+      </View>
+
+      <View style={styles.badges}>
+        <View style={styles.badgeHead}>
+          <Text style={styles.trophyHead} accessibilityRole="header">Badges</Text>
+          <Text style={styles.badgeCount}>{earnedCount} of {badges.length}</Text>
+        </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.badgeGrid} tabIndex={0} accessibilityLabel="Badges, scroll sideways">
+          {badges.map((b) => (
+            <View
+              key={b.id}
+              style={[styles.badge, b.earned ? styles.badgeOn : styles.badgeOff]}
+              accessibilityLabel={b.earned ? `${b.title}, earned${newBadgeIds.includes(b.id) ? ', new' : ''}. ${b.hint}` : `${b.title}, not earned yet. ${b.hint}`}
+            >
+              <Text style={[styles.badgeEmoji, !b.earned && { opacity: 0.25 }]}>{b.emoji}</Text>
+              <Text style={styles.badgeTitle} numberOfLines={2}>{b.title}</Text>
+              {newBadgeIds.includes(b.id) && b.earned && <Text style={styles.badgeNew}>NEW</Text>}
+              {!b.earned && <Text style={styles.badgeHint} numberOfLines={3}>{b.hint}</Text>}
+            </View>
+          ))}
+        </ScrollView>
+      </View>
+
       {awards.length > 0 && (
         <View style={styles.trophies}>
           <Text style={styles.trophyHead} accessibilityRole="header">Rewards</Text>
@@ -116,6 +163,15 @@ export default function Library() {
           <EmptyState {...(q.trim() ? { emoji: '🔎', title: 'No matches', body: `Nothing in this list matches "${q.trim()}".` } : COPY.words)} />
         ) : (
           <View style={styles.wordList}>
+            <View style={styles.garden} accessibilityLabel={`Word garden: ${garden.stage.name}. ${garden.next ? `${garden.toNext} more ${garden.toNext === 1 ? 'word' : 'words'} to grow into ${garden.next.name.toLowerCase()}.` : 'Fully grown!'}`}>
+              <Text style={styles.gardenPlant}>{garden.stage.emoji}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.gardenName}>Your word garden: {garden.stage.name.toLowerCase()}</Text>
+                <Text style={styles.gardenText}>{garden.next ? `${garden.toNext} more ${garden.toNext === 1 ? 'word' : 'words'} to grow into ${garden.next.name.toLowerCase()} ${garden.next.emoji}` : 'Your garden is fully grown!'}</Text>
+                <View style={styles.gardenTrack}><View style={[styles.gardenFill, { width: `${Math.round(garden.pct * 100)}%` }]} /></View>
+                <Text style={styles.gardenFlowers} numberOfLines={2}>{'🌼'.repeat(Math.min(learnedWords.length, 24))}</Text>
+              </View>
+            </View>
             <Text style={styles.wordCount}>{learnedWords.length === 1 ? '1 word explored' : `${learnedWords.length} words explored`}</Text>
             {words.map((w) => (
               <View key={w.wordId} style={styles.wordCard}>
@@ -159,6 +215,28 @@ const styles = themed(() => StyleSheet.create({
   stat: { flex: 1, alignItems: 'center', paddingVertical: 12, borderRadius: radius.md, backgroundColor: colors.primarySoft },
   statNum: { fontFamily: fonts.black, fontSize: 28, color: colors.primaryDeep },
   statLabel: { ...type.small, color: colors.ink, fontFamily: fonts.bold },
+  goal: { flexDirection: 'row', alignItems: 'center', gap: 16, marginHorizontal: space.md, marginTop: space.md, padding: 14, borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.border },
+  goalTitle: { ...type.heading, color: colors.ink },
+  goalText: { ...type.body, color: colors.ink, marginTop: 2 },
+  goalNote: { ...type.small, color: colors.muted, marginTop: 4 },
+  badges: { marginTop: space.md },
+  badgeHead: { paddingHorizontal: space.md, flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 },
+  badgeCount: { ...type.small, color: colors.muted, fontFamily: fonts.bold },
+  badgeGrid: { gap: 8, paddingHorizontal: space.md },
+  badge: { width: 108, minHeight: 112, alignItems: 'center', paddingVertical: 10, paddingHorizontal: 6, borderRadius: radius.md },
+  badgeOn: { backgroundColor: colors.amberSoft },
+  badgeOff: { backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.border },
+  badgeEmoji: { fontSize: 32 },
+  badgeTitle: { fontFamily: fonts.black, fontSize: 13, color: colors.ink, textAlign: 'center', marginTop: 4 },
+  badgeHint: { fontFamily: fonts.regular, fontSize: 11, color: colors.muted, textAlign: 'center', marginTop: 2 },
+  badgeNew: { fontFamily: fonts.black, fontSize: 10, color: colors.onAction, backgroundColor: colors.action, paddingHorizontal: 8, paddingVertical: 2, borderRadius: radius.pill, marginTop: 4, overflow: 'hidden' },
+  garden: { flexDirection: 'row', gap: 14, alignItems: 'center', padding: 14, borderRadius: radius.lg, backgroundColor: colors.secondarySoft },
+  gardenPlant: { fontSize: 56 },
+  gardenName: { ...type.heading, color: colors.ink },
+  gardenText: { ...type.small, color: colors.ink, marginTop: 2 },
+  gardenTrack: { height: 8, borderRadius: 4, backgroundColor: colors.surface, marginTop: 8, overflow: 'hidden' },
+  gardenFill: { height: '100%', backgroundColor: colors.secondary, borderRadius: 4 },
+  gardenFlowers: { fontSize: 16, marginTop: 8 },
   trophies: { marginHorizontal: space.md, marginTop: space.md },
   trophyHead: { ...type.heading, color: colors.ink, marginBottom: 6 },
   trophy: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: radius.md, backgroundColor: colors.amberSoft },

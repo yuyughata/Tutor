@@ -34,10 +34,11 @@ MOBILE = [
         ('m39-chapter-sheet', 'Chapter list', 'Tap the chapter heading to jump to any chapter.'),
         ('m40-long-text-scrolls', 'Long pages scroll', 'When a page has a lot of text it scrolls under the picture, and the last line stays clear of the buttons.'),
     ]),
-    ('Word Explorer and reading stats', 'Spark stories have one new word and Seeker stories have three. Finished stories are counted per week, month and all time, and the team can reward the top readers.', [
+    ('Word Explorer, badges and reading stats', 'Spark stories have one new word and Seeker stories have three. Finished stories are counted per week, month and all time, the team can reward the top readers, and everything on this page is worked out on the device with nothing to download.', [
         ('m38-word-sheet', 'Word Explorer', 'Meaning and an example sentence; "I learned it" saves the word.'),
-        ('m41-end-words-stats', 'The End', 'The new words of the story and how many stories were finished this week.'),
-        ('m42-mybooks-words', 'My words', 'Counts for this week, this month and all time, and a Words shelf. Rewards from the team show here too.'),
+        ('m41-end-words-stats', 'The End', 'A one-time star burst (skipped when the device asks for less motion), a "New badges!" card, the new words and this week\'s count.'),
+        ('m43-mybooks-badges', 'Goal and badges', 'A weekly goal ring that starts fresh every Monday, and milestone badges: 1, 5, 10, 25 and 50 stories, a chapter book, first and 10th word, every category.'),
+        ('m42-mybooks-words', 'Word garden', 'The Words shelf grows a plant as the child learns words: seed, sprout, leafy plant, flower, sunflower, tree.'),
     ]),
     ('My books', 'A personal shelf for every reader on the device, with search.', [
         ('m05-mybooks-empty', 'Empty state', 'Friendly empty states explain what will appear here.'),

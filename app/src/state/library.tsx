@@ -1,6 +1,8 @@
 import { AppState } from 'react-native';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { supabase } from '../lib/supabase';
+import { badgeStates, type BadgeState, type Completion } from '../lib/badges';
+import { getCategorySlugs } from '../data/repository';
 import { statsFrom, type Stats } from '../lib/story';
 import type { LearnedWord, Story, StoryWord } from '../types';
 import { useAuth } from './auth';
@@ -8,14 +10,14 @@ import { load, save } from './storage';
 import { useProfiles } from './profiles';
 
 export type Progress = { page: number; finished: boolean };
-type Completion = { slug: string; at: string };
 type Data = {
   favorites: Record<string, string[]>; // childId -> story slugs
   progress: Record<string, Record<string, Progress>>; // childId -> slug -> progress
   completions: Record<string, Completion[]>; // childId -> every time a story was finished (feeds week / month / all-time counts)
   words: Record<string, LearnedWord[]>; // childId -> words explored
+  badgesSeen: Record<string, string[]>; // childId -> badge ids already celebrated
 };
-const EMPTY: Data = { favorites: {}, progress: {}, completions: {}, words: {} };
+const EMPTY: Data = { favorites: {}, progress: {}, completions: {}, words: {}, badgesSeen: {} };
 
 /** A reward the Genova team has given this reader. */
 export type Award = { kind: 'week' | 'month' | 'all_time' | 'custom'; periodLabel: string; stories: number | null; note: string | null; at: string };
@@ -33,6 +35,10 @@ type Ctx = {
   hasLearned: (wordId: string) => boolean;
   learnWord: (story: Story, word: StoryWord) => void;
   awards: Award[];
+  /** Every milestone badge with whether it is earned (worked out on the device). */
+  badges: BadgeState[];
+  badgesSeen: string[];
+  markBadgesSeen: (ids: string[]) => void;
 };
 
 const KEY = 'genova.library.v1';
@@ -45,6 +51,7 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<Data>(EMPTY);
   const { session } = useAuth();
   const [awards, setAwards] = useState<Award[]>([]);
+  const [categorySlugs, setCategorySlugs] = useState<string[]>([]);
   const ref = useRef(data);
   ref.current = data;
 
@@ -59,6 +66,10 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 
   const childId = active?.id;
   const synced = (story: Story) => !!supabase && /^[0-9a-f-]{36}$/i.test(story.id) && !!childId;
+
+  // The category list (from the saved copy) is only needed for the "Explorer" badge.
+  const doneCount = (data.completions[active?.id ?? ''] ?? []).length;
+  useEffect(() => { getCategorySlugs().then(setCategorySlugs).catch(() => {}); }, [childId, doneCount]);
 
   // Rewards given by the team are read from the account, so they show on every device (and refresh when the app comes back).
   useEffect(() => {
@@ -80,10 +91,20 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
     const finishedBefore = Object.entries(progress).filter(([, p]) => p.finished).map(([slug]) => slug);
     const stats = statsFrom(completions);
     stats.all = new Set([...completions.map((c) => c.slug), ...finishedBefore]).size;
+    const badges = badgeStates({ storiesFinished: stats.all, completions, wordsLearned: learnedWords.length, categorySlugs });
+    const badgesSeen = (childId && data.badgesSeen[childId]) || [];
     return {
       favorites,
       progress,
       stats,
+      badges,
+      badgesSeen,
+      markBadgesSeen: (ids) => {
+        if (!childId || !ids.length) return;
+        const cur = ref.current.badgesSeen[childId] ?? [];
+        const next = [...cur, ...ids.filter((i) => !cur.includes(i))];
+        if (next.length !== cur.length) commit({ ...ref.current, badgesSeen: { ...ref.current.badgesSeen, [childId]: next } });
+      },
       learnedWords,
       awards,
       hasLearned: (wordId) => learnedWords.some((w) => w.wordId === wordId),
@@ -113,7 +134,7 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
         const done = ref.current.completions[childId] ?? [];
         const today = new Date().toDateString();
         const completions = finished && !done.some((c) => c.slug === story.slug && new Date(c.at).toDateString() === today)
-          ? [...done, { slug: story.slug, at: new Date().toISOString() }] : done;
+          ? [...done, { slug: story.slug, at: new Date().toISOString(), chapters: !!story.hasChapters, cats: story.categories }] : done;
         commit({ ...ref.current, progress: { ...ref.current.progress, [childId]: { ...cur, [story.slug]: next } }, completions: { ...ref.current.completions, [childId]: completions } });
         if (finished && completions !== done && synced(story)) {
           supabase!.from('story_completions').upsert({ child_id: childId, story_id: story.id }, { onConflict: 'child_id,story_id,completed_day', ignoreDuplicates: true }).then(() => {});
@@ -131,7 +152,7 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
       },
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, childId, commit, awards]);
+  }, [data, childId, commit, awards, categorySlugs]);
 
   return <LibraryContext.Provider value={value}>{children}</LibraryContext.Provider>;
 }
