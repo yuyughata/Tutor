@@ -175,6 +175,7 @@ export default function Reader() {
               <View style={{ width, height: listH }}>
                 <Picture uri={item.page.imageUrl} art={item.page.art} style={{ width, height: artH + insets.top, borderBottomLeftRadius: radius.xl, borderBottomRightRadius: radius.xl }} />
                 <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.textWrap}>
+                  <View style={styles.column}>
                   <ChapterHeading chapters={chapters} at={at} color={theme.ink} muted={theme.muted} onOpen={() => setChapterSheet(true)} />
                   <Text accessibilityRole="text" style={[styles.text, { fontSize, lineHeight: fontSize * 1.5, color: theme.ink }]}>
                     {splitByWords(item.page.text, wordPages.filter((x) => x.at === at).map((x) => ({ id: x.w.id, word: x.w.word }))).map((seg, k) =>
@@ -202,6 +203,7 @@ export default function Reader() {
                       {hasLearned(w.id) && <Ionicons name="checkmark-circle" size={18} color={colors.secondaryDeep} />}
                     </Tap>
                   ))}
+                  </View>
                 </ScrollView>
               </View>
             ) : (
@@ -266,7 +268,7 @@ export default function Reader() {
       />
 
       {/* bottom bar */}
-      <View style={[styles.bottom, { paddingBottom: insets.bottom + 14 }]}>
+      <View style={[styles.bottom, { paddingBottom: insets.bottom + 14, backgroundColor: theme.bg }]}>
         <View style={styles.size}>
           <Tap accessibilityRole="button" accessibilityLabel="Smaller text" onPress={() => setDelta((d) => Math.max(MIN_DELTA, d - 2))} style={styles.sizeBtn}>
             <Text style={[styles.sizeTxt, { fontSize: 14 }]}>A</Text>
@@ -288,14 +290,16 @@ export default function Reader() {
 }
 
 const styles = themed(() => StyleSheet.create({
-  top: { position: 'absolute', top: 0, left: 16, right: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  top: { position: 'absolute', top: 0, left: space.lg, right: space.lg, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   round: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.95)', alignItems: 'center', justifyContent: 'center' },
   dots: { flexDirection: 'row', gap: 6, backgroundColor: 'rgba(35,35,35,0.35)', paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.pill },
   dot: { width: 22, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.45)' },
   dotOn: { backgroundColor: colors.amber },
+  // a comfortable reading column: on a tablet or computer the text stays centred instead of running edge to edge
+  column: { width: '100%', maxWidth: 680, alignSelf: 'center' },
   textWrap: { paddingHorizontal: space.lg, paddingTop: space.lg, paddingBottom: 110 },
   text: { fontFamily: fonts.bold, textAlign: 'left' },
-  bottom: { position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: space.md, paddingTop: 10 },
+  bottom: { position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: space.lg, paddingTop: 10 },
   size: { flexDirection: 'row', backgroundColor: colors.primarySoft, borderRadius: radius.pill, padding: 4 },
   sizeBtn: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center' },
   sizeTxt: { fontFamily: fonts.black, color: colors.primaryDeep },
