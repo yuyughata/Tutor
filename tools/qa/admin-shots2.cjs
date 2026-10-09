@@ -70,6 +70,14 @@ const fontCss = Object.keys(fontFile).map((w) => `@font-face{font-family:'Nunito
   await step('categories', async () => { await nav('Categories').click(); await page.getByRole('heading', { name: 'Categories', exact: true }).waitFor(); await shot('a09-categories'); });
   await step('subscribers', async () => { await nav('Subscribers').click(); await page.getByText('amara@example.com').waitFor(); await shot('a10-subscribers'); await page.getByRole('button', { name: 'Access' }).nth(3).click(); await page.locator('dialog').waitFor(); await shot('a11-manage-access'); await page.locator('dialog').getByRole('button', { name: 'Cancel' }).click(); await page.getByRole('button', { name: 'Password' }).first().click(); await page.locator('dialog').waitFor(); await shot('a11b-password-help'); await page.locator('dialog').getByRole('button', { name: 'Done' }).click(); });
   await step('settings', async () => { await nav('Settings').click(); await page.getByRole('heading', { name: 'Settings', exact: true }).waitFor(); await shot('a12-settings', true); });
+  await step('email + support', async () => {
+    await nav('Email').click(); await page.getByRole('heading', { name: 'Resend connection' }).waitFor(); await shot('a15-email-connection', true);
+    await page.getByLabel('Resend API key').fill('re_demokey12345678'); await page.locator('input[type=email]').first().fill('hello@custar.com');
+    await page.getByRole('button', { name: 'Save settings' }).click(); await page.getByText('Settings saved').waitFor(); await page.getByRole('button', { name: 'Activate email' }).click(); await page.getByText(/Email is on\. Verified/).waitFor(); await page.waitForTimeout(500);
+    await page.getByRole('button', { name: 'Send', exact: true }).click(); await page.getByRole('heading', { name: 'Write an email' }).waitFor(); await page.locator('[data-var=message]').fill('# New stories every week\nThree new bedtime stories land on Friday.\n\n- Luna and the Firefly\n- Bedtime for Bear'); await page.getByRole('button', { name: 'Preview' }).click(); await page.locator('iframe.mail-preview').waitFor({ state: 'visible' }); await shot('a16-email-send', true);
+    await page.getByRole('button', { name: 'Templates', exact: true }).click(); await page.getByRole('heading', { name: 'Welcome' }).waitFor(); await page.getByRole('button', { name: 'Preview' }).click(); await page.locator('iframe.mail-preview').waitFor({ state: 'visible' }); await shot('a17-email-templates', true);
+    await nav('Support').click(); await page.getByText('I paid yesterday').waitFor(); await shot('a18-support');
+  });
   await step('mobile', async () => {
     await page.setViewportSize({ width: 390, height: 844 }); await page.setViewportSize({ width: 390, height: 844 });
     await nav('Dashboard').click(); await page.getByRole('heading', { name: 'Dashboard' }).waitFor(); await shot('a13-mobile-dashboard');

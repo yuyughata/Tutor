@@ -44,6 +44,18 @@ MOBILE = [
         ('m21-forgot-new-password', 'New password', 'Choose and repeat a new password.'),
         ('m22-forgot-done', 'All set', 'The parent is signed in with the new password.'),
     ]),
+    ('Themes and reader modes', 'Amber buttons for the main actions in every theme. Parents choose Purple or Teal in Grown-ups; each theme has its own Day, Sepia and Night modes in the reader.', [
+        ('m32-home-teal', 'Teal theme: Home', 'Teal accents for selection, tabs and cards. "Read now" stays amber.'),
+        ('m34-reader-day-teal', 'Teal: Day', 'Bright page. The next-page button is the amber main action.'),
+        ('m35-reader-sepia-teal', 'Teal: Sepia', 'A warm page for lamp-lit reading.'),
+        ('m33-reader-night-teal', 'Teal: Night', 'Deep teal for bedtime. The reader remembers the last mode.'),
+    ]),
+    ('Passcode and kiosk mode', 'A parent with an account creates a 4-digit passcode. It replaces the number puzzle and is the only way out of kiosk mode.', [
+        ('m27-passcode-create', 'Create a passcode', 'Offered right after sign-in, or any time from Grown-ups.'),
+        ('m28-passcode-saved', 'Saved', 'Only a salted hash is stored. We email a note that it changed.'),
+        ('m29c-grownups-settings', 'Appearance, passcode, kiosk', 'Theme picker, passcode and the Kiosk mode switch with plain-language notes.'),
+        ('m30-gate-passcode', 'Passcode gate', 'Asked every time a child needs a grown-up, and again to leave kiosk mode. Five wrong tries lock it for a minute.'),
+    ]),
     ('Readers and the Grown-ups area', 'Several children can share one device. Parents see their plan, readers, downloads and the privacy policy.', [
         ('m23-grownups-premium', 'Premium active', 'Account status, Manage on the web, readers, offline storage and privacy.'),
         ('m24-privacy-policy', 'Privacy policy', 'Opens as a pop-up from the Privacy card. The text is edited by CUSTAR in the admin dashboard and saved on the device for offline reading.'),
@@ -57,6 +69,8 @@ WEB_PAGES = [
     ('Plans', 'Free, Paid ₦5,000 per month and Paid ₦12,000 per quarter. Signed-out visitors go to sign-up first, then straight to checkout for the plan they chose.', 'single', ['w02-plans']),
     ('Create account and checkout', 'Parents register on the website, then pay with Paystack. Checkout shows the plan, price and billing period, and links to the privacy policy.', 'wpair', ['w03-signup', 'w04-checkout']),
     ('Your account', 'The Premium badge shows where the parent pays. Free accounts see Get Premium; the app unlocks with the same email.', 'wpair', ['w05-account-free', 'w06-account-premium']),
+    ('Privacy consent at checkout', 'Before paying, the parent ticks a consent box and can read the privacy policy in a pop-up (the same text as the app). The consent and policy version are saved with the account.', 'wpair', ['w11-checkout-consent', 'w12-checkout-policy-popup']),
+    ('Contact support', 'Parents message the Genova team from their account. Messages land in the admin Support inbox and past messages are listed here.', 'crop', ['w13-account-support']),
     ('Payment overdue', 'After a missed renewal the badge turns amber with a Renew now button. Five days past the due date the account moves to Free automatically.', 'wpair', ['w07-account-overdue', 'w08-login']),
     ('Password reset and privacy', 'Forgot password uses an emailed code, as in the app. The privacy policy page shows the same text as the app, edited from the admin.', 'wpair', ['w09-forgot', 'w10-privacy']),
 ]
@@ -72,6 +86,10 @@ ADMIN_PAIRS = [
     ('Subscribers', 'Search parents and see their plan, access status and access-until date. Paid access ends 5 days after a missed renewal. Each row has Access and Password actions.', 'single', ['a10-subscribers']),
     ('Manage access', 'Grant or adjust access for app-store reviewers, partners and support fixes, with an end date. A later Paystack event overrides it.', 'single', ['a11-manage-access']),
     ('Password help', 'Best option: email the parent a reset code so they choose their own password. If email is not working, set a temporary password. Both actions are logged.', 'single', ['a11b-password-help']),
+    ('Email: connection', 'Paste a free Resend API key and press Activate. The key is stored on the server only and never shown again. Step-by-step help sits beside the form.', 'crop', ['a15-email-connection']),
+    ('Email: send to parents', 'Write a message, pick the group (Premium, payment overdue, ending soon, Free or everyone), preview it as parents see it, then send.', 'crop', ['a16-email-send']),
+    ('Email: templates', 'Seven editable templates: welcome, receipt, payment due, new title, broadcast, cancellation and passcode/password changed. Receipts, payment-due and cancellation emails go out automatically.', 'crop', ['a17-email-templates']),
+    ('Support inbox', 'Messages parents send from their account. Mark resolved, keep private notes, or reply by email.', 'single', ['a18-support']),
     ('Settings', 'Edit the privacy policy with a live preview (version number goes up on publish), manage admins, and review the support log.', 'crop', ['a12-settings']),
     ('Admin sign in', 'Admin-only access, on the website at /admin/. Signed-in accounts that are not admins see a clear "No admin access" message.', 'single', ['a01-login']),
     ('On a phone', 'The dashboard is responsive: the sidebar becomes a compact top bar and tables scroll.', 'phones', ['a13-mobile-dashboard', 'a14-mobile-editor']),
@@ -80,12 +98,19 @@ ADMIN_CAP = {
     'a02-dashboard': 'Dashboard', 'a03-stories': 'Stories', 'a04-story-editor': 'Editing a live story', 'a05-new-story-ready': 'New story, ready to publish',
     'a06-publish-checklist': 'Checklist blocks an incomplete story', 'a11-manage-access': 'Manage subscriber access', 'a11b-password-help': 'Password help',
     'a07-featured': 'Featured slots', 'a08-schedule-featured': 'Schedule a featured story', 'a09-categories': 'Categories', 'a10-subscribers': 'Subscribers',
-    'a01-login': 'Admin sign in', 'a12-settings': 'Settings: privacy policy, admins, support log', 'a13-mobile-dashboard': 'Dashboard on mobile', 'a14-mobile-editor': 'Editor on mobile',
+    'a01-login': 'Admin sign in', 'a15-email-connection': 'Email: connect Resend', 'a16-email-send': 'Email: write and preview', 'a17-email-templates': 'Email: templates', 'a18-support': 'Support inbox', 'a12-settings': 'Settings: privacy policy, admins, support log', 'a13-mobile-dashboard': 'Dashboard on mobile', 'a14-mobile-editor': 'Editor on mobile',
     'w01-landing': 'Landing page (top of page)', 'w02-plans': 'Plans', 'w03-signup': 'Create account', 'w04-checkout': 'Checkout', 'w05-account-free': 'Account: Free plan',
-    'w06-account-premium': 'Account: Premium badge', 'w07-account-overdue': 'Account: payment overdue', 'w08-login': 'Sign in', 'w09-forgot': 'Forgot password: enter code', 'w10-privacy': 'Privacy policy',
+    'w06-account-premium': 'Account: Premium badge', 'w11-checkout-consent': 'Checkout: consent box', 'w12-checkout-policy-popup': 'Privacy policy pop-up', 'w13-account-support': 'Account: contact support', 'w07-account-overdue': 'Account: payment overdue', 'w08-login': 'Sign in', 'w09-forgot': 'Forgot password: enter code', 'w10-privacy': 'Privacy policy',
 }
 
 # ---------------------------------------------------------------- html helpers
+try:
+    from PIL import Image
+    _src = f'{SHOTS}/m29-grownups-settings.png'
+    if os.path.exists(_src):
+        _im = Image.open(_src); _im.crop((0, 470, _im.size[0], 470 + 1688)).save(f'{SHOTS}/m29c-grownups-settings.png')
+except ImportError:
+    pass
 pages = []  # (title for contents, html)
 def foot(n, label):
     return f'<div class="foot"><span>Genova · UI Screens</span><span>{e(label)}</span><span>{n}</span></div>'
@@ -114,20 +139,20 @@ cover = f'''<div class="cover">
   <div class="logo">Gen<i>o</i>va</div>
   <h1>UI Screens</h1>
   <p class="lead">Mobile app for young readers, the Genova website, and the admin dashboard &amp; CMS</p>
-  <div class="chips"><span>26 app screens</span><span>10 website screens</span><span>15 admin screens</span></div>
+  <div class="chips"><span>{sum(len(i) for _, _, i in MOBILE)} app screens</span><span>{sum(len(n) for _, _, _, n in WEB_PAGES)} website screens</span><span>{sum(len(n) for _, _, _, n in ADMIN_PAIRS)} admin screens</span></div>
   <div class="by">A CUSTAR product · October 2026</div>
   <div class="note">Screens show sample stories and sample data. The app is captured from the web build of the same code that ships to iOS and Android; the website and admin are shown with a test backend.</div>
 </div>'''
 pages.append(('cover', cover)); n += 1
 
-found = f'''<div class="head"><div class="kick">FOUNDATIONS</div><h2>Brand, type and components</h2><p>Built on the four CUSTAR brand colours. Charcoal text is used on teal and amber because white on teal is only 3.2:1.</p></div>
+found = f'''<div class="head"><div class="kick">FOUNDATIONS</div><h2>Brand, type and components</h2><p>Built on the four CUSTAR brand colours: amber for main actions, with a purple and a teal theme. Charcoal text is used on teal and amber because white on teal is only 3.2:1.</p></div>
 <div class="found">
   <div class="col">
     <h3>Colour</h3>
     <div class="sw">
-      <div><i style="background:#ab46d2"></i><b>Purple</b><span>#ab46d2</span><em>Primary actions, active tab, selection. White text 4.6:1</em></div>
-      <div><i style="background:#10a19c"></i><b>Teal</b><span>#10a19c</span><em>Secondary, progress, success. Charcoal text 4.9:1</em></div>
-      <div><i style="background:#ffbe00"></i><b>Amber</b><span>#ffbe00</span><em>Highlights: FREE, Title of the Week. Charcoal text 9.4:1</em></div>
+      <div><i style="background:#ab46d2"></i><b>Purple</b><span>#ab46d2</span><em>Theme accent (purple theme): selection, tabs, cards. White text 4.6:1</em></div>
+      <div><i style="background:#10a19c"></i><b>Teal</b><span>#10a19c</span><em>Second accent; the teal theme's main accent. Charcoal text 4.9:1</em></div>
+      <div><i style="background:#ffbe00"></i><b>Amber</b><span>#ffbe00</span><em>Main actions in every theme, plus FREE and Title of the Week. Charcoal text 9.4:1</em></div>
       <div><i style="background:#232323"></i><b>Charcoal</b><span>#232323</span><em>Text and the admin sidebar</em></div>
     </div>
     <div class="sw small">
@@ -234,7 +259,7 @@ figcaption b{{display:block;color:#232323;font-size:10pt;font-weight:900;margin-
 .sw i{{display:block;height:15mm;border-radius:3mm;margin-bottom:1mm}} .sw.small i{{height:8mm}} .sw b{{color:#232323;font-size:10pt;font-weight:900}} .sw span{{font-weight:800;color:#232323}} .sw em{{font-style:normal}}
 .type{{display:flex;flex-direction:column;gap:2mm;background:#fff;border:.3mm solid #ece3f1;border-radius:4mm;padding:4mm 5mm}}
 .comp{{display:flex;gap:2.5mm;align-items:center;flex-wrap:wrap;margin-bottom:3.5mm}}
-.btn{{padding:2.4mm 5mm;border-radius:99mm;font-weight:900;font-size:9.5pt}} .btn.p{{background:#ab46d2;color:#fff}} .btn.s{{background:#dcf3f2;color:#0b6f6b}} .btn.g{{color:#7a2e99}} .btn.d{{background:#fdeceb;color:#c0392b}}
+.btn{{padding:2.4mm 5mm;border-radius:99mm;font-weight:900;font-size:9.5pt}} .btn.p{{background:#ffbe00;color:#232323}} .btn.s{{background:#dcf3f2;color:#0b6f6b}} .btn.g{{color:#7a2e99}} .btn.d{{background:#fdeceb;color:#c0392b}}
 .chip{{padding:1.8mm 4mm;border-radius:99mm;border:.4mm solid #ece3f1;background:#fff;font-weight:800;font-size:9pt}} .chip.on{{background:#ab46d2;color:#fff;border-color:#ab46d2}}
 .pill{{padding:.9mm 3mm;border-radius:99mm;font-weight:900;font-size:7.5pt}} .pill.live{{background:#dcf3f2;color:#0b6f6b}} .pill.sched{{background:#fff2c7;color:#7a5a00}} .pill.draft{{background:#ece3f1;color:#6b6472}} .pill.free{{background:#ffbe00}} .pill.prem{{background:#f4e6fa;color:#7a2e99}}
 .seg{{display:inline-flex;background:#ece3f1;border-radius:99mm;padding:.8mm}} .seg b{{padding:1.8mm 4mm;border-radius:99mm;font-size:8.5pt;font-weight:800;color:#6b6472}} .seg b.on{{background:#fff;color:#7a2e99}}

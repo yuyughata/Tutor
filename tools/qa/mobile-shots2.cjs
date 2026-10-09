@@ -66,6 +66,33 @@ const out = process.env.OUT;
     await page.getByText('Add a reader').first().click(); await page.getByLabel("Reader's name").fill('Kofi'); await page.getByText('Sunrise', { exact: true }).click(); await page.getByLabel('bear', { exact: true }).click(); await page.getByText('Save', { exact: true }).click();
     await tab('Home').click(); await page.getByLabel(/^Reading as/).click(); await page.getByText("Who's reading?").waitFor(); await shot('m18-switch-reader');
   });
+  const WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'];
+  const digits = async (d) => { for (const c of d) { await page.getByRole('button', { name: WORDS[Number(c)], exact: true }).last().click(); await page.waitForTimeout(80); } };
+  const tall = async (n, h = 1500) => { const vp = page.viewportSize(); await page.setViewportSize({ width: vp.width, height: h }); await page.waitForTimeout(600); await page.screenshot({ path: `${out}/${n}.png` }); await page.setViewportSize(vp); await page.waitForTimeout(300); console.log('shot', n); };
+  await step('open grown-ups', async () => {
+    await page.mouse.click(195, 120); await page.waitForTimeout(500); // close the reader sheet
+    await tab('Grown-ups').click(); await page.waitForTimeout(600);
+    if (await page.getByText('Tap these numbers in order').count()) await gate();
+    await page.getByRole('button', { name: 'Create passcode' }).waitFor();
+  });
+  await step('passcode create', async () => {
+    await page.getByRole('button', { name: 'Create passcode' }).click(); await page.getByText('Create your passcode').waitFor(); await digits('24'); await shot('m27-passcode-create');
+    await digits('68'); await page.getByText('Repeat the passcode').first().waitFor(); await digits('2468'); await page.getByText('Passcode saved').waitFor(); await shot('m28-passcode-saved'); await page.getByRole('button', { name: 'Done' }).click();
+  });
+  await step('kiosk on, settings card', async () => {
+    await page.getByRole('switch', { name: 'Kiosk mode' }).click(); await page.waitForTimeout(500); await tall('m29-grownups-settings', 1700);
+  });
+  await step('kiosk off needs the passcode', async () => {
+    await page.getByRole('switch', { name: 'Kiosk mode' }).click(); await page.getByText('Enter your passcode').waitFor(); await digits('24'); await shot('m30-gate-passcode'); await digits('68'); await page.waitForTimeout(500);
+  });
+  await step('teal theme', async () => {
+    await page.getByRole('radio', { name: /^Teal theme/ }).click(); await page.getByText('Teal ✓').waitFor(); await page.waitForTimeout(400); await tall('m31-grownups-teal', 1700);
+    await tab('Home').click(); await page.getByText('Popular right now').waitFor(); await shot('m32-home-teal');
+    await page.getByLabel(/^Bedtime for Bear/).first().click(); await page.getByText('Start reading').waitFor(); await page.getByText('Start reading').click(); await page.getByLabel('Next page').waitFor(); await shot('m33-reader-night-teal'); // the reader remembers the last mode (night, from the earlier shots)
+    await page.getByLabel(/^Reading theme/).click(); await shot('m34-reader-day-teal');
+    await page.getByLabel(/^Reading theme/).click(); await shot('m35-reader-sepia-teal');
+    await page.getByLabel(/^Reading theme/).click(); await page.getByLabel('Close story').click(); await page.getByLabel('Back').click();
+  });
   console.log(logs.join('\n') || 'no page errors'); console.log(failures ? failures + ' FAILED' : 'ALL CAPTURED');
   await browser.close();
 })().catch((e) => { console.error('FATAL', e.message.split('\n').slice(0, 4).join('\n')); process.exit(1); });
