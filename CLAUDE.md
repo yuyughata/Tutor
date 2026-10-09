@@ -1,7 +1,7 @@
 # Genova (by CUSTAR) — working context
 
 Children's storybook app. Text stories now; audio then video later. CUSTAR authors first, outside writers later.
-Read `README.md` for setup and `docs/MVP_BRIEF.md` for scope. This file holds decisions, conventions and the backlog so a new session can continue without re-deriving them.
+Read `README.md` for setup, `docs/MVP_BRIEF.md` for scope, `docs/HANDOFF.md` for accounts/secrets/deploy/resuming in a new chat or account, and `tools/qa/README.md` for the browser test tooling. This file holds decisions, conventions and the backlog so a new session can continue without re-deriving them.
 
 ## Product decisions (do not re-litigate)
 - **Reading levels, never ages.** Sunrise = Assisted Reader, Spark = Emergent Reader, Seeker = Developing Reader. No age or age-group text may appear in the app, website, admin or docs. DB enum is `reading_level` (`sunrise|spark|seeker`).
@@ -15,11 +15,12 @@ Read `README.md` for setup and `docs/MVP_BRIEF.md` for scope. This file holds de
 ## Layout
 - `app/` Expo SDK 57 / React Native 0.86 / expo-router, TypeScript. react + react-dom are pinned exactly (19.2.3); keep them equal.
 - `web/` Next.js 16 static export (`output: 'export'`, trailingSlash). Admin CMS is vanilla JS in `web/public/admin/` and shares the site's Supabase session.
+- `tools/qa/` browser tests (fake Supabase backend), screenshot and PDF scripts. `supabase/seed_legal.sql` = sample privacy policy.
 - `supabase/migrations/0001–0004` (all applied to the live project), `supabase/functions/` (paystack-checkout, paystack-webhook, paystack-manage, admin-user-support; all deployed), `supabase/tests/`.
 - Supabase project **GenovaStorybook**, ref `cjdrlddvbyfataumdztg`.
 
 ## Commands
-- App: `cd app && npm start`, `npm run typecheck`. Web: `cd web && npm run dev | build | typecheck | test` (admin test needs `SUPABASE_JS=<supabase-js umd main>`).
+- App: `cd app && npm start`, `npm run typecheck`. Web: `cd web && npm run dev | build | typecheck | test` (`npm test` needs `app/node_modules` installed).
 - Function tests: `cd supabase && node --experimental-strip-types --test tests/support.test.mjs tests/paystack.test.mjs` (pass files, not a directory).
 - App web export for browser tests: `npx expo export -p web --clear` (use `--clear` or EXPO_PUBLIC env vars are stale).
 

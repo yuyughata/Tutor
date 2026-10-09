@@ -6,7 +6,9 @@ Children's storybook app by CUSTAR. Product scope: [`docs/MVP_BRIEF.md`](docs/MV
 - `app/` — Expo (React Native, TypeScript, Expo Router) mobile app.
 - `web/` — Next.js website (static export): landing, plans and checkout, account (Premium badge, manage subscription), sign-up / sign-in / forgot password, privacy policy, and the **admin dashboard / CMS** at `/admin/` (`web/public/admin`).
 - `supabase/migrations/` — `0001`–`0004` (schema + RLS, admin CMS, hardened helpers, reading levels / access rules / plans / legal documents).
-- `supabase/seed.sql` — three sample stories for local development.
+- `supabase/seed.sql` — three sample stories for local development; `supabase/seed_legal.sql` — sample privacy policy.
+- `tools/qa/` — browser tests, screenshots and PDF build ([README](tools/qa/README.md)).
+- `CLAUDE.md` and [`docs/HANDOFF.md`](docs/HANDOFF.md) — context, accounts, deploy and how to resume in a new chat or account.
 - `supabase/functions/` — `paystack-checkout`, `paystack-webhook`, `paystack-manage`, `admin-user-support`.
 - `supabase/tests/` — unit tests for the Paystack and support logic.
 
