@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "npx http-server out -p 3000 -c-1",
     "typecheck": "tsc --noEmit",
-    "test": "node --test tests/admin/api.test.mjs"
+    "test": "node --test tests/admin/api.test.mjs",
+    "landing:single": "node ../tools/site/build_landing.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.3",

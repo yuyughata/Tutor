@@ -1,0 +1,61 @@
+/* Account, checkout, sign-in, plans, privacy and support pages: same look as the landing page (tokens live in design.css). */
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior:auto; } *, *::before, *::after { animation-duration:.01ms !important; transition-duration:.01ms !important; } }
+h1,h2,h3 { letter-spacing:-.01em; }
+main > :not(.lp) a:not(.btn) { color:var(--purple); text-decoration:underline; text-underline-offset:3px; }
+.muted { color:var(--ink-soft); } .small { font-size:14px; } .center { text-align:center; }
+.stack > * + * { margin-top:16px; } .row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+.wrap.auth, .wrap.page-top, .page-top { max-width:var(--maxw); }
+
+/* page header band */
+.page-top { position:relative; padding:64px 28px 12px; margin:0 auto; max-width:var(--maxw); }
+.page-top::before { content:""; position:absolute; z-index:-1; top:0; bottom:-24px; left:50%; width:100vw; margin-left:-50vw;
+  background: radial-gradient(40% 70% at 10% 0%, rgba(245,166,35,.20), transparent 70%), radial-gradient(44% 80% at 92% 0%, rgba(14,168,148,.16), transparent 72%), radial-gradient(50% 90% at 70% 100%, rgba(108,43,217,.10), transparent 72%); }
+.page-top h1, .auth h1 { font-family:'Fraunces',Georgia,serif; font-weight:700; font-size:clamp(2rem,4.4vw,2.9rem); line-height:1.05; letter-spacing:-.5px; color:var(--ink); }
+.page-top p { color:var(--ink-soft); font-size:1.08rem; line-height:1.62; margin-top:12px; max-width:660px; }
+.page-top + * { margin-top:28px; }
+
+/* cards */
+.card { background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:30px; box-shadow:var(--shadow); }
+.card h2 { font-size:1.55rem; } .card h3 { font-size:1.2rem; }
+.auth { min-height:calc(100vh - 280px); display:grid; place-items:center; padding:48px 28px; }
+.auth .card { width:min(480px,100%); box-shadow:var(--shadow-lift); padding:38px; }
+.auth h1 { font-size:2rem; margin-bottom:8px; }
+
+/* forms (extends .field from design.css) */
+.field .hint { color:var(--ink-soft); font-size:.82rem; margin-top:5px; }
+.field label { font-size:.86rem; }
+.field input, .field select, .field textarea { min-height:50px; }
+.field textarea { min-height:120px; }
+.field select, .field textarea { font-family:inherit; }
+.notice { padding:14px 16px; border-radius:14px; font-weight:600; background:var(--gold-soft); color:var(--gold-text); font-size:.95rem; }
+.notice.bad { background:var(--danger-soft); color:var(--danger); } .notice.ok { background:var(--teal-soft); color:var(--teal-text); }
+.consent { display:flex; gap:12px; align-items:flex-start; padding:16px 18px; border-radius:16px; background:var(--purple-soft); }
+.consent input { width:24px; height:24px; margin-top:2px; accent-color:var(--purple-deep); flex:none; } .consent label { font-weight:600; line-height:1.5; font-family:'Inter'; font-size:.95rem; }
+.linkbtn { background:none; border:0; padding:0; font:inherit; font-weight:700; color:var(--purple); text-decoration:underline; cursor:pointer; }
+
+/* premium badge */
+.premium { display:inline-flex; align-items:center; gap:8px; padding:6px 14px 6px 10px; border-radius:99px; background:linear-gradient(135deg,#ffd44d,#F5A623 60%,#E08E00); color:#232323; font-family:'Baloo 2'; font-weight:700; font-size:.88rem; box-shadow:0 6px 16px -6px rgba(224,142,0,.6); white-space:nowrap; }
+.premium svg { width:18px; height:18px; flex:none; }
+.premium.warn { background:linear-gradient(135deg,#fff3de,#ffe3a8); box-shadow:none; border:2px solid var(--gold); }
+.premium.lg { font-size:1.1rem; padding:10px 20px 10px 14px; } .premium.lg svg { width:24px; height:24px; }
+.premium small { font-weight:600; opacity:.85; font-size:.8em; }
+.banner { display:flex; gap:16px; align-items:center; flex-wrap:wrap; padding:20px 24px; border-radius:var(--radius); background:linear-gradient(135deg,#fff8e8,var(--gold-soft)); border:2px solid var(--gold); box-shadow:var(--shadow-soft); }
+
+/* plans page extras */
+.plans-page .plans { margin-top:0; }
+
+/* account */
+dl.facts { display:grid; grid-template-columns:auto 1fr; gap:12px 28px; margin:0; } dl.facts dt { color:var(--ink-soft); font-weight:600; } dl.facts dd { margin:0; font-family:'Baloo 2'; font-weight:700; }
+.legal h3 { margin:28px 0 8px; font-size:1.3rem; } .legal p { margin-bottom:12px; color:var(--ink-soft); line-height:1.75; } .legal ul { margin:0 0 12px; padding-left:22px; color:var(--ink-soft); } .legal li { margin-bottom:6px; line-height:1.65; }
+.spinner { width:22px; height:22px; border-radius:50%; border:3px solid var(--purple-soft); border-top-color:var(--purple); animation:spin .8s linear infinite; display:inline-block; vertical-align:-5px; } @keyframes spin { to { transform:rotate(360deg); } }
+.reqs { list-style:none; padding:0; margin:0; } .reqs li { padding:12px 0; border-top:1px solid var(--line); } .reqs .when { color:var(--ink-soft); font-size:13px; font-weight:600; }
+
+/* dialog (privacy policy) */
+.sheet { border:0; border-radius:var(--radius-lg); padding:0; width:min(680px,calc(100vw - 24px)); max-height:min(86vh,720px); box-shadow:0 40px 90px -24px rgba(0,0,0,.5); color:var(--ink); background:var(--cream); }
+.sheet::backdrop { background:rgba(28,27,31,.62); backdrop-filter:blur(3px); }
+.sheet[open] { display:flex; flex-direction:column; }
+.sheet-head { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; padding:22px 26px 14px; border-bottom:1px solid var(--line); background:#fff; } .sheet-head h2 { font-size:1.4rem; }
+.sheet-body { padding:8px 26px 16px; overflow:auto; flex:1; } .sheet-foot { padding:14px 26px 22px; border-top:1px solid var(--line); display:flex; justify-content:flex-end; background:#fff; }
+
+@media (max-width:640px) { .page-top { padding:44px 20px 8px; } .auth { padding:32px 16px; } .card { padding:24px 20px; } .auth .card { padding:28px 22px; } }
+.wrap > .page-top { padding-left:0; padding-right:0; }

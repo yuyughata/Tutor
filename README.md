@@ -118,3 +118,6 @@ Not yet built: audio and video (Phase 2 and 3).
 Verification caveat: everything was exercised against a fake Supabase backend that speaks the real wire format and with SQL rollback tests;
 nothing has been run against the live Supabase/Paystack (the build sandbox could not reach them), nor on a physical device.
 Do a first sign-in, one story save, and one Paystack test payment as smoke tests.
+
+## Landing page
+The website's landing page content is in `web/content/` and its look in `web/app/design.css` (shared by every page). `node tools/site/build_landing.mjs` builds a single self-contained HTML copy at `docs/Genova_Landing_Page.html`. See `CLAUDE.md` for details.

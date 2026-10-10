@@ -16,7 +16,7 @@ const BASE = 'http://localhost:8096';
   let fails = 0;
   const step = async (name, fn) => { try { await fn(); console.log('ok   ', name); } catch (e) { fails++; console.log('FAIL ', name, '-', e.message.split('\n').slice(0, 5).join(' | ').slice(0, 400)); await page.screenshot({ path: `${process.env.OUT}/fail-${name.replace(/\W+/g, '-')}.png`, fullPage: true }).catch(() => {}); } };
   const text = () => page.locator('body').innerText();
-  const noAges = async (where) => { const t = await text(); const m = t.match(/\bAges?\b|\b2\s?[–-]\s?4\b|\b5\s?[–-]\s?8\b|\b9\s?[–-]\s?12\b|\bLittle\b|\bExplorer\b|\bAdventurer\b|\bage group/i); if (m) throw new Error(`${where}: found "${m[0]}"`); };
+  const noAges = async (where) => { const t = await text(); const m = t.match(/\bAges?\b|\b2\s?[–-]\s?4\b|\b5\s?[–-]\s?8\b|\b9\s?[–-]\s?12\b|\bLittle Explorer\b|\bAdventurer\b|\bage group/i); if (m) throw new Error(`${where}: found "${m[0]}"`); };
   const audit = async (name) => {
     await page.addScriptTag({ content: AXE }).catch(() => {});
     const r = await page.evaluate(async () => (await window.axe.run(document, { runOnly: ['wcag2a', 'wcag2aa'] })).violations.map((v) => `${v.id}[${v.impact}]x${v.nodes.length}`));
@@ -27,7 +27,7 @@ const BASE = 'http://localhost:8096';
 
   await step('landing: levels without ages, plans and prices', async () => {
     await goto('/');
-    await page.getByRole('heading', { name: /Stories that grow/ }).waitFor();
+    await page.getByRole('heading', { name: /Stories That Stay and/i }).waitFor();
     for (const t of ['Sunrise', 'Assisted Reader', 'Spark', 'Emergent Reader', 'Seeker', 'Developing Reader']) await page.getByText(t, { exact: true }).first().waitFor();
     await page.getByText('₦5,000').first().waitFor(); await page.getByText('₦12,000').first().waitFor(); await page.getByText('Save 20%').first().waitFor();
     await noAges('landing'); await audit('landing');

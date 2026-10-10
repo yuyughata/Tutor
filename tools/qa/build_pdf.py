@@ -77,7 +77,7 @@ MOBILE = [
 ]
 
 WEB_PAGES = [
-    ('Landing', 'Introduces Genova and its three reading levels, with plans and prices up front. No ages anywhere.', 'crop', ['w01-landing']),
+    ('Landing', 'The CUSTAR landing page: the Genova story, seven pillars, three reading levels, the Genova app with live plans, soft-copy bundles, title catalog, reading program, library and requests. Every other page shares its look. No ages anywhere.', 'crop', ['w01-landing']),
     ('Plans', 'Free, Paid ₦5,000 per month and Paid ₦12,000 per quarter. Signed-out visitors go to sign-up first, then straight to checkout for the plan they chose.', 'single', ['w02-plans']),
     ('Create account and checkout', 'Parents register on the website, then pay with Paystack. Checkout shows the plan, price and billing period, and links to the privacy policy.', 'wpair', ['w03-signup', 'w04-checkout']),
     ('Your account', 'The Premium badge shows where the parent pays. Free accounts see Get Premium; the app unlocks with the same email.', 'wpair', ['w05-account-free', 'w06-account-premium']),
