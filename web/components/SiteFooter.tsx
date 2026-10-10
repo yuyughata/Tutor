@@ -16,7 +16,7 @@ export function SiteFooter() {
             <a href="/#pillars">7 Pillars</a>
             <a href="/#levels">Reading Levels</a>
             <a href="/#products">Storybooks</a>
-            <a href="/#catalog">Title Catalog</a>
+            {/* Title Catalog link switched off while the catalog section is hidden: <a href="/#catalog">Title Catalog</a> */}
           </div>
           <div className="foot-col">
             <h5>Programs</h5>

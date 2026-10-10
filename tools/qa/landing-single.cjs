@@ -21,7 +21,7 @@ const FILE = 'file://' + path.resolve(__dirname, '..', '..', 'docs', 'Genova_Lan
   const step = async (name, width, fn) => { try { await run(width, fn); console.log('ok   ', name); } catch (e) { fails++; console.log('FAIL ', name, '-', e.message.split('\n').slice(0, 4).join(' | ')); } };
 
   await step('desktop: content preserved and new app section present', 1280, async (p) => {
-    for (const t of ['Stories That Stay and', 'Reading is where it starts. Character is where it goes.', 'Seven pillars. One whole child.', 'Every child reads differently.', 'Genova Sunrise P1', 'Genova Spark P1', 'Genova Seeker P1', 'Combo Pack P1', '900+ stories. Seven pillars.', 'From struggling reader to confident reader', 'A real library where children walk in, pick a book, and read.', 'Real homes. Real reading wins.', 'Genova stories, in your child', 'Simple plans', 'Good questions, honest answers.']) {
+    for (const t of ['Stories That Stay and', 'Reading is where it starts. Character is where it goes.', 'Seven pillars. One whole child.', 'Every child reads differently.', 'Genova Sunrise P1', 'Genova Spark P1', 'Genova Seeker P1', 'Combo Pack P1', 'From struggling reader to confident reader', 'A real library where children walk in, pick a book, and read.', 'Real homes. Real reading wins.', 'Genova stories, in your child', 'Simple plans', 'Good questions, honest answers.']) {
       if (!(await p.locator('body').innerText()).includes(t) && !(await p.content()).includes(t.replace(/'/g, '&#39;'))) throw new Error('missing: ' + t);
     }
     const links = await p.$$eval('a[href*="selar.com"]', (a) => a.length); if (links !== 4) throw new Error('Selar order links: ' + links);
@@ -38,15 +38,13 @@ const FILE = 'file://' + path.resolve(__dirname, '..', '..', 'docs', 'Genova_Lan
     await p.evaluate(() => document.querySelector('#pillars').scrollIntoView()); await p.waitForTimeout(1600);
     const o = await p.$eval('#pillars .pillar-card', (e) => getComputedStyle(e).opacity); if (Number(o) < 0.99) throw new Error('pillar card still hidden: ' + o);
   });
-  await step('desktop: a catalog group opens the full catalog at that pillar; tabs switch; Escape closes', 1280, async (p) => {
-    await p.locator('button.catalog-group[data-catalog-open="D"]').click();
-    await p.locator('#catalogModal.open').waitFor();
-    await p.getByText('How a Danfo Bus Moves').waitFor();
-    const top = await p.$eval('#catalogBody', (b) => { const t = b.querySelector('[data-pillar="D"]'); return Math.abs(b.scrollTop - (t.offsetTop - 8)) < 40; }); if (!top) throw new Error('did not scroll to pillar D');
-    await p.getByRole('button', { name: /Genova Seeker/ }).click(); await p.getByText('How the Internet Connects the World').waitFor();
-    await p.keyboard.press('Escape'); await p.locator('#catalogModal.open').waitFor({ state: 'detached' }).catch(() => {});
-    if (await p.locator('#catalogModal.open').count()) throw new Error('catalog did not close');
-    if (await p.evaluate(() => document.body.style.overflow)) throw new Error('page scroll stayed locked');
+  await step('desktop: the Title Catalog section and its buttons are hidden', 1280, async (p) => {
+    const txt = await p.locator('body').innerText();
+    for (const t of ['The Title Catalog', 'Browse the Catalog', 'Open the full catalog', 'Title Catalog']) if (txt.includes(t)) throw new Error('still visible: ' + t);
+    if (await p.locator('#catalog').isVisible().catch(() => false)) throw new Error('#catalog is visible');
+    if (await p.locator('a[href="#catalog"],[data-catalog-open]').count()) throw new Error('something still links to the catalog');
+    if (!(await p.getByText('This is the whole point.').isVisible())) throw new Error('the "whole point" card is gone');
+    if (!(await p.getByText('Seven Pillars,').first().isVisible())) throw new Error('pillars heading missing');
   });
   await step('desktop: forms have no age field and are labelled', 1280, async (p) => {
     for (const id of ['preorderForm', 'grpForm']) {

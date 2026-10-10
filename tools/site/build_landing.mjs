@@ -17,7 +17,7 @@ const SITE = (process.env.SITE_URL || '').replace(/\/$/, '');
 const read = (...p) => fs.readFileSync(path.join(web, ...p), 'utf8');
 
 // ---- navigation: one source of truth (components/SiteHeader.tsx) ----
-const headerSrc = read('components', 'SiteHeader.tsx');
+const headerSrc = read('components', 'SiteHeader.tsx').split('\n').filter((l) => !l.trim().startsWith('//')).join('\n'); // commented-out links stay off
 const nav = [...headerSrc.matchAll(/\{ href: '([^']+)', label: '([^']+)' \}/g)].map((m) => ({ href: m[1], label: m[2] }));
 if (nav.length < 6) throw new Error('could not read NAV_LINKS from SiteHeader.tsx');
 
@@ -90,7 +90,7 @@ const footer = `
         <p class="blurb">A storybook world built on seven pillars of wholesome development, for families raising readers, thinkers, and people of real character.</p>
       </div>
       <div class="foot-col"><h5>Explore</h5>
-        <a href="/#about">About Genova</a><a href="/#pillars">7 Pillars</a><a href="/#levels">Reading Levels</a><a href="/#products">Storybooks</a><a href="/#catalog">Title Catalog</a></div>
+        <a href="/#about">About Genova</a><a href="/#pillars">7 Pillars</a><a href="/#levels">Reading Levels</a><a href="/#products">Storybooks</a></div>
       <div class="foot-col"><h5>Programs</h5>
         <a href="/#grp">Reading Program (GRP)</a><a href="/#grp-form">Request a Session</a><a href="/#preorder">Request a Title</a><a href="/#library">Genova Library</a></div>
       <div class="foot-col"><h5>Genova App</h5>

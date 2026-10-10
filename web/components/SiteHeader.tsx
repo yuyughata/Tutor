@@ -12,7 +12,7 @@ export const NAV_LINKS = [
   { href: '/#levels', label: 'Reading Levels' },
   { href: '/#app', label: 'Genova App' },
   { href: '/#products', label: 'Storybooks' },
-  { href: '/#catalog', label: 'Title Catalog' },
+  // Title Catalog link switched off while the catalog section is hidden: { href: '/#catalog', label: 'Title Catalog' },
   { href: '/#grp', label: 'Reading Program' },
   { href: '/plans/', label: 'Plans' },
 ];
