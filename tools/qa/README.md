@@ -43,15 +43,15 @@ Each prints `ok`/`FAIL` per step and `ALL PASSED`. Failures leave a `fail-*.png`
 Stop servers with their PID (`kill %1`), not `pkill -f`.
 
 ## Screenshots and the UI PDF
+Serve the app export (:8097), the website export `web/out` (:8096) and the admin (`http-server public` on :8098) as above, then:
 ```sh
-node mobile-shots2.cjs && node site-shots.cjs && node admin-shots2.cjs     # write PNGs to $OUT (m*, w*, a*)
-SHOTS=$OUT python3 build_pdf.py                                            # builds .work/ui-screens.html
+export PW=... AXE=... OUT=$PWD/.work/shots QA_ART_DIR=$PWD/.work/art
+mkdir -p $OUT && node make_art.cjs                      # friendly sample cover/page artwork for the fake backend (optional)
+node mobile-shots2.cjs && node mobile-shots3.cjs        # app screens (Spark reader, then Seeker: chapters, words, badges, rewards)
+node site-shots.cjs && node landing-shots.cjs           # website pages, landing sections and phone shots
+node admin-shots2.cjs                                   # admin screens (demo mode)
+SHOTS=$OUT python3 build_pdf.py                         # -> .work/ui-screens.html (cuts tall shots into page-sized slices)
+HTML=$PWD/.work/ui-screens.html node check_pdf_layout.cjs   # fails if anything spills off a page
 HTML=$PWD/.work/ui-screens.html PDF=$PWD/../../docs/Genova_UI_Screens.pdf node print_pdf.cjs
 ```
-Edit the captions and page order at the top of `build_pdf.py`.
-
-## Other tests (no browser)
-- `cd web && npm test` (admin data layer; needs `app/node_modules`)
-- `cd supabase && node --experimental-strip-types --test tests/support.test.mjs tests/paystack.test.mjs`
-- Typecheck: `cd app && npm run typecheck`, `cd web && npm run typecheck`
-- SQL rollback tests were run ad hoc through the Supabase SQL tool with `raise exception` at the end of a DO block (so nothing persists) and simulated claims via `set_config('request.jwt.claims', ...)`.
+Edit captions and page order at the top of `build_pdf.py`. Layout rules: up to 4 phones per page (a bigger group continues on the next page), website and landing shots two per page in slices, admin shots wide with tall ones continued over pages.

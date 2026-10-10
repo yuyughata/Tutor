@@ -53,11 +53,12 @@ const fontCss = Object.keys(fontFile).map((w) => `@font-face{font-family:'Nunito
     await page.getByRole('button', { name: 'Animals', exact: true }).click(); await page.getByRole('button', { name: 'Adventure', exact: true }).click();
     await page.locator('.cover-drop input[type=file]').setInputFiles(cover);
     await page.locator('input[type=file][multiple]').setInputFiles(pagesArt);
-    await page.waitForFunction(() => document.querySelectorAll('.page-card').length === 3);
+    await page.waitForFunction(() => document.querySelectorAll('.page-card .page-img').length === 3);
     const t = page.locator('.page-card textarea');
     await t.nth(0).fill('Once upon a time, a small turtle woke up and looked at the hill.'); await t.nth(1).fill('He decided to climb it, one slow step at a time.'); await t.nth(2).fill('At the top, he could see the whole wide world.');
+    await page.getByLabel('Word 1', { exact: true }).fill('turtle'); await page.getByLabel('Meaning of word 1').fill('a slow, gentle animal that carries its shell'); await page.getByLabel('Example for word 1').fill('The turtle walked up the hill.');
     await page.getByRole('button', { name: 'Live', exact: true }).click(); await page.locator('.page-card textarea').first().focus();
-    await page.waitForFunction(() => document.querySelectorAll('.checklist li.ok').length === 6); await shot('a05-new-story-ready', true);
+    await page.waitForFunction(() => document.querySelectorAll('.checklist li.ok').length === 7); await shot('a05-new-story-ready', true);
   });
   await step('new story validation', async () => {
     page.once('dialog', (d) => d.accept()); await nav('Stories').click(); await page.getByRole('link', { name: 'New story' }).first().click();
@@ -78,6 +79,14 @@ const fontCss = Object.keys(fontFile).map((w) => `@font-face{font-family:'Nunito
     await page.getByRole('button', { name: 'Reminders', exact: true }).click(); await page.getByRole('heading', { name: 'Scheduled reminders' }).waitFor(); await page.getByRole('button', { name: 'Send due reminders now' }).click(); await page.getByRole('button', { name: 'Send now' }).click(); await page.getByText(/Sent 3 reminders/).waitFor(); await page.waitForTimeout(3500); await shot('a19-email-reminders', true);
     await page.getByRole('button', { name: 'Templates', exact: true }).click(); await page.getByRole('heading', { name: 'Welcome' }).waitFor(); await page.getByRole('button', { name: 'Preview' }).click(); await page.locator('iframe.mail-preview').waitFor({ state: 'visible' }); await shot('a17-email-templates', true);
     await nav('Support').click(); await page.getByText('I paid yesterday').waitFor(); await shot('a18-support');
+  });
+  await step('editor chapters and words', async () => {
+    await nav('Stories').click(); await page.getByText('The Child and the Snow Leopard').first().click(); await page.getByRole('heading', { name: 'Edit story' }).waitFor();
+    await page.getByRole('heading', { name: 'Word Explorer' }).waitFor(); await shot('a20-editor-chapters-words', true);
+  });
+  await step('readers', async () => {
+    await nav('Readers').click(); await page.getByRole('heading', { name: 'Top readers' }).waitFor(); await page.getByRole('row', { name: /Ada/ }).waitFor(); await shot('a21-readers');
+    await page.getByRole('row', { name: /Ada/ }).getByRole('button', { name: 'Give award' }).click(); await page.locator('dialog').waitFor(); await shot('a22-readers-award'); await page.locator('dialog').getByRole('button', { name: 'Cancel' }).click();
   });
   await step('mobile', async () => {
     await page.setViewportSize({ width: 390, height: 844 }); await page.setViewportSize({ width: 390, height: 844 });

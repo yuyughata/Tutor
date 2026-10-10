@@ -52,7 +52,13 @@ function createState(over = {}) {
 }
 
 async function install(context, state, { host = 'mock.supabase.test' } = {}) {
-  await context.route(/img\.test/, (r) => r.fulfill({ status: 200, contentType: 'image/png', headers: { 'access-control-allow-origin': '*' }, body: PNG }));
+  // QA_ART_DIR (see make_art.cjs) serves friendlier sample artwork for screenshots; tests use the tiny default picture.
+  const artDir = process.env.QA_ART_DIR;
+  await context.route(/img\.test/, (r) => {
+    let body = PNG;
+    if (artDir) { try { body = require('fs').readFileSync(require('path').join(artDir, new URL(r.request().url()).pathname.split('/').pop())); } catch { /* fall back */ } }
+    return r.fulfill({ status: 200, contentType: 'image/png', headers: { 'access-control-allow-origin': '*' }, body });
+  });
   await context.route(new RegExp(host.replace(/\./g, '\\.')), async (route) => {
     if (state.down) return route.abort('internetdisconnected');
     const req = route.request();
