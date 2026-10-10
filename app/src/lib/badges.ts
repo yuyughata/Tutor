@@ -50,6 +50,9 @@ export function badgeStates(i: BadgeInput): BadgeState[] {
 /** Earned badges the reader has not been shown yet. */
 export const unseenBadges = (states: BadgeState[], seen: string[]): BadgeState[] => states.filter((b) => b.earned && !seen.includes(b.id));
 
+/** The weekly reading goal is switched off for now (set to true to bring back the ring on My books). */
+export const WEEKLY_GOAL_ENABLED = false;
+
 /** Stories to finish in a week. The goal never carries over and a missed week costs nothing. */
 export const WEEKLY_GOAL = 3;
 

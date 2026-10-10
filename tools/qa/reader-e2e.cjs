@@ -101,7 +101,7 @@ const AXE = fs.readFileSync(process.env.AXE, 'utf8');
     await page.getByText('This week', { exact: true }).waitFor(); await page.getByText('This month', { exact: true }).waitFor(); await page.getByText('All time', { exact: true }).waitFor();
     await page.getByLabel('Stories finished: 1 this week, 1 this month, 1 in total').waitFor();
     await page.getByRole('heading', { name: 'Badges' }).waitFor(); await page.getByText('3 of 9').waitFor();
-    await page.getByLabel('Weekly goal: 1 of 3 stories this week').waitFor(); await page.getByText('2 more to go!').waitFor();
+    if (await page.getByText('Weekly reading goal').count()) throw new Error('the weekly goal is switched off');
     await page.getByLabel(/^First story, earned\./).waitFor(); await page.getByLabel(/^Explorer, not earned yet/).waitFor();
     if (await page.getByText('NEW', { exact: true }).count()) throw new Error('badges shown on The End must not be tagged new again');
     await shot('my-books-badges'); await audit('my books (badges, goal)');

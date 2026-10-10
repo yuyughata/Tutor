@@ -75,6 +75,11 @@ const NUM = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eigh
   });
   await step('theme: switch to teal, stay on Grown-ups, amber actions, reader modes per theme', async () => {
     const rgb = async (loc, prop = 'backgroundColor') => loc.evaluate((el, p) => getComputedStyle(el)[p], prop);
+    // the default theme is the original: purple accents and purple main-action buttons
+    await tab('Home').click(); await page.getByText('Read now').first().waitFor();
+    const purpleBtn = await page.getByText('Read now').first().evaluate((el) => getComputedStyle(el.parentElement).backgroundColor);
+    if (purpleBtn !== 'rgb(171, 70, 210)') throw new Error('default theme main action should be purple, got ' + purpleBtn);
+    await tab('Grown-ups').click(); await page.getByText('Premium is active').waitFor();
     const radios = page.getByRole('radio');
     console.log('  radio attrs:', JSON.stringify(await radios.evaluateAll((els) => els.map((e) => [e.getAttribute('role'), e.getAttribute('aria-checked'), e.getAttribute('aria-label')]))));
     await page.getByRole('radio', { name: /^Teal theme/ }).click();
@@ -87,7 +92,7 @@ const NUM = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eigh
     await tab('Home').click(); await page.getByText('TITLE OF THE WEEK').waitFor();
     const readNow = page.getByText('Read now').first();
     const readBg = await readNow.evaluate((el) => getComputedStyle(el.parentElement).backgroundColor);
-    if (readBg !== 'rgb(255, 190, 0)') throw new Error('main action should be amber, got ' + readBg);
+    if (readBg !== 'rgb(255, 190, 0)') throw new Error('teal theme main action should be amber, got ' + readBg);
     await page.getByLabel(/^Title of the week/i).click(); await page.getByText('Start reading').waitFor();
     const startBg = await page.getByRole('button', { name: /Start reading/ }).first().evaluate((el) => getComputedStyle(el).backgroundColor);
     if (startBg !== 'rgb(255, 190, 0)') throw new Error('Start reading should be amber, got ' + startBg);

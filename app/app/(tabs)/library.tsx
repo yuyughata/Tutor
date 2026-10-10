@@ -4,7 +4,7 @@ import { RefreshControl, ScrollView, StyleSheet, Text, TextInput, useWindowDimen
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Chip } from '../../src/components/Chip';
 import { ProgressRing } from '../../src/components/ProgressRing';
-import { gardenFor, goalProgress, unseenBadges } from '../../src/lib/badges';
+import { WEEKLY_GOAL_ENABLED, gardenFor, goalProgress, unseenBadges } from '../../src/lib/badges';
 import { EmptyState } from '../../src/components/EmptyState';
 import { OfflineBanner } from '../../src/components/OfflineBanner';
 import { StoryCard } from '../../src/components/StoryCard';
@@ -103,6 +103,7 @@ export default function Library() {
           </View>
         ))}
       </View>
+      {WEEKLY_GOAL_ENABLED && (
       <View style={styles.goal} accessibilityLabel={goal.reached ? `Weekly goal reached: ${goal.count} stories this week` : `Weekly goal: ${goal.count} of ${goal.goal} stories this week`}>
         <ProgressRing pct={goal.pct} label={`${Math.min(goal.count, 99)}`} sub={`of ${goal.goal}`} />
         <View style={{ flex: 1 }}>
@@ -115,6 +116,7 @@ export default function Library() {
           <Text style={styles.goalNote}>A fresh start every Monday.</Text>
         </View>
       </View>
+      )}
 
       <View style={styles.badges}>
         <View style={styles.badgeHead}>

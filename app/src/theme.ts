@@ -9,20 +9,16 @@ export const brand = {
 };
 
 // ---- Themes -------------------------------------------------------------------------------------
-// Main actions (buttons that move the child or parent forward) are always amber. The theme chooses the
-// accent used for selection, navigation and decoration: purple (the original) or teal. Every theme has
-// its own Day, Sepia and Night reader modes.
+// Purple is the default and the original look: purple accents AND purple main-action buttons.
+// Teal is the alternative: teal accents with amber main-action buttons. Every theme has its own Day, Sepia and
+// Night reader modes. Main actions are the buttons that move the child or parent forward (`colors.action`).
 export type ThemeId = 'purple' | 'teal';
 
 const common = {
   amber: brand.amber,
   amberSoft: '#fff2c7',
   amberDeep: '#7a5a00', // text on amberSoft, 5.6:1
-  action: brand.amber, // main actions
-  onAction: brand.charcoal, // charcoal on amber, 9.4:1
   onAmber: brand.charcoal,
-  actionSoft: '#fff2c7',
-  actionDeep: '#7a5a00',
   ink: brand.charcoal,
   muted: '#6b6472',
   surface: '#ffffff',
@@ -37,6 +33,10 @@ export const themes = {
     primaryDeep: '#7a2e99', // darker brand purple for small text, gradients and pressed states
     primarySoft: '#f4e6fa',
     onPrimary: '#ffffff', // 4.6:1 on #ab46d2
+    action: '#ab46d2', // main action buttons are purple in the default theme
+    onAction: '#ffffff', // white on purple, 4.6:1
+    actionSoft: '#f4e6fa',
+    actionDeep: '#7a2e99',
     secondary: '#10a19c',
     secondarySoft: '#dcf3f2',
     secondaryDeep: '#0b6f6b', // text on white / secondarySoft
@@ -50,6 +50,10 @@ export const themes = {
     primaryDeep: '#0b6f6b',
     primarySoft: '#dcf3f2',
     onPrimary: brand.charcoal, // charcoal on teal 4.9:1 (white would be only 3.2:1)
+    action: brand.amber, // the teal theme keeps amber main-action buttons
+    onAction: brand.charcoal, // charcoal on amber, 9.4:1
+    actionSoft: '#fff2c7',
+    actionDeep: '#7a5a00',
     secondary: '#ab46d2',
     secondarySoft: '#f4e6fa',
     secondaryDeep: '#7a2e99',
