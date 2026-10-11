@@ -1,5 +1,6 @@
 import { Nunito_600SemiBold, Nunito_800ExtraBold, Nunito_900Black, useFonts } from '@expo-google-fonts/nunito';
 import { Stack, router, useSegments } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { initDownloads } from '../src/data/downloads';
@@ -12,6 +13,9 @@ import { LibraryProvider } from '../src/state/library';
 import { ProfilesProvider, useProfiles } from '../src/state/profiles';
 import { ThemeProvider, useTheme } from '../src/state/theme';
 import { colors } from '../src/theme';
+
+// Keep the Genova logo splash up until the fonts are ready, then reveal the app.
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 /** First launch: nobody is reading yet, so ask who is before showing anything else. */
 function OnboardingGuard() {
@@ -32,6 +36,7 @@ function RootStack() {
   const [loaded] = useFonts({ Nunito_600SemiBold, Nunito_800ExtraBold, Nunito_900Black });
   const reduceMotion = useReducedMotion();
   useEffect(() => { initDownloads(); }, []);
+  useEffect(() => { if (loaded) SplashScreen.hideAsync().catch(() => {}); }, [loaded]);
   if (!loaded) return null;
   return (
     <AuthProvider>
