@@ -54,6 +54,13 @@ MOBILE = [
         ('m43-mybooks-badges', 'Counts, badges and rewards', 'Stories finished this week, this month and all time, nine milestone badges, and rewards given by the Genova team.'),
         ('m42-mybooks-words', 'Word garden', 'The Words shelf grows a plant as words are learned: seed, sprout, leafy plant, flower, sunflower, tree.'),
     ]),
+    ('A song after the story', 'A story can have one song. Friendly hints while reading say a song is waiting; it unlocks on The End and plays only when the child taps it. It loads while they read, so there is no wait.', [
+        ('m44-story-has-song', 'Story page', 'A "Has a song" fact tells the child there is a reward at the end.'),
+        ('m45-reader-song-hint', 'Hint on the first page', 'A small note: a little song is waiting at the end. Hints appear on only a few pages, so they stay a treat.'),
+        ('m46-reader-song-last', 'Hint on the last page', 'Turn the page to unlock the song.'),
+        ('m47-end-song-ready', 'Song unlocked', 'The End shows the song with a big play button. It never starts by itself.'),
+        ('m48-end-song-playing', 'Playing', 'Play and pause, a progress bar and the time. It stops when the child goes back a page or closes the story.'),
+    ]),
     ('My books', 'A personal shelf for every reader on the device, with search.', [
         ('m05-mybooks-empty', 'Empty state', 'Friendly empty states explain what will appear here.'),
         ('m11-mybooks-reading', 'Reading', 'Stories in progress, with a progress bar under each cover.'),
@@ -136,7 +143,9 @@ ADMIN = [
         ('a04-story-editor', 'Editing a live story'), ('a05-new-story-ready', 'A new story, ready to publish')]),
     ('Chapters and Word Explorer', 'Switch on "This book has chapters" and title the first page of each chapter. Spark stories take one Word Explorer word and Seeker stories three, each with a meaning, an example and the page it shows on. The checklist makes sure they are complete.', [
         ('a20-editor-chapters-words', 'Editor: chapters and Word Explorer')]),
-    ('Publish checklist', 'The checklist blocks "Live" until the story has a title, synopsis, cover, complete pages, and (when they apply) chapters and its Word Explorer words. Drafts can always be saved.', [('a06-publish-checklist', 'Checklist blocks an incomplete story')]),
+    ('Song', 'Each story can have one MP3 song. The file is made light in the browser (mono, 48 kbps, about 1 MB for 3 minutes) before it uploads, so it loads fast on a phone. The card shows the size before and after and a preview player. A song needs a title before the story can go Live.', [
+        ('a23-editor-song-empty', 'Song card: no song yet'), ('a24-editor-song-ready', 'Song card: added, with preview')]),
+    ('Publish checklist', 'The checklist blocks "Live" until the story has a title, synopsis, cover, complete pages, and (when they apply) chapters, its Word Explorer words and a song title (when a song is added). Drafts can always be saved.', [('a06-publish-checklist', 'Checklist blocks an incomplete story')]),
     ('Featured', 'Title of the Week and Title of the Month, with what is on now and what is scheduled next.', [('a07-featured', 'Featured slots')]),
     ('Schedule a featured story', 'Pick a live or scheduled story and a date range. The database rejects overlapping slots of the same kind, so the home screen always has one clear winner.', [('a08-schedule-featured', 'Schedule a featured story')]),
     ('Categories', 'Rename, reorder, add and delete the category chips shown on the app home screen.', [('a09-categories', 'Categories')]),

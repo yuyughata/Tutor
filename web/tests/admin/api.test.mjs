@@ -188,3 +188,33 @@ test('leaderboard and awards use the right function and table', async () => {
   assert.equal(rows[0].child_name, 'Ada');
   assert.deepEqual(calls.find((c) => c.path === '/rest/v1/rpc/admin_leaderboard').body, { p_period: 'week', p_limit: 10 });
 });
+
+test('song: saved on the story row only when set, uploaded to the private songs bucket, old files tidied', async () => {
+  const { api, calls } = harness((c) => {
+    if (c.path.startsWith('/storage/v1/object/list/songs')) return [200, [{ name: 'old.mp3' }, { name: 'new.mp3' }]];
+    if (c.method === 'GET' && c.path.startsWith('/rest/v1/')) return [200, []];
+    if (c.path.startsWith('/storage/')) return [200, {}];
+    return [201, []];
+  });
+  const base = { id: 's1', slug: 'a', title: 'A', synopsis: 'x', cover_url: '', reading_level: 'spark', status: 'draft', is_free: true, reading_minutes: 2 };
+  await api.saveStory({ ...base, song_path: 's1/new.mp3', song_title: '  Fox Song ', song_seconds: 120, song_bytes: 720000 }, [], []);
+  const up = calls.find((c) => c.method === 'POST' && rest(c, 'stories'));
+  assert.deepEqual([up.body.song_path, up.body.song_title, up.body.song_seconds, up.body.song_bytes], ['s1/new.mp3', 'Fox Song', 120, 720000]);
+  const rm = calls.find((c) => c.method === 'DELETE' && c.path === '/storage/v1/object/songs');
+  assert.deepEqual(rm.body.prefixes, ['s1/old.mp3'], 'only files that are no longer the story song are removed');
+
+  calls.length = 0;
+  await api.saveStory({ ...base, song_path: '', song_title: 'left over', song_seconds: 9, song_bytes: 9 }, [], []);
+  const none = calls.find((c) => c.method === 'POST' && rest(c, 'stories'));
+  assert.deepEqual([none.body.song_path, none.body.song_title, none.body.song_seconds, none.body.song_bytes], [null, null, null, null], 'removing the song clears every song field');
+});
+
+test('song upload: size cap, private bucket, audio/mpeg', async () => {
+  const { api, calls } = harness(() => [200, { Key: 'songs/s1/x.mp3' }]);
+  await assert.rejects(() => api.uploadSong('s1', new Blob([new Uint8Array(3 * 1024 * 1024 + 1)])), /3 MB/);
+  assert.equal(calls.length, 0);
+  const path = await api.uploadSong('s1', new Blob([new Uint8Array(1000)], { type: 'audio/mpeg' }));
+  assert.match(path, /^s1\/[^/]+\.mp3$/);
+  const put = calls.find((c) => c.path.startsWith('/storage/v1/object/songs/s1/'));
+  assert.ok(put, 'uploads into the songs bucket under the story folder');
+});

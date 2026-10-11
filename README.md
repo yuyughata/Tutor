@@ -5,7 +5,7 @@ Children's storybook app by CUSTAR. Product scope: [`docs/MVP_BRIEF.md`](docs/MV
 ## Layout
 - `app/` — Expo (React Native, TypeScript, Expo Router) mobile app.
 - `web/` — Next.js website (static export): landing, plans and checkout, account (Premium badge, manage subscription), sign-up / sign-in / forgot password, privacy policy, and the **admin dashboard / CMS** at `/admin/` (`web/public/admin`).
-- `supabase/migrations/` — `0001`–`0008` (schema + RLS, admin CMS, hardened helpers, reading levels / access rules / plans / legal documents, support / consent / passcode / email, scheduled reminders, email designs, chapters + Word Explorer + leaderboard/awards).
+- `supabase/migrations/` — `0001`–`0009` (schema + RLS, admin CMS, hardened helpers, reading levels / access rules / plans / legal documents, support / consent / passcode / email, scheduled reminders, email designs, chapters + Word Explorer + leaderboard/awards, story song + private songs bucket).
 - `supabase/seed.sql` — three sample stories for local development; `supabase/seed_legal.sql` — sample privacy policy.
 - `tools/email/` — builds the email design previews (`docs/email-templates`, `docs/Genova_Email_Templates.pdf`) and the Supabase Auth email HTML (`supabase/auth-email-templates`).
 - `tools/qa/` — browser tests, screenshots and PDF build ([README](tools/qa/README.md)).

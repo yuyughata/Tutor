@@ -23,7 +23,7 @@ With no `app/.env` the app runs on built-in sample stories. To use the live back
 | Service | What it is used for | Where the secret lives | Status |
 |---|---|---|---|
 | GitHub `yuyughata/Tutor` | Code | Your GitHub login | exists |
-| Supabase project **GenovaStorybook**, ref `cjdrlddvbyfataumdztg`, URL `https://cjdrlddvbyfataumdztg.supabase.co` | Auth, Postgres, storage, edge functions | Owner's Supabase account. Anon key is public (in `app/.env.example`, `web/lib/config.ts`, `web/public/config.js`). **Service-role key** is only inside Supabase (functions read it automatically); never commit it | exists, migrations 0001-0008 applied, 7 functions deployed |
+| Supabase project **GenovaStorybook**, ref `cjdrlddvbyfataumdztg`, URL `https://cjdrlddvbyfataumdztg.supabase.co` | Auth, Postgres, storage, edge functions | Owner's Supabase account. Anon key is public (in `app/.env.example`, `web/lib/config.ts`, `web/public/config.js`). **Service-role key** is only inside Supabase (functions read it automatically); never commit it | exists, migrations 0001-0009 applied, 7 functions deployed |
 | Paystack | Subscriptions on the web | `PAYSTACK_SECRET_KEY` as a Supabase function secret | **not set up yet** |
 | Resend | Receipts, welcome, reminders, broadcasts (Admin > Email) and, optionally, Supabase auth emails via SMTP | The API key is pasted into Admin > Email > Connection (stored server-side only). SMTP creds, if used, go in Supabase Auth settings | **not set up yet** |
 | Web hosting (Netlify / Cloudflare Pages / Vercel) | Hosts `web/out` | Host dashboard | **not deployed yet** |
@@ -79,7 +79,7 @@ eas build -p android --profile preview      # test build (APK)
 eas build -p ios --profile preview          # needs an Apple Developer account
 ```
 Set the `EXPO_PUBLIC_*` values as EAS environment variables (they are public). Before store submission read the risks in `docs/MVP_BRIEF.md` (Kids Category and Families policy, children's privacy, review of the privacy policy text).
-Kiosk mode needs a native build (Android Lock Task Mode); it will not work in Expo Go. Read `docs/KIOSK.md` (device-owner setup for dedicated tablets) and test it on a real Android device before release.
+Songs use the `expo-audio` native module, so phone builds made before it was added need a new EAS build. Kiosk mode needs a native build (Android Lock Task Mode); it will not work in Expo Go. Read `docs/KIOSK.md` (device-owner setup for dedicated tablets) and test it on a real Android device before release.
 
 ## 7. Day-to-day workflow
 - Content: stories are created in the admin (`/admin/`): cover, pages with images and text, reading level, free or Premium, draft/live/scheduled; Title of the Week/Month in Featured. Target 15-20 launch stories.

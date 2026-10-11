@@ -1,5 +1,6 @@
 import { h, icon, clear, field, slugify, toast, busy, statusPill, storyState, toLocalInput, fromLocalInput } from '../ui.js';
 import { LEVELS, levelName } from '../levels.js';
+import { compressSong, formatSize, formatTime } from '../audio.js';
 
 const key = () => Math.random().toString(36).slice(2);
 const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${key()}`);
@@ -20,8 +21,9 @@ export async function render(ctx, { id }) {
   let story, categoryIds, pages, wordList, visibility, publishAt, slugTouched, minutesTouched, active = 0, dirty = false, savedAt = null;
   const load = (s) => {
     story = s
-      ? { id: s.id, slug: s.slug, title: s.title, synopsis: s.synopsis, cover_url: s.cover_url || '', author_id: s.author_id || authors[0]?.id || null, reading_level: s.reading_level, is_free: s.is_free, has_chapters: !!s.has_chapters, reading_minutes: s.reading_minutes, status: s.status, published_at: s.published_at }
-      : { id: uuid(), slug: '', title: '', synopsis: '', cover_url: '', author_id: authors[0]?.id || null, reading_level: 'spark', is_free: false, has_chapters: false, reading_minutes: 3, status: 'draft', published_at: null };
+      ? { id: s.id, slug: s.slug, title: s.title, synopsis: s.synopsis, cover_url: s.cover_url || '', author_id: s.author_id || authors[0]?.id || null, reading_level: s.reading_level, is_free: s.is_free, has_chapters: !!s.has_chapters, reading_minutes: s.reading_minutes, status: s.status, published_at: s.published_at,
+          song_path: s.song_path || '', song_title: s.song_title || '', song_seconds: s.song_seconds || null, song_bytes: s.song_bytes || null }
+      : { id: uuid(), slug: '', title: '', synopsis: '', cover_url: '', author_id: authors[0]?.id || null, reading_level: 'spark', is_free: false, has_chapters: false, reading_minutes: 3, status: 'draft', published_at: null, song_path: '', song_title: '', song_seconds: null, song_bytes: null };
     categoryIds = new Set(s ? s.categoryIds : []);
     pages = (s ? s.pages : []).map((p) => ({ key: key(), id: p.id, image_url: p.image_url, text: p.text, chapter_title: p.chapter_title || '', preview: null }));
     wordList = (s?.words || []).map((w) => ({ key: key(), id: w.id, word: w.word, meaning: w.meaning, example: w.example || '', page_position: w.page_position || null }));
@@ -52,6 +54,7 @@ export async function render(ctx, { id }) {
     ['At least one page', pages.length > 0],
     ['Every page has an image and text', pages.length > 0 && pages.every((p) => p.image_url && p.text.trim())],
     ...(story.has_chapters ? [['First page has a chapter title', !!pages[0]?.chapter_title?.trim()], ['At least two chapters', chapterCount() >= 2]] : []),
+    ...(story.song_path ? [['Song has a title', story.song_title.trim().length > 0]] : []),
     ...(slots() ? [[`Word Explorer: ${slots()} ${slots() === 1 ? 'word' : 'words'} with meanings`, wordsDone() === slots() && !wordsHalf()]] : []),
   ];
 
@@ -97,10 +100,10 @@ export async function render(ctx, { id }) {
   const slug = h('input', { type: 'text', maxlength: 60, placeholder: 'the-curious-little-fox' });
   const synopsis = h('textarea', { maxlength: 400, rows: 3, placeholder: 'One or two sentences that make a child want to open it.' });
   const synCount = h('div', { class: 'count' });
-  const minutes = h('input', { type: 'number', min: 1, max: 60 });
+  const minutes = h('input', { type: 'number', min: 1, max: 60, 'aria-label': 'Reading time in minutes' });
   const bandSeg = h('div', { class: 'seg', role: 'group', 'aria-label': 'Reading level' });
   const chipBox = h('div', { class: 'chips' });
-  const authorSel = h('select', {}, authors.map((a) => h('option', { value: a.id }, a.name)));
+  const authorSel = h('select', { 'aria-label': 'Author' }, authors.map((a) => h('option', { value: a.id }, a.name)));
   const free = h('input', { type: 'checkbox' });
   const chap = h('input', { type: 'checkbox' });
 
@@ -117,7 +120,7 @@ export async function render(ctx, { id }) {
 
   // ---------- cover ----------
   const coverBox = h('div', { class: 'cover-box', tabindex: 0, role: 'button', 'aria-label': 'Choose cover image' });
-  const coverInput = h('input', { type: 'file', accept: 'image/jpeg,image/png,image/webp,image/gif', class: 'sr', tabindex: -1 });
+  const coverInput = h('input', { type: 'file', accept: 'image/jpeg,image/png,image/webp,image/gif', class: 'sr', tabindex: -1, 'aria-label': 'Cover image file' });
   const paintCover = () => { coverBox.replaceChildren(story.cover_url ? h('img', { src: story.cover_url, alt: 'Cover preview' }) : h('span', {}, 'Add cover')); };
   const setCover = async (file) => {
     if (!file) return;
@@ -131,7 +134,7 @@ export async function render(ctx, { id }) {
 
   // ---------- pages ----------
   const pageList = h('div', {});
-  const pageInput = h('input', { type: 'file', accept: 'image/jpeg,image/png,image/webp,image/gif', multiple: true, class: 'sr', tabindex: -1 });
+  const pageInput = h('input', { type: 'file', accept: 'image/jpeg,image/png,image/webp,image/gif', multiple: true, class: 'sr', tabindex: -1, 'aria-label': 'Page images' });
   let pickFor = null;
   let dragFrom = null;
 
@@ -236,6 +239,50 @@ export async function render(ctx, { id }) {
       }));
   }
 
+  // ---------- song (one MP3 per story, made light in the browser before it is uploaded) ----------
+  const songBox = h('div', {});
+  const songInput = h('input', { type: 'file', accept: 'audio/mpeg,.mp3', class: 'sr', tabindex: -1, 'aria-label': 'Song MP3 file' });
+  let songBusy = null; // progress text while a song is being prepared
+  let songNote = '';   // "4.2 MB -> 1.1 MB" after a fresh upload
+  async function chooseSong(file) {
+    if (!file) return;
+    try {
+      songBusy = 'Making it light… 0%'; paintSong();
+      const done = await compressSong(file, (f) => { songBusy = `Making it light… ${Math.round(f * 100)}%`; const el = songBox.querySelector('.song-progress'); if (el) el.textContent = songBusy; });
+      songBusy = 'Uploading…'; paintSong();
+      const path = await api.uploadSong(story.id, done.blob);
+      story.song_path = path; story.song_seconds = done.seconds; story.song_bytes = done.bytes;
+      if (!story.song_title.trim()) story.song_title = file.name.replace(/\.mp3$/i, '').replace(/[-_]+/g, ' ').trim().slice(0, 80);
+      songNote = `${formatSize(done.originalBytes)} → ${formatSize(done.bytes)}`;
+      songPreview = URL.createObjectURL(done.blob);
+      touch();
+    } catch (e) { toast(e.message, 'err'); } finally { songBusy = null; paintSong(); }
+  }
+  let songPreview = '';
+  songInput.onchange = () => { chooseSong(songInput.files[0]); songInput.value = ''; };
+  async function paintSong() {
+    if (songBusy) {
+      songBox.replaceChildren(h('div', { class: 'song-drop busy' }, h('span', { class: 'song-progress', role: 'status' }, songBusy)));
+      return;
+    }
+    const pick = h('button', { class: 'btn secondary sm', type: 'button', onclick: () => songInput.click() }, icon('plus'), story.song_path ? 'Replace song' : 'Choose MP3');
+    if (!story.song_path) {
+      const zone = h('div', { class: 'song-drop', tabindex: 0, role: 'button', 'aria-label': 'Choose an MP3 song', onclick: () => songInput.click(),
+        onkeydown: (e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), songInput.click()) }, h('span', {}, '🎵 Drop an MP3 here, or click to choose'));
+      dropZone(zone, (files) => chooseSong(files[0]));
+      songBox.replaceChildren(zone, h('p', { class: 'small muted', style: { margin: '10px 0 0' } }, 'Optional. Up to 5 minutes. We shrink it for you (mono, 48 kbps), so a 3 minute song is about 1 MB and plays instantly.'));
+      return;
+    }
+    const titleIn = h('input', { type: 'text', maxlength: 80, value: story.song_title, placeholder: 'e.g. The Little Fox Song', 'aria-label': 'Song title', oninput: (e) => { story.song_title = e.target.value; touch(); } });
+    const audio = h('audio', { controls: true, preload: 'metadata', 'aria-label': 'Song preview', style: { width: '100%', marginTop: '10px' } });
+    audio.src = songPreview || await api.songUrl(story.song_path);
+    const remove = h('button', { class: 'btn danger sm', type: 'button', onclick: () => { story.song_path = ''; story.song_title = ''; story.song_seconds = null; story.song_bytes = null; songNote = ''; songPreview = ''; touch(); paintSong(); } }, icon('trash'), 'Remove song');
+    songBox.replaceChildren(
+      field('Song title', titleIn, 'Shown to the reader when the song unlocks.'),
+      h('div', { class: 'song-meta small muted' }, [story.song_seconds ? formatTime(story.song_seconds) : null, story.song_bytes ? formatSize(story.song_bytes) : null, songNote ? `(was ${songNote.split(' → ')[0]})` : null].filter(Boolean).join(' · ')),
+      audio, h('div', { class: 'row', style: { marginTop: '10px' } }, pick, remove));
+  }
+
   // ---------- aside: publishing, checklist, previews ----------
   const aside = h('div', { class: 'sticky' });
   const phoneBox = h('div', {});
@@ -279,7 +326,7 @@ export async function render(ctx, { id }) {
     title.value = story.title; slug.value = story.slug; synopsis.value = story.synopsis; synCount.textContent = `${story.synopsis.length}/400`;
     minutes.value = story.reading_minutes; authorSel.value = story.author_id || ''; free.checked = story.is_free; chap.checked = !!story.has_chapters;
     when.value = toLocalInput(publishAt);
-    paintBand(); paintChips(); paintCover(); paintPages(); paintWords(); paintStatus(); paintAside();
+    paintBand(); paintChips(); paintCover(); paintPages(); paintWords(); paintSong(); paintStatus(); paintAside();
     headState.replaceChildren(statusPill(visibility));
   }
 
@@ -307,7 +354,10 @@ export async function render(ctx, { id }) {
           h('button', { class: 'btn sm', onclick: addPage }, icon('plus'), 'Add page')),
           pageInput, pageList,
           h('p', { class: 'small muted', style: { marginBottom: 0 } }, 'Each page is one picture with text underneath. Long text scrolls for the reader. Drag the number to reorder. Pick several images at once to create many pages.')),
-        h('div', { class: 'card', style: { marginTop: '16px' } }, h('h2', {}, 'Word Explorer'), wordBox)),
+        h('div', { class: 'card', style: { marginTop: '16px' } }, h('h2', {}, 'Word Explorer'), wordBox),
+        h('div', { class: 'card', style: { marginTop: '16px' } }, h('h2', {}, 'Song'),
+          h('p', { class: 'small muted', style: { marginTop: 0 } }, 'One song per story. While reading, children see friendly hints that a song is waiting. It unlocks on The End and plays only when they tap it.'),
+          songInput, songBox)),
       aside));
   paintAll();
   return root;

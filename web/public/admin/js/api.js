@@ -2,6 +2,7 @@
 // createApi(sb) takes a supabase-js client so it can be unit tested with a fake transport.
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+const MAX_SONG_BYTES = 3 * 1024 * 1024;
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
 function friendly(error) {
@@ -81,7 +82,7 @@ export function createApi(sb) {
     },
     async getStory(id) {
       const story = unwrap(await sb.from('stories')
-        .select('id, slug, title, synopsis, cover_url, author_id, reading_level, status, is_free, has_chapters, reading_minutes, published_at, updated_at, story_categories(category_id)')
+        .select('id, slug, title, synopsis, cover_url, author_id, reading_level, status, is_free, has_chapters, reading_minutes, published_at, updated_at, song_path, song_title, song_seconds, song_bytes, story_categories(category_id)')
         .eq('id', id).maybeSingle());
       if (!story) return null;
       const pages = unwrap(await sb.from('story_pages').select('id, position, image_url, text, chapter_title').eq('story_id', id).order('position'));
@@ -95,6 +96,8 @@ export function createApi(sb) {
         id: story.id, slug: story.slug, title: story.title, synopsis: story.synopsis, cover_url: story.cover_url || null,
         author_id: story.author_id || null, reading_level: story.reading_level, status: story.status, is_free: !!story.is_free, has_chapters: !!story.has_chapters,
         reading_minutes: story.reading_minutes, published_at: story.published_at || null,
+        song_path: story.song_path || null, song_title: story.song_path ? (story.song_title?.trim() || null) : null,
+        song_seconds: story.song_path ? story.song_seconds || null : null, song_bytes: story.song_path ? story.song_bytes || null : null,
       };
       unwrap(await sb.from('stories').upsert(row, { onConflict: 'id' }));
 
@@ -137,6 +140,7 @@ export function createApi(sb) {
 
       // tidy up page images that are no longer referenced (best effort)
       try { await removeFolder('pages', story.id, pages.map((p) => p.image_url).filter(Boolean)); } catch { /* ignore */ }
+      try { await removeFolder('songs', story.id, story.song_path ? [story.song_path] : []); } catch { /* ignore */ }
       return story.id;
     },
     async setStoryStatus(id, status, publishedAt) {
@@ -144,7 +148,7 @@ export function createApi(sb) {
     },
     async deleteStory(id) {
       unwrap(await sb.from('stories').delete().eq('id', id));
-      try { await removeFolder('pages', id); await removeFolder('covers', id); } catch { /* ignore */ }
+      try { await removeFolder('pages', id); await removeFolder('covers', id); await removeFolder('songs', id); } catch { /* ignore */ }
     },
     async uploadCover(storyId, file) {
       checkImage(file);
@@ -160,6 +164,21 @@ export function createApi(sb) {
       const { error } = await sb.storage.from('pages').upload(path, file, { contentType: file.type, cacheControl: '3600' });
       if (error) throw friendly(error);
       return path;
+    },
+    /** Uploads the (already compressed) song for a story and returns its storage path. One song per story. */
+    async uploadSong(storyId, blob) {
+      if (blob.size > MAX_SONG_BYTES) throw new Error('That song is still over 3 MB after compressing. Please use a shorter one.');
+      const path = `${storyId}/${uuid()}.mp3`;
+      const { error } = await sb.storage.from('songs').upload(path, blob, { contentType: 'audio/mpeg', cacheControl: '3600' });
+      if (error) throw friendly(error);
+      return path;
+    },
+    /** Songs live in a private bucket; admins preview them through a short-lived signed URL. */
+    async songUrl(path) {
+      if (!path) return '';
+      if (/^(https?:|data:|blob:)/.test(path)) return path;
+      const { data, error } = await sb.storage.from('songs').createSignedUrl(path, 3600);
+      return error ? '' : data.signedUrl;
     },
     /** Page art lives in a private bucket; admins preview it through short-lived signed URLs. */
     async pageImageUrl(path) {
@@ -266,7 +285,7 @@ export function createApi(sb) {
 
 export const API_METHODS = [
   'session', 'signIn', 'signOut', 'onAuthChange', 'me', 'stats', 'recentPayments', 'listStories', 'getStory', 'saveStory',
-  'setStoryStatus', 'deleteStory', 'uploadCover', 'uploadPageImage', 'pageImageUrl', 'listAuthors', 'listCategories',
+  'setStoryStatus', 'deleteStory', 'uploadCover', 'uploadPageImage', 'pageImageUrl', 'uploadSong', 'songUrl', 'listAuthors', 'listCategories',
   'saveCategory', 'deleteCategory', 'listFeatured', 'saveFeatured', 'deleteFeatured', 'listSubscribers', 'setEntitlement',
   'getLegal', 'saveLegal', 'supportSendReset', 'supportSetPassword', 'listSupportActions', 'listAdmins', 'setAdmin',
   'emailStatus', 'emailSaveSettings', 'emailActivate', 'emailDeactivate', 'emailTest', 'emailPreview', 'emailCount', 'emailSend',

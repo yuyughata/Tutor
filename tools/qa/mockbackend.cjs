@@ -17,7 +17,16 @@ const STORIES = [
 // A Seeker book with chapters, three explorer words and one page with a very long text (to prove the page text scrolls).
 const LONG = Array.from({ length: 40 }, (_, i) => `Sentence ${i + 1}: the wind pushed against the mountain and the silent snow kept falling.`).join(' ') + ' THE-VERY-LAST-LINE';
 STORIES.push({ id: '00000000-0000-0000-0000-00000000a004', slug: 'the-snow-trek', title: 'The Snow Trek', synopsis: 'A long walk across the mountain.', cover_url: 'https://img.test/cover4.png', reading_level: 'seeker', is_free: true, page_count: 4, reading_minutes: 8, has_chapters: true, published_at: new Date(Date.now() - 2 * day).toISOString(), authors: { name: 'CUSTAR' }, story_categories: [{ categories: { slug: 'fantasy' } }] });
-STORIES.forEach((s) => { s.has_chapters = !!s.has_chapters; });
+// Luna has a song (the file is a small tone made on first use; tests check it is fetched while reading, before The End).
+STORIES[0].song_path = `${STORIES[0].id}/song.mp3`; STORIES[0].song_title = 'The Firefly Song'; STORIES[0].song_seconds = 6;
+STORIES.forEach((s) => { s.has_chapters = !!s.has_chapters; s.song_path ||= null; s.song_title ||= null; s.song_seconds ||= null; });
+let songBytes;
+function songFile() {
+  if (songBytes) return songBytes;
+  const f = require('path').join(require('os').tmpdir(), 'genova-qa-song.mp3');
+  if (!require('fs').existsSync(f)) require('child_process').execFileSync('ffmpeg', ['-y', '-v', 'error', '-f', 'lavfi', '-i', 'sine=frequency=523:duration=6', '-ac', '1', '-ar', '24000', '-b:a', '48k', f]);
+  return (songBytes = require('fs').readFileSync(f));
+}
 const WORDS = {
   [STORIES[0].id]: [{ id: '00000000-0000-0000-0000-0000000000c1', word: 'sparkle', meaning: 'a tiny flash of light', example: 'The stars sparkle at night.', page_position: 2, sort_order: 1 }],
   [STORIES[3].id]: [
@@ -115,6 +124,19 @@ async function install(context, state, { host = 'mock.supabase.test' } = {}) {
     if (p === '/rest/v1/profiles') return send(200, wantsObject ? { id: state.user.id, email: state.user.email, is_admin: !!state.isAdmin } : [{ id: state.user.id, email: state.user.email, is_admin: !!state.isAdmin }]);
     if (p.startsWith('/rest/v1/')) return send(method === 'GET' ? 200 : 201, method === 'GET' ? [] : []);
     // ---- storage + functions ----
+    if (p.startsWith('/storage/v1/object/sign/songs/')) {
+      const path = decodeURIComponent(p.slice('/storage/v1/object/sign/songs/'.length));
+      if (method === 'POST') {
+        const story = STORIES.find((x) => path.startsWith(x.id + '/'));
+        if (state.songDown || !story || !(story.is_free || state.access?.active)) return send(400, { statusCode: '404', error: 'not_found', message: 'Object not found' });
+        return send(200, { signedURL: `/object/sign/songs/${path}?token=t` });
+      }
+      const mp3 = songFile(); const range = /bytes=(\d*)-(\d*)/.exec(req.headers()['range'] || '');
+      const h = { ...CORS, 'content-type': 'audio/mpeg', 'accept-ranges': 'bytes' };
+      if (!range) return route.fulfill({ status: 200, headers: h, body: mp3 });
+      const a = range[1] ? Number(range[1]) : 0, b = range[2] ? Math.min(Number(range[2]), mp3.length - 1) : mp3.length - 1;
+      return route.fulfill({ status: 206, headers: { ...h, 'content-range': `bytes ${a}-${b}/${mp3.length}` }, body: mp3.subarray(a, b + 1) });
+    }
     if (p.startsWith('/storage/v1/object/sign/')) return send(200, [{ path: 'x', signedURL: '/object/sign/x?token=t' }]);
     if (p === '/functions/v1/paystack-checkout') {
       if (body?.consent !== true) return send(400, { error: 'Please read the privacy policy and tick the consent box to continue.' });

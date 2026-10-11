@@ -7,19 +7,22 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '../../src/components/Button';
 import { Picture } from '../../src/components/Picture';
 import { Tap } from '../../src/components/Tap';
-import { getPages, getStory, getWords } from '../../src/data/repository';
+import { getPages, getSong, getStory, getWords } from '../../src/data/repository';
 import { ChapterSheet } from '../../src/components/ChapterSheet';
+import { SongCard } from '../../src/components/SongCard';
+import { SongHint } from '../../src/components/SongHint';
 import { StarBurst } from '../../src/components/StarBurst';
 import { WordSheet } from '../../src/components/WordSheet';
 import { announce, useReducedMotion } from '../../src/lib/a11y';
 import { unseenBadges, type BadgeState } from '../../src/lib/badges';
-import { chaptersOf, chapterAt, splitByWords, wordPageIndex, type Chapter } from '../../src/lib/story';
+import { useSongPlayer } from '../../src/lib/song';
+import { chaptersOf, chapterAt, songHint, splitByWords, wordPageIndex, type Chapter } from '../../src/lib/story';
 import { useAuth } from '../../src/state/auth';
 import { useLibrary } from '../../src/state/library';
 import { useReadingLevel } from '../../src/state/profiles';
 import { load, save } from '../../src/state/storage';
 import { colors, fonts, radius, readerFontBase, readerThemes, shadow, space, type, type ReaderThemeName, themed } from '../../src/theme';
-import type { Story, StoryPage, StoryWord } from '../../src/types';
+import type { SongSource, Story, StoryPage, StoryWord } from '../../src/types';
 import { useTheme } from '../../src/state/theme';
 
 const MIN_DELTA = -4;
@@ -80,6 +83,10 @@ export default function Reader() {
   const burstDone = useRef(false);
   const [burst, setBurst] = useState(false);
 
+  // The story's song: its link is fetched and the audio starts loading as soon as reading starts, so it is ready at The End.
+  const [song, setSong] = useState<SongSource | null>(null);
+  const { player: songPlayer, status: songStatus } = useSongPlayer(song);
+
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
 
@@ -88,6 +95,10 @@ export default function Reader() {
   useEffect(() => { getStory(slug).then(setStory).catch(() => { setStory(null); setPages([]); }); }, [slug]);
 
   const readable = story ? canRead(story) : null;
+  useEffect(() => {
+    setSong(null);
+    if (story?.song && readable) { let live = true; getSong(story).then((s) => live && setSong(s)).catch(() => {}); return () => { live = false; }; }
+  }, [story, readable]);
   useEffect(() => {
     if (!story || !accessReady) return;
     setFailed(false);
@@ -116,7 +127,8 @@ export default function Reader() {
 
   const atTheEnd = !!pages && pages.length > 0 && index === pages.length;
   useEffect(() => {
-    if (!atTheEnd) { setFreshBadges([]); return; }
+    if (!atTheEnd) { setFreshBadges([]); try { if (songStatus.playing) songPlayer.pause(); } catch { /* released */ } return; }
+    if (song) announce(`Song unlocked: ${song.title}`);
     if (!burstDone.current) { burstDone.current = true; setBurst(true); }
     const fresh = unseenBadges(badges, badgesSeen);
     if (fresh.length) {
@@ -196,6 +208,7 @@ export default function Reader() {
                 <Picture uri={item.page.imageUrl} art={item.page.art} style={{ width, height: artH + insets.top, borderBottomLeftRadius: radius.xl, borderBottomRightRadius: radius.xl }} />
                 <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.textWrap}>
                   <View style={styles.column}>
+                  {song && songHint(at, pages.length) && <SongHint text={songHint(at, pages.length)!} />}
                   <ChapterHeading chapters={chapters} at={at} color={theme.ink} muted={theme.muted} onOpen={() => setChapterSheet(true)} />
                   <Text accessibilityRole="text" style={[styles.text, { fontSize, lineHeight: fontSize * 1.5, color: theme.ink }]}>
                     {splitByWords(item.page.text, wordPages.filter((x) => x.at === at).map((x) => ({ id: x.w.id, word: x.w.word }))).map((seg, k) =>
@@ -232,6 +245,7 @@ export default function Reader() {
                 <Text style={{ fontSize: 64 }}>🌟</Text>
                 <Text style={[styles.endTitle, { color: theme.ink }]}>The End</Text>
                 <Text style={[styles.endSub, { color: theme.muted }]}>You finished "{story?.title}". Great reading!</Text>
+                {song && <SongCard song={song} player={songPlayer} status={songStatus} />}
                 {freshBadges.length > 0 && (
                   <View style={styles.newBadge} accessibilityLiveRegion="polite">
                     <Text style={styles.newBadgeKick}>NEW {freshBadges.length === 1 ? 'BADGE' : 'BADGES'}!</Text>

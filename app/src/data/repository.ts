@@ -3,7 +3,7 @@ import { load, save } from '../state/storage';
 import { getSaved, listSaved } from './downloads';
 import * as mock from './mock';
 import { chaptersOf, type Chapter } from '../lib/story';
-import type { ReadingLevel, HomeData, Story, StoryPage, StoryWord } from '../types';
+import type { ReadingLevel, HomeData, SongSource, Story, StoryPage, StoryWord } from '../types';
 
 // A reader sees stories at their level and the levels below it; harder levels are hidden.
 const levelOrder: ReadingLevel[] = ['sunrise', 'spark', 'seeker'];
@@ -13,12 +13,13 @@ const inBand = (s: Story, band: ReadingLevel) => levelOrder.indexOf(s.level) <= 
 type StoryRow = {
   id: string; slug: string; title: string; synopsis: string; cover_url: string | null;
   reading_level: ReadingLevel; is_free: boolean; page_count: number; reading_minutes: number; published_at: string; has_chapters: boolean;
+  song_path: string | null; song_title: string | null; song_seconds: number | null;
   authors: { name: string } | null;
   story_categories: { categories: { slug: string } | null }[];
 };
 
 const STORY_SELECT =
-  'id, slug, title, synopsis, cover_url, reading_level, is_free, page_count, reading_minutes, published_at, has_chapters,' +
+  'id, slug, title, synopsis, cover_url, reading_level, is_free, page_count, reading_minutes, published_at, has_chapters, song_path, song_title, song_seconds,' +
   ' authors(name), story_categories(categories(slug))';
 
 function toStory(r: StoryRow, reads: Map<string, number>): Story {
@@ -28,6 +29,7 @@ function toStory(r: StoryRow, reads: Map<string, number>): Story {
     pageCount: r.page_count, readingMinutes: r.reading_minutes, publishedAt: r.published_at,
     categories: r.story_categories.flatMap((c) => (c.categories ? [c.categories.slug] : [])),
     reads30d: reads.get(r.id) ?? 0, hasChapters: !!r.has_chapters,
+    ...(r.song_path && r.song_title ? { song: { title: r.song_title, path: r.song_path, ...(r.song_seconds ? { seconds: r.song_seconds } : {}) } } : {}),
   };
 }
 
@@ -192,6 +194,27 @@ export async function getChapters(story: Story): Promise<Chapter[]> {
     return ((data ?? []) as { chapter: number; title: string; first_page: number }[]).map((c) => ({ index: c.chapter, title: c.title, firstPage: c.first_page - 1 }));
   } catch {
     return [];
+  }
+}
+
+/**
+ * The story's song, ready to play, or null (no song, no access, offline). Read from the saved copy when the story is
+ * downloaded. Songs sit in a private bucket, so a story the account cannot read gets no link.
+ * Never throws: a missing song just means the reader sees no song card.
+ */
+export async function getSong(story: Story, opts: { fresh?: boolean } = {}): Promise<SongSource | null> {
+  const saved = opts.fresh ? undefined : getSaved(story.slug)?.song;
+  if (saved) return saved;
+  const song = story.song;
+  if (!song) return null;
+  if (/^(https?:|data:|blob:)/.test(song.path)) return { title: song.title, url: song.path, seconds: song.seconds }; // sample data
+  if (!supabase) return null;
+  try {
+    const { data, error } = await supabase.storage.from('songs').createSignedUrl(song.path, 3600);
+    if (error || !data?.signedUrl) return null;
+    return { title: song.title, url: data.signedUrl, seconds: song.seconds };
+  } catch {
+    return null;
   }
 }
 

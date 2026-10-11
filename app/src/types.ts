@@ -19,6 +19,8 @@ export type Story = {
   readingMinutes: number;
   publishedAt: string;
   categories: string[]; // category slugs
+  /** The story's song (one MP3, optional). It unlocks on The End; `path` is the private storage path. */
+  song?: { title: string; path: string; seconds?: number };
   reads30d: number;
   /** The book is split into chapters (a page with a chapter title starts one). */
   hasChapters?: boolean;
@@ -41,3 +43,6 @@ export type HomeData = {
 };
 
 export type ChildProfile = { id: string; name: string; avatar: string; level: ReadingLevel };
+
+/** A song ready to play: `url` is a short-lived signed link, or a file on the device when the story is saved offline. */
+export type SongSource = { title: string; url: string; seconds?: number };

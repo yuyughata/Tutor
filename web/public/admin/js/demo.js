@@ -153,6 +153,8 @@ export function createDemoApi() {
     async uploadCover(_id, file) { return readFile(file); },
     async uploadPageImage(_id, file) { return readFile(file); },
     async pageImageUrl(path) { return path || ''; },
+    async uploadSong(_id, blob) { return readFile(blob, 'audio/'); },
+    async songUrl(path) { return path || ''; },
 
     async listAuthors() { return delay(authors); },
     async listCategories() { return delay([...cats].sort((a, b) => a.sort_order - b.sort_order)); },
@@ -261,9 +263,9 @@ export function createDemoApi() {
   };
 }
 
-function readFile(file) {
+function readFile(file, kind = 'image/') {
   return new Promise((resolve, reject) => {
-    if (!file.type.startsWith('image/')) return reject(new Error('Please choose a JPG, PNG, WebP or GIF image.'));
+    if (!file.type.startsWith(kind)) return reject(new Error(kind === 'image/' ? 'Please choose a JPG, PNG, WebP or GIF image.' : 'Please choose an MP3 file.'));
     const r = new FileReader();
     r.onload = () => resolve(r.result);
     r.onerror = () => reject(new Error('Could not read that file.'));

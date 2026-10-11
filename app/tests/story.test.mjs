@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { chaptersOf, chapterAt, wordsAllowed, splitByWord, splitByWords, wordPageIndex, statsFrom, weekStart, monthStart } from '../src/lib/story.ts';
+import { chaptersOf, chapterAt, wordsAllowed, splitByWord, splitByWords, wordPageIndex, statsFrom, weekStart, monthStart, songHint, clock } from '../src/lib/story.ts';
 
 test('chapters start at titled pages and pages belong to the latest chapter', () => {
   const pages = [{ chapterTitle: 'The Climb' }, {}, { chapterTitle: ' The Cave ' }, {}, {}];
@@ -55,4 +55,20 @@ test('several explorer words are marked in one page of text', () => {
   const segs = splitByWords('The wind howled. A silent cat; howled again!', [{ id: 'a', word: 'howled' }, { id: 'b', word: 'silent' }]);
   assert.deepEqual(segs.filter((s) => s.wordId).map((s) => [s.text, s.wordId]), [['howled', 'a'], ['silent', 'b'], ['howled', 'a']]);
   assert.equal(segs.map((s) => s.text).join(''), 'The wind howled. A silent cat; howled again!');
+});
+
+test('song hints appear on a few pages only: first, middle of a longer story, last', () => {
+  const shown = (n) => Array.from({ length: n }, (_, i) => songHint(i, n)).map((h, i) => (h ? i : -1)).filter((i) => i >= 0);
+  assert.deepEqual(shown(1), [0]);
+  assert.deepEqual(shown(3), [0, 2]);
+  assert.deepEqual(shown(4), [0, 3]);
+  assert.deepEqual(shown(5), [0, 2, 4]);
+  assert.deepEqual(shown(10), [0, 4, 9]);
+  assert.match(songHint(0, 6), /at the end/); assert.match(songHint(5, 6), /Last page/); assert.match(songHint(2, 6), /Halfway/);
+  assert.equal(songHint(-1, 4), null); assert.equal(songHint(4, 4), null); assert.equal(songHint(0, 0), null);
+});
+
+test('clock formats seconds as m:ss and survives bad numbers', () => {
+  assert.equal(clock(75), '1:15'); assert.equal(clock(9.9), '0:09'); assert.equal(clock(600), '10:00');
+  assert.equal(clock(NaN), '0:00'); assert.equal(clock(-3), '0:00'); assert.equal(clock(Infinity), '0:00');
 });

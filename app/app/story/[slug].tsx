@@ -9,7 +9,7 @@ import { EmptyState } from '../../src/components/EmptyState';
 import { Picture } from '../../src/components/Picture';
 import { Tap } from '../../src/components/Tap';
 import { formatBytes, removeStory, saveStory, useDownloads } from '../../src/data/downloads';
-import { getChapters, getHome, getPages, getStory, getWords } from '../../src/data/repository';
+import { getChapters, getHome, getPages, getSong, getStory, getWords } from '../../src/data/repository';
 import { levelFull } from '../../src/levels';
 import { useAuth } from '../../src/state/auth';
 import { useGate } from '../../src/state/gate';
@@ -80,7 +80,7 @@ export default function StoryDetail() {
     try {
       const pages = await getPages(story, { fresh: true });
       if (!pages.length) throw new Error('empty');
-      await saveStory(story, pages, await getWords(story));
+      await saveStory(story, pages, await getWords(story), await getSong(story, { fresh: true }));
     } catch {
       setSaveError("Couldn't save this story. Check your connection and try again.");
     }
@@ -106,6 +106,7 @@ export default function StoryDetail() {
             <Fact icon="sparkles" label={levelFull(story.level)} bg={colors.primarySoft} fg={colors.primaryDeep} />
             <Fact icon="albums" label={`${story.pageCount} pages`} bg={colors.secondarySoft} fg={colors.secondaryDeep} />
             <Fact icon="time" label={`${story.readingMinutes} min`} bg={colors.amberSoft} fg="#7a5a00" />
+            {story.song && <Fact icon="musical-notes" label="Has a song" bg={colors.secondarySoft} fg={colors.secondaryDeep} />}
           </View>
 
           <Text style={styles.synopsis}>{story.synopsis}</Text>

@@ -76,3 +76,21 @@ export function statsFrom(completions: { slug: string; at: string }[], now = new
 }
 
 export const wordKey = (w: Pick<LearnedWord, 'wordId'>) => w.wordId;
+
+/**
+ * The gentle hint shown on a page while reading a story that has a song. Only a few pages carry one so it stays a
+ * treat and not a nag: the first page, the middle of a longer story, and the last page. Returns null elsewhere.
+ */
+export function songHint(pageIndex: number, pageCount: number): string | null {
+  if (pageCount < 1 || pageIndex < 0 || pageIndex >= pageCount) return null;
+  if (pageIndex === 0) return 'A little song is waiting for you at the end';
+  if (pageIndex === pageCount - 1) return 'Last page! Turn it to unlock your song';
+  if (pageCount >= 5 && pageIndex === Math.floor((pageCount - 1) / 2)) return 'Halfway there! Keep reading to unlock your song';
+  return null;
+}
+
+/** 75 -> "1:15" (never negative or NaN). */
+export function clock(seconds: number): string {
+  const s = Number.isFinite(seconds) && seconds > 0 ? Math.floor(seconds) : 0;
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+}

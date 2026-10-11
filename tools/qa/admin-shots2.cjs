@@ -93,6 +93,16 @@ const fontCss = Object.keys(fontFile).map((w) => `@font-face{font-family:'Nunito
     await nav('Dashboard').click(); await page.getByRole('heading', { name: 'Dashboard' }).waitFor(); await shot('a13-mobile-dashboard');
     await nav('Stories').click(); await page.getByText('Luna and the Firefly').first().click(); await page.getByRole('heading', { name: 'Edit story' }).waitFor(); await shot('a14-mobile-editor');
   });
+  await step('editor song', async () => {
+    const mp3 = require('path').join(require('os').tmpdir(), 'genova-shot-song.mp3');
+    require('child_process').execFileSync('ffmpeg', ['-y', '-v', 'error', '-f', 'lavfi', '-i', 'sine=frequency=440:duration=95', '-f', 'lavfi', '-i', 'anoisesrc=d=95:c=pink:a=0.05', '-filter_complex', '[0][1]amix=inputs=2,aformat=channel_layouts=stereo', '-ar', '44100', '-b:a', '192k', mp3]);
+    await page.setViewportSize({ width: 1360, height: 900 });
+    await nav('Stories').click(); await page.getByText('Luna and the Firefly').first().click(); await page.getByRole('heading', { name: 'Edit story' }).waitFor();
+    await page.getByRole('heading', { name: 'Song', exact: true }).waitFor(); await page.getByRole('button', { name: 'Choose an MP3 song' }).scrollIntoViewIfNeeded(); await page.waitForTimeout(300);
+    await page.locator('.card', { has: page.getByRole('heading', { name: 'Song', exact: true }) }).screenshot({ path: `${out}/a23-editor-song-empty.png` }); console.log('shot a23-editor-song-empty');
+    await page.locator('input[type=file][accept^="audio"]').setInputFiles(mp3); await page.getByLabel('Song title').waitFor({ timeout: 30000 }); await page.getByLabel('Song title').fill('The Firefly Song'); await page.waitForTimeout(500);
+    await page.locator('.card', { has: page.getByRole('heading', { name: 'Song', exact: true }) }).screenshot({ path: `${out}/a24-editor-song-ready.png` }); console.log('shot a24-editor-song-ready');
+  });
   console.log(failures ? failures + ' FAILED' : 'ALL CAPTURED');
   await browser.close();
 })().catch((e) => { console.error('FATAL', e.message.split('\n').slice(0, 4).join('\n')); process.exit(1); });
