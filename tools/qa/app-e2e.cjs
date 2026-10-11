@@ -73,8 +73,8 @@ const NUM = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eigh
     await tab('Home').click(); await tab('Grown-ups').click(); await page.getByText('Free plan', { exact: true }).waitFor({ timeout: 6000 });
     const link = page.getByRole('link', { name: /Change plan/ });
     await link.waitFor(); if (!(await link.innerText()).includes('Change plan – to access premium stories')) throw new Error('link text: ' + (await link.innerText()));
-    // tapping it opens the website's plans page (same tab on web). Stop that navigation so the app stays put and just record the address.
-    let hit = null; const catcher = (r) => { hit = r.request().url(); return r.abort(); };
+    // tapping it opens the website's plans page (same tab on web). A 204 reply cancels that navigation so the app stays put and just record the address.
+    let hit = null; const catcher = (r) => { hit = r.request().url(); return r.fulfill({ status: 204 }); };
     await ctx.route(/genova\.test\/plans/, catcher);
     await link.click(); for (let i = 0; i < 30 && !hit; i++) await page.waitForTimeout(100);
     await ctx.unroute(/genova\.test\/plans/, catcher);
