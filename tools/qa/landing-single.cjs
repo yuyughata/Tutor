@@ -21,10 +21,14 @@ const FILE = 'file://' + path.resolve(__dirname, '..', '..', 'docs', 'Genova_Lan
   const step = async (name, width, fn) => { try { await run(width, fn); console.log('ok   ', name); } catch (e) { fails++; console.log('FAIL ', name, '-', e.message.split('\n').slice(0, 4).join(' | ')); } };
 
   await step('desktop: content preserved and new app section present', 1280, async (p) => {
-    for (const t of ['Stories That Stay and', 'Reading is where it starts. Character is where it goes.', 'Seven pillars. One whole child.', 'Every child reads differently.', 'Genova Sunrise P1', 'Genova Spark P1', 'Genova Seeker P1', 'Combo Pack P1', 'From struggling reader to confident reader', 'A real library where children walk in, pick a book, and read.', 'Real homes. Real reading wins.', 'Genova stories, in your child', 'Simple plans', 'Good questions, honest answers.']) {
+    for (const t of ['Stories That Stay and', 'Reading is where it starts. Character is where it goes.', 'Seven pillars. One whole child.', 'Every child reads differently.', 'From struggling reader to confident reader', 'A real library where children walk in, pick a book, and read.', 'Real homes. Real reading wins.', 'Genova stories, in your child', 'Simple plans', 'Good questions, honest answers.']) {
       if (!(await p.locator('body').innerText()).includes(t) && !(await p.content()).includes(t.replace(/'/g, '&#39;'))) throw new Error('missing: ' + t);
     }
-    const links = await p.$$eval('a[href*="selar.com"]', (a) => a.length); if (links !== 4) throw new Error('Selar order links: ' + links);
+    // Storybook bundles and every "Shop ..." button are switched off (kept as INACTIVE comments)
+    const links = await p.$$eval('a[href*="selar.com"], #products, a[href="#products"]', (a) => a.length); if (links !== 0) throw new Error('bundle/shop elements still visible: ' + links);
+    const shop = (await p.locator('body').innerText()).match(/Shop (the )?(Storybooks|\w+ Books)|Storybook Bundles|Order \w+ P1/); if (shop) throw new Error('shop text visible: ' + shop[0]);
+    for (const old of ['₦5,000', '₦12,000', '₦2,500']) if ((await p.locator('body').innerText()).includes(old)) throw new Error('old price visible: ' + old);
+    for (const price of ['₦3,000', '₦7,500']) if (!(await p.locator('body').innerText()).includes(price)) throw new Error('new price missing: ' + price);
     if ((await p.$$eval('a[href*="wa.me"]', (a) => a.length)) < 2) throw new Error('WhatsApp links missing');
     const txt = await p.locator('body').innerText();
     if (/\bAges?\b|Age\(s\)|child_ages/.test(txt) || (await p.content()).includes('child_ages')) throw new Error('age text found');

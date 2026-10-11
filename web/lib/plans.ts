@@ -10,7 +10,7 @@ export function planLabel(plans: Plan[], stored: string | null): string {
   if (stored === 'comp') return 'Complimentary Premium';
   return planFor(plans, stored)?.name ?? 'Premium';
 }
-/** "Save 20%" for the quarterly plan versus paying monthly. */
+/** "Save 17%" style figure for the quarterly plan versus paying monthly. */
 export function savingPercent(plans: Plan[], plan: Plan): number {
   const monthly = plans.find((p) => p.billing_interval === 'monthly');
   if (!monthly || plan.billing_interval !== 'quarterly') return 0;

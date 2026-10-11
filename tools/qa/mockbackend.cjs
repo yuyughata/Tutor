@@ -19,7 +19,9 @@ const LONG = Array.from({ length: 40 }, (_, i) => `Sentence ${i + 1}: the wind p
 STORIES.push({ id: '00000000-0000-0000-0000-00000000a004', slug: 'the-snow-trek', title: 'The Snow Trek', synopsis: 'A long walk across the mountain.', cover_url: 'https://img.test/cover4.png', reading_level: 'seeker', is_free: true, page_count: 4, reading_minutes: 8, has_chapters: true, published_at: new Date(Date.now() - 2 * day).toISOString(), authors: { name: 'CUSTAR' }, story_categories: [{ categories: { slug: 'fantasy' } }] });
 // Luna has a song (the file is a small tone made on first use; tests check it is fetched while reading, before The End).
 STORIES[0].song_path = `${STORIES[0].id}/song.mp3`; STORIES[0].song_title = 'The Firefly Song'; STORIES[0].song_seconds = 6;
-STORIES.forEach((s) => { s.has_chapters = !!s.has_chapters; s.song_path ||= null; s.song_title ||= null; s.song_seconds ||= null; });
+STORIES[0].puzzle_words = ['LUNA', 'FIREFLY', 'WINDOW', 'MOON', 'GARDEN', 'SPARKLE'];
+STORIES[3].puzzle_words = ['MOUNTAIN', 'WIND', 'RIDGE', 'CAVERN', 'SUNRISE', 'SILENT', 'HOWLED', 'TREK'];
+STORIES.forEach((s) => { s.puzzle_words ||= []; s.has_chapters = !!s.has_chapters; s.song_path ||= null; s.song_title ||= null; s.song_seconds ||= null; });
 let songBytes;
 function songFile() {
   if (songBytes) return songBytes;
@@ -49,8 +51,8 @@ const PAGES = {
 const POLICY = { slug: 'privacy-policy', title: 'Privacy Policy', body: 'SAMPLE TEXT: placeholder.\n\n# Our promise to families\nWe do not show ads.\n\n# What we collect\n- Parent email\n- Child first name or nickname', version: 3, updated_at: '2026-10-09T10:00:00Z' };
 const PLANS = [
   { id: 'free', name: 'Free', tagline: 'A taste of Genova', price_minor: 0, currency: 'NGN', billing_interval: null, features: ['A growing set of free stories', 'Reader profiles for every child'], sort_order: 1, active: true },
-  { id: 'monthly', name: 'Premium Monthly', tagline: 'Pay month to month', price_minor: 500000, currency: 'NGN', billing_interval: 'monthly', features: ['Every story in the library', 'Cancel any time'], sort_order: 2, active: true },
-  { id: 'quarterly', name: 'Premium Quarterly', tagline: 'Best value: save 20%', price_minor: 1200000, currency: 'NGN', billing_interval: 'quarterly', features: ['Everything in Monthly'], sort_order: 3, active: true },
+  { id: 'monthly', name: 'Premium Monthly', tagline: 'Pay month to month', price_minor: 300000, currency: 'NGN', billing_interval: 'monthly', features: ['Every story in the library', 'Cancel any time'], sort_order: 2, active: true },
+  { id: 'quarterly', name: 'Premium Quarterly', tagline: 'Best value: save 17%', price_minor: 750000, currency: 'NGN', billing_interval: 'quarterly', features: ['Everything in Monthly'], sort_order: 3, active: true },
 ];
 
 /** state: { access: row|null, password: 'secret123', calls: [], user } */

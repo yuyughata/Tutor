@@ -67,7 +67,7 @@ Reading levels (drive content filtering and reader typography). Ages are never s
 
 **6. Subscription and access (web-paid)**
 - Free tier: a sample set (about 5 stories, to be decided by CUSTAR) readable without an account.
-- Premium: the full catalogue. Plans: **Free**, **Paid ₦5,000 per month**, **Paid ₦12,000 per quarter**.
+- Premium: the full catalogue. Plans: **Free**, **Paid ₦3,000 per month**, **Paid ₦7,500 per quarter**.
 - Grace rule: a subscriber who has not renewed 5 days after the due date moves to Free automatically (enforced in the database, so the app, site and webhook agree).
 - The web checkout is built on Paystack: a plan page on the Genova website that starts a Paystack subscription transaction (plans are created in the Paystack dashboard). Billing management links to Paystack's subscription management email flow.
 - A Paystack webhook (Supabase Edge Function, HMAC-SHA512 verified, idempotent) writes the `entitlements` row in Supabase, and the app reads it on launch and whenever it returns to the foreground.

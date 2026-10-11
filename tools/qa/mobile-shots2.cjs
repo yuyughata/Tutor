@@ -80,10 +80,10 @@ const out = process.env.OUT;
     await digits('68'); await page.getByText('Repeat the passcode').first().waitFor(); await digits('2468'); await page.getByText('Passcode saved').waitFor(); await shot('m28-passcode-saved'); await page.getByRole('button', { name: 'Done' }).click();
   });
   await step('kiosk on, settings card', async () => {
-    await page.getByRole('switch', { name: 'Kiosk mode' }).click(); await page.waitForTimeout(500); await tall('m29-grownups-settings', 1700);
+    await page.getByRole('switch', { name: 'Screen Lock' }).click(); await page.waitForTimeout(500); await tall('m29-grownups-settings', 1700);
   });
   await step('kiosk off needs the passcode', async () => {
-    await page.getByRole('switch', { name: 'Kiosk mode' }).click(); await page.getByText('Enter your passcode').waitFor(); await digits('24'); await shot('m30-gate-passcode'); await digits('68'); await page.waitForTimeout(500);
+    await page.getByRole('switch', { name: 'Screen Lock' }).click(); await page.getByText('Enter your passcode').waitFor(); await digits('24'); await shot('m30-gate-passcode'); await digits('68'); await page.waitForTimeout(500);
   });
   await step('teal theme', async () => {
     await page.getByRole('radio', { name: /^Teal theme/ }).click(); await page.getByText('Teal ✓').waitFor(); await page.waitForTimeout(400); await tall('m31-grownups-teal', 1700);

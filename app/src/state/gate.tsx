@@ -18,7 +18,7 @@ const MAX_TRIES = 5;
 const LOCK_MS = 60_000;
 const makeChallenge = () => Array.from({ length: 3 }, () => 1 + Math.floor(Math.random() * 9));
 
-type AskOptions = { /** Ignore the 30-second grace period (used for leaving kiosk mode). */ fresh?: boolean };
+type AskOptions = { /** Ignore the 30-second grace period (used for leaving Screen Lock). */ fresh?: boolean };
 type Ctx = { ask: (opts?: AskOptions) => Promise<boolean> };
 const GateContext = createContext<Ctx | null>(null);
 type Mode = 'words' | 'pin' | 'forgot' | 'reset';

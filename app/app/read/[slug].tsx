@@ -16,6 +16,7 @@ import { WordSheet } from '../../src/components/WordSheet';
 import { announce, useReducedMotion } from '../../src/lib/a11y';
 import { unseenBadges, type BadgeState } from '../../src/lib/badges';
 import { useSongPlayer } from '../../src/lib/song';
+import { hasPuzzle, MIN_WORDS } from '../../src/lib/puzzle';
 import { chaptersOf, chapterAt, songHint, splitByWords, wordPageIndex, type Chapter } from '../../src/lib/story';
 import { useAuth } from '../../src/state/auth';
 import { useLibrary } from '../../src/state/library';
@@ -183,6 +184,7 @@ export default function Reader() {
   const fontSize = readerFontBase[band] + delta;
   const artH = Math.min(width * 0.88, height * 0.46, 480);
   const atEnd = index === last;
+  const hasHunt = !!story && hasPuzzle(story.level) && (story.puzzleWords?.length ?? 0) >= MIN_WORDS;
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.bg }}>
@@ -277,8 +279,11 @@ export default function Reader() {
                   </View>
                 )}
                 <View style={{ gap: 10, marginTop: 20, alignSelf: 'stretch', paddingHorizontal: space.lg }}>
+                  {hasHunt && (
+                    <Button label="Play the word hunt" icon="search" onPress={() => router.push({ pathname: '/puzzle/[slug]', params: { slug: story.slug } })} />
+                  )}
                   <Button label="Read again" icon="refresh" variant="secondary" onPress={() => go(0)} />
-                  <Button label="More stories" icon="library" onPress={() => router.dismissAll()} />
+                  <Button label="More stories" icon="library" variant={hasHunt ? 'secondary' : 'primary'} onPress={() => router.dismissAll()} />
                 </View>
               </ScrollView>
             )

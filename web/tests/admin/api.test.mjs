@@ -218,3 +218,11 @@ test('song upload: size cap, private bucket, audio/mpeg', async () => {
   const put = calls.find((c) => c.path.startsWith('/storage/v1/object/songs/s1/'));
   assert.ok(put, 'uploads into the songs bucket under the story folder');
 });
+
+test('word hunt words are normalised, de-duplicated and capped on save', async () => {
+  const { api, calls } = harness((c) => (c.method === 'GET' && c.path.startsWith('/rest/v1/') ? [200, []] : c.path.startsWith('/storage/') ? [200, []] : [201, []]));
+  const base = { id: 's1', slug: 'a', title: 'A', synopsis: 'x', cover_url: '', reading_level: 'spark', status: 'draft', is_free: true, reading_minutes: 2 };
+  await api.saveStory({ ...base, puzzle_words: ['luna', 'Fire-fly', 'LUNA', 'ox', 'extraordinary', 'a b c', 'moon', 'garden', 'window', 'sparkle', 'star', 'night', 'dream'] }, [], []);
+  const up = calls.find((c) => c.method === 'POST' && rest(c, 'stories'));
+  assert.deepEqual(up.body.puzzle_words, ['LUNA', 'FIREFLY', 'ABC', 'MOON', 'GARDEN', 'WINDOW', 'SPARKLE', 'STAR']);
+});

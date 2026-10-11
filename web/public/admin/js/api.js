@@ -82,7 +82,7 @@ export function createApi(sb) {
     },
     async getStory(id) {
       const story = unwrap(await sb.from('stories')
-        .select('id, slug, title, synopsis, cover_url, author_id, reading_level, status, is_free, has_chapters, reading_minutes, published_at, updated_at, song_path, song_title, song_seconds, song_bytes, story_categories(category_id)')
+        .select('id, slug, title, synopsis, cover_url, author_id, reading_level, status, is_free, has_chapters, reading_minutes, published_at, updated_at, song_path, song_title, song_seconds, song_bytes, puzzle_words, story_categories(category_id)')
         .eq('id', id).maybeSingle());
       if (!story) return null;
       const pages = unwrap(await sb.from('story_pages').select('id, position, image_url, text, chapter_title').eq('story_id', id).order('position'));
@@ -96,6 +96,7 @@ export function createApi(sb) {
         id: story.id, slug: story.slug, title: story.title, synopsis: story.synopsis, cover_url: story.cover_url || null,
         author_id: story.author_id || null, reading_level: story.reading_level, status: story.status, is_free: !!story.is_free, has_chapters: !!story.has_chapters,
         reading_minutes: story.reading_minutes, published_at: story.published_at || null,
+        puzzle_words: [...new Set((story.puzzle_words || []).map((w) => String(w).toUpperCase().replace(/[^A-Z]/g, '')).filter((w) => w.length >= 3 && w.length <= 10))].slice(0, 8),
         song_path: story.song_path || null, song_title: story.song_path ? (story.song_title?.trim() || null) : null,
         song_seconds: story.song_path ? story.song_seconds || null : null, song_bytes: story.song_path ? story.song_bytes || null : null,
       };

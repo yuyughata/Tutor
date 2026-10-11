@@ -15,7 +15,7 @@ export function SiteFooter() {
             <a href="/#about">About Genova</a>
             <a href="/#pillars">7 Pillars</a>
             <a href="/#levels">Reading Levels</a>
-            <a href="/#products">Storybooks</a>
+            {/* Storybooks link switched off while the storybook bundles section is hidden: <a href="/#products">Storybooks</a> */}
             {/* Title Catalog link switched off while the catalog section is hidden: <a href="/#catalog">Title Catalog</a> */}
           </div>
           <div className="foot-col">

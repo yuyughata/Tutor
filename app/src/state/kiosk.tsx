@@ -6,14 +6,14 @@ import { useAuth } from './auth';
 import { usePasscode } from './passcode';
 import { load, save } from './storage';
 
-// Kiosk mode keeps a child inside Genova.
+// Screen Lock keeps a child inside Genova.
 //  - Android: Lock Task Mode (startLockTask) through the local GenovaKiosk module.
-//  - Everywhere: the back button no longer leaves the app. Leaving kiosk mode always needs the parent's
+//  - Everywhere: the back button no longer leaves the app. Leaving Screen Lock always needs the parent's
 //    4-digit passcode (the parental gate), asked in the Grown-ups area.
 const KEY = 'genova.kiosk.v1';
 
 type Ctx = {
-  /** The parent switched kiosk mode on. */
+  /** The parent switched Screen Lock on. */
   enabled: boolean;
   /** Android Lock Task Mode is available in this build. */
   nativeSupported: boolean;
@@ -21,7 +21,7 @@ type Ctx = {
   deviceOwner: boolean;
   /** The system reports that the app is currently locked. */
   locked: boolean;
-  /** Turn kiosk mode on or off. Returns an error message or null. The caller must have passed the gate already. */
+  /** Turn Screen Lock on or off. Returns an error message or null. The caller must have passed the gate already. */
   setEnabled: (on: boolean) => Promise<string | null>;
 };
 const KioskContext = createContext<Ctx | null>(null);
@@ -50,7 +50,7 @@ export function KioskProvider({ children }: { children: ReactNode }) {
     setLocked(false);
   }, [nativeSupported]);
 
-  // While kiosk mode is on, lock whenever the app comes to the foreground.
+  // While Screen Lock is on, lock whenever the app comes to the foreground.
   useEffect(() => {
     if (!loaded) return;
     if (enabled) void lock(); else void unlock();
@@ -58,14 +58,14 @@ export function KioskProvider({ children }: { children: ReactNode }) {
     return () => sub.remove();
   }, [enabled, loaded, lock, unlock]);
 
-  // The hardware back button must not leave the app while kiosk mode is on.
+  // The hardware back button must not leave the app while Screen Lock is on.
   useEffect(() => {
     if (Platform.OS !== 'android') return;
     const sub = BackHandler.addEventListener('hardwareBackPress', () => enabledRef.current && !router.canGoBack());
     return () => sub.remove();
   }, []);
 
-  // Kiosk mode depends on the parent's account (the passcode is how it is left), so signing out turns it off.
+  // Screen Lock depends on the parent's account (the passcode is how it is left), so signing out turns it off.
   useEffect(() => {
     if (configured && accessReady && !session && enabledRef.current) { setEnabledState(false); save(KEY, false); }
   }, [configured, accessReady, session]);
@@ -73,7 +73,7 @@ export function KioskProvider({ children }: { children: ReactNode }) {
   const setEnabled = useCallback(async (on: boolean) => {
     if (on) {
       if (!session) return 'Sign in with your parent account first.';
-      if (!passcode.hasPasscode) return 'Create your 4-digit passcode first. It is how you leave kiosk mode.';
+      if (!passcode.hasPasscode) return 'Create your 4-digit passcode first. It is how you leave Screen Lock.';
     }
     setEnabledState(on); save(KEY, on);
     return null;

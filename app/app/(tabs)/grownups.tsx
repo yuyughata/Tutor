@@ -15,7 +15,7 @@ import { useGate } from '../../src/state/gate';
 import { useKiosk } from '../../src/state/kiosk';
 import { usePasscode } from '../../src/state/passcode';
 import { useProfiles } from '../../src/state/profiles';
-import { colors, radius, shadow, space, themeOptions, themes, type, themed } from '../../src/theme';
+import { colors, fonts, radius, shadow, space, themeOptions, themes, type, themed } from '../../src/theme';
 import { useTheme as useThemeCtx } from '../../src/state/theme';
 
 
@@ -80,6 +80,12 @@ export default function GrownUps() {
                 {entitlement.inGrace ? 'Payment overdue' : entitlement.active ? 'Premium is active' : 'Free plan'}
               </Text>
             </View>
+            {!entitlement.active && WEB_URL && (
+              <Tap accessibilityRole="link" accessibilityLabel="Change plan, to access premium stories. Opens the Genova website" onPress={() => Linking.openURL(`${WEB_URL}/plans/`)} style={styles.planLink}>
+                <Ionicons name="star" size={16} color={colors.primaryDeep} />
+                <Text style={styles.planLinkText}>Change plan – to access premium stories</Text>
+              </Tap>
+            )}
             {entitlement.inGrace && entitlement.until && (
               <Text style={styles.body}>Renew on the website before {new Date(entitlement.until).toLocaleDateString(undefined, { day: 'numeric', month: 'long' })} to keep Premium. After that your account moves back to the Free plan.</Text>
             )}
@@ -118,24 +124,24 @@ export default function GrownUps() {
       </Card>
 
       <Card>
-        <Text accessibilityRole="header" style={styles.cardTitle}>Passcode and kiosk mode</Text>
+        <Text accessibilityRole="header" style={styles.cardTitle}>Passcode and Screen Lock</Text>
         {!session ? (
-          <Text style={styles.body}>Sign in with your parent account to create a 4-digit passcode. It locks this area from children, and lets you turn on kiosk mode.</Text>
+          <Text style={styles.body}>Sign in with your parent account to create a 4-digit passcode. It locks this area from children, and lets you turn on Screen Lock.</Text>
         ) : (
           <>
             <Text style={styles.body}>{passcode.hasPasscode ? 'Your 4-digit passcode protects this area.' : 'Create a 4-digit passcode so only you can open this area. Without one, a number puzzle is used.'}</Text>
             <Button label={passcode.hasPasscode ? 'Change passcode' : 'Create passcode'} icon="keypad-outline" variant="secondary" onPress={() => router.push('/passcode')} />
             <View style={styles.switchRow}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.name} nativeID="kioskLabel">Kiosk mode</Text>
+                <Text style={styles.name} nativeID="kioskLabel">Screen Lock</Text>
                 <Text style={styles.meta}>Keeps a child inside Genova. Leaving it needs your passcode.</Text>
               </View>
               <Switch
-                accessibilityLabel="Kiosk mode" accessibilityHint="Keeps a child inside Genova until the passcode is entered" value={kiosk.enabled}
+                accessibilityLabel="Screen Lock" accessibilityHint="Keeps a child inside Genova until the passcode is entered" value={kiosk.enabled}
                 trackColor={{ true: colors.primary, false: colors.border }} thumbColor="#fff"
                 onValueChange={async (on) => {
                   setKioskMsg(null);
-                  if (!on && !(await ask({ fresh: true }))) return; // leaving kiosk mode always asks again
+                  if (!on && !(await ask({ fresh: true }))) return; // leaving Screen Lock always asks again
                   setKioskMsg(await kiosk.setEnabled(on));
                 }}
               />
@@ -144,7 +150,7 @@ export default function GrownUps() {
             {kiosk.enabled && (
               <Text style={styles.meta}>
                 {kiosk.nativeSupported
-                  ? kiosk.deviceOwner ? 'Locked. Only your passcode can leave kiosk mode.' : 'Android may ask you to confirm "screen pinning". For a lock that cannot be bypassed, set this tablet up as a dedicated device (see docs/KIOSK.md).'
+                  ? kiosk.deviceOwner ? 'Locked. Only your passcode can leave Screen Lock.' : 'Android may ask you to confirm "screen pinning". For a lock that cannot be bypassed, set this tablet up as a dedicated device (see docs/KIOSK.md).'
                   : 'The back button no longer leaves the app. On iPhone and iPad also turn on Guided Access (Settings, Accessibility), and on Android use a build with kiosk support.'}
               </Text>
             )}
@@ -197,6 +203,8 @@ const styles = themed(() => StyleSheet.create({
   card: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: space.md, gap: 12 },
   cardTitle: { ...type.title, color: colors.ink },
   body: { ...type.body, color: colors.muted },
+  planLink: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44, alignSelf: 'flex-start' },
+  planLinkText: { fontFamily: fonts.bold, fontSize: 15, lineHeight: 20, color: colors.primaryDeep, textDecorationLine: 'underline', flexShrink: 1 },
   badge: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 6, borderRadius: radius.pill },
   badgeOn: { backgroundColor: colors.secondarySoft },
   badgeOff: { backgroundColor: colors.border },

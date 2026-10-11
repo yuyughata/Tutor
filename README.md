@@ -5,7 +5,7 @@ Children's storybook app by CUSTAR. Product scope: [`docs/MVP_BRIEF.md`](docs/MV
 ## Layout
 - `app/` — Expo (React Native, TypeScript, Expo Router) mobile app.
 - `web/` — Next.js website (static export): landing, plans and checkout, account (Premium badge, manage subscription), sign-up / sign-in / forgot password, privacy policy, and the **admin dashboard / CMS** at `/admin/` (`web/public/admin`).
-- `supabase/migrations/` — `0001`–`0009` (schema + RLS, admin CMS, hardened helpers, reading levels / access rules / plans / legal documents, support / consent / passcode / email, scheduled reminders, email designs, chapters + Word Explorer + leaderboard/awards, story song + private songs bucket).
+- `supabase/migrations/` — `0001`–`0011` (schema + RLS, admin CMS, hardened helpers, reading levels / access rules / plans / legal documents, support / consent / passcode / email, scheduled reminders, email designs, chapters + Word Explorer + leaderboard/awards, story song + private songs bucket, plan prices, word hunt words).
 - `supabase/seed.sql` — three sample stories for local development; `supabase/seed_legal.sql` — sample privacy policy.
 - `tools/email/` — builds the email design previews (`docs/email-templates`, `docs/Genova_Email_Templates.pdf`) and the Supabase Auth email HTML (`supabase/auth-email-templates`).
 - `tools/qa/` — browser tests, screenshots and PDF build ([README](tools/qa/README.md)).
@@ -16,7 +16,7 @@ Children's storybook app by CUSTAR. Product scope: [`docs/MVP_BRIEF.md`](docs/MV
 
 ## Reading levels, plans, access
 - Readers and stories use **Sunrise** (Assisted Reader), **Spark** (Emergent Reader) and **Seeker** (Developing Reader). Ages are not stored or shown.
-- Plans (table `plans`, editable in the DB): Free, Paid ₦5,000 / month, ₦12,000 / quarter.
+- Plans (table `plans`, editable in the DB): Free, Paid ₦3,000 / month, ₦7,500 / quarter.
 - Access rule (one source of truth: `my_access()` and an hourly job): Premium lasts until the paid-until date **+ 5 days**; after that the account is Free. Cancelled plans end at the paid-until date.
 
 ## Run the app
@@ -77,7 +77,7 @@ Note: the Supabase tooling used here blocks `DROP`/`DELETE` statements, so `0002
 The app never shows prices or purchase buttons. Parents subscribe on the website; the app unlocks
 when the webhook writes the subscription.
 
-1. In the Paystack dashboard create a **monthly** (₦5,000) and a **quarterly** (₦12,000) Plan and note the `PLN_...` codes.
+1. In the Paystack dashboard create a **monthly** (₦3,000) and a **quarterly** (₦7,500) Plan and note the `PLN_...` codes.
 2. Set Supabase secrets:
    ```sh
    supabase secrets set PAYSTACK_SECRET_KEY=sk_test_... \
@@ -111,7 +111,7 @@ Built:
 - Admin: dashboard, stories CMS, featured, categories, subscribers (access + password help), settings (privacy editor, admins, support log).
 - Backend: schema + RLS, 5-day grace access rule, Paystack checkout/webhook/manage, admin password support.
 
-Also built: contact support, privacy consent at checkout, Resend email, amber main actions with purple and teal themes (Day/Sepia/Night reader modes in each), 4-digit parent passcode, and kiosk mode (see `docs/KIOSK.md`; the Android native part is untested on a device).
+Also built: contact support, privacy consent at checkout, Resend email, amber main actions with purple and teal themes (Day/Sepia/Night reader modes in each), 4-digit parent passcode, and Screen Lock (see `docs/KIOSK.md`; the Android native part is untested on a device).
 
 Not yet built: audio and video (Phase 2 and 3).
 

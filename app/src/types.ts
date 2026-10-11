@@ -21,6 +21,8 @@ export type Story = {
   categories: string[]; // category slugs
   /** The story's song (one MP3, optional). It unlocks on The End; `path` is the private storage path. */
   song?: { title: string; path: string; seconds?: number };
+  /** Words for the post-story word hunt (characters, key words, events). Spark and Seeker only. */
+  puzzleWords?: string[];
   reads30d: number;
   /** The book is split into chapters (a page with a chapter title starts one). */
   hasChapters?: boolean;

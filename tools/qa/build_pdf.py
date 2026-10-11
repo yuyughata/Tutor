@@ -83,11 +83,11 @@ MOBILE = [
         ('m35-reader-sepia-teal', 'Teal: Sepia', 'A warm page for lamp-lit reading.'),
         ('m33-reader-night-teal', 'Teal: Night', 'Deep teal for bedtime. The reader remembers the last mode.'),
     ]),
-    ('Passcode and kiosk mode', 'A parent with an account creates a 4-digit passcode. It replaces the number puzzle and is the only way out of kiosk mode.', [
+    ('Passcode and Screen Lock', 'A parent with an account creates a 4-digit passcode. It replaces the number puzzle and is the only way out of Screen Lock.', [
         ('m27-passcode-create', 'Create a passcode', 'Offered right after sign-in, or any time from Grown-ups.'),
         ('m28-passcode-saved', 'Saved', 'Only a salted hash is stored. We email a note that it changed.'),
-        ('m29c-grownups-settings', 'Appearance, passcode, kiosk', 'The theme picker, the passcode and the Kiosk mode switch, with plain-language notes.'),
-        ('m30-gate-passcode', 'Passcode gate', 'Asked every time a child needs a grown-up, and again to leave kiosk mode. Five wrong tries lock it for a minute.'),
+        ('m29c-grownups-settings', 'Appearance, passcode, Screen Lock', 'The theme picker, the passcode and the Screen Lock switch, with plain-language notes.'),
+        ('m30-gate-passcode', 'Passcode gate', 'Asked every time a child needs a grown-up, and again to leave Screen Lock. Five wrong tries lock it for a minute.'),
     ]),
     ('Readers and the Grown-ups area', 'Several children can share one device. Parents see their plan, readers, downloads and the privacy policy.', [
         ('m23-grownups-premium', 'Premium active', 'Account status, Manage on the web, readers, offline storage and privacy.'),
@@ -116,7 +116,7 @@ WEB = [
         ('w01q-landing-phone-menu', 'Menu', 'Every section, plus Sign in and Get started.'),
         ('w01r-landing-phone-app', 'The Genova app', 'Features and how it works.'),
         ('w01s-landing-phone-plans', 'Plans', 'Free, Monthly and Quarterly, one under another.')]),
-    ('Plans', 'Free, Paid ₦5,000 per month and Paid ₦12,000 per quarter. Signed-out visitors go to sign-up first, then straight to checkout for the plan they chose.', [
+    ('Plans', 'Free, Paid ₦3,000 per month and Paid ₦7,500 per quarter. Signed-out visitors go to sign-up first, then straight to checkout for the plan they chose.', [
         ('w02-plans', 'Plans')]),
     ('Create account and checkout', 'Parents register on the website, then pay with Paystack. Checkout shows the plan, price and billing period, and links to the privacy policy.', [
         ('w03-signup', 'Create account'), ('w04-checkout', 'Checkout')]),

@@ -17,6 +17,8 @@ jobs:
         working-directory: app
     env:
       # public values (the anon key is meant to be in the app); same as app/eas.json
+      # the website address (for the "Change plan" link): set it under Settings > Secrets and variables > Actions > Variables
+      EXPO_PUBLIC_WEB_URL: ${{ vars.EXPO_PUBLIC_WEB_URL }}
       EXPO_PUBLIC_SUPABASE_URL: https://cjdrlddvbyfataumdztg.supabase.co
       EXPO_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZHJsZGR2YnlmYXRhdW1kenRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0NzA0MzcsImV4cCI6MjEwNzA0NjQzN30.SwnZqajinzmRx_6t2oWFlAAV-8v-u9URHImiB1DKhvA
     steps:

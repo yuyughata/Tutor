@@ -57,6 +57,7 @@ function RootStack() {
               <Stack.Screen name="forgot-password" options={{ presentation: 'modal' }} />
               <Stack.Screen name="legal/privacy" options={{ presentation: 'modal' }} />
               <Stack.Screen name="passcode" options={{ presentation: 'modal' }} />
+              <Stack.Screen name="puzzle/[slug]" options={{ presentation: 'modal' }} />
             </Stack>
           </GateProvider>
            </KioskProvider>

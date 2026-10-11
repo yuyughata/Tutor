@@ -13,13 +13,13 @@ const inBand = (s: Story, band: ReadingLevel) => levelOrder.indexOf(s.level) <= 
 type StoryRow = {
   id: string; slug: string; title: string; synopsis: string; cover_url: string | null;
   reading_level: ReadingLevel; is_free: boolean; page_count: number; reading_minutes: number; published_at: string; has_chapters: boolean;
-  song_path: string | null; song_title: string | null; song_seconds: number | null;
+  song_path: string | null; song_title: string | null; song_seconds: number | null; puzzle_words: string[] | null;
   authors: { name: string } | null;
   story_categories: { categories: { slug: string } | null }[];
 };
 
 const STORY_SELECT =
-  'id, slug, title, synopsis, cover_url, reading_level, is_free, page_count, reading_minutes, published_at, has_chapters, song_path, song_title, song_seconds,' +
+  'id, slug, title, synopsis, cover_url, reading_level, is_free, page_count, reading_minutes, published_at, has_chapters, song_path, song_title, song_seconds, puzzle_words,' +
   ' authors(name), story_categories(categories(slug))';
 
 function toStory(r: StoryRow, reads: Map<string, number>): Story {
@@ -29,6 +29,7 @@ function toStory(r: StoryRow, reads: Map<string, number>): Story {
     pageCount: r.page_count, readingMinutes: r.reading_minutes, publishedAt: r.published_at,
     categories: r.story_categories.flatMap((c) => (c.categories ? [c.categories.slug] : [])),
     reads30d: reads.get(r.id) ?? 0, hasChapters: !!r.has_chapters,
+    ...(r.puzzle_words?.length ? { puzzleWords: r.puzzle_words } : {}),
     ...(r.song_path && r.song_title ? { song: { title: r.song_title, path: r.song_path, ...(r.song_seconds ? { seconds: r.song_seconds } : {}) } } : {}),
   };
 }

@@ -40,7 +40,7 @@ export default function PasscodeScreen() {
       <View style={styles.wrap}>
         <Text style={styles.kicker}>ALL SET</Text>
         <Text accessibilityRole="header" style={styles.title}>Passcode saved</Text>
-        <Text style={styles.body}>Use it whenever a child needs a grown-up, and to leave kiosk mode. We emailed you a note that it changed.</Text>
+        <Text style={styles.body}>Use it whenever a child needs a grown-up, and to leave Screen Lock. We emailed you a note that it changed.</Text>
         <Button label="Done" onPress={() => router.back()} />
       </View>
     );

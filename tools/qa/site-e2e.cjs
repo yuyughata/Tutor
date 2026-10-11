@@ -29,7 +29,7 @@ const BASE = 'http://localhost:8096';
     await goto('/');
     await page.getByRole('heading', { name: /Stories That Stay and/i }).waitFor();
     for (const t of ['Sunrise', 'Assisted Reader', 'Spark', 'Emergent Reader', 'Seeker', 'Developing Reader']) await page.getByText(t, { exact: true }).first().waitFor();
-    await page.getByText('₦5,000').first().waitFor(); await page.getByText('₦12,000').first().waitFor(); await page.getByText('Save 20%').first().waitFor();
+    await page.getByText('₦3,000').first().waitFor(); await page.getByText('₦7,500').first().waitFor(); await page.getByText('Save 17%').first().waitFor();
     await noAges('landing'); await audit('landing');
   });
   await step('plans (signed out): CTAs go to sign-up with the plan', async () => {
@@ -43,12 +43,12 @@ const BASE = 'http://localhost:8096';
     await page.getByLabel('Email', { exact: true }).fill('parent@example.com'); await page.getByLabel('Password', { exact: true }).fill('secret123'); await page.getByLabel('Repeat password').fill('secret123');
     await audit('signup'); await page.getByRole('button', { name: 'Create account' }).click();
     await page.getByRole('heading', { name: 'Checkout' }).waitFor({ timeout: 8000 });
-    await page.getByText('Premium Quarterly').first().waitFor(); await page.getByText('₦12,000').first().waitFor(); await page.getByText('every 3 months').first().waitFor();
+    await page.getByText('Premium Quarterly').first().waitFor(); await page.getByText('₦7,500').first().waitFor(); await page.getByText('every 3 months').first().waitFor();
     if (await page.locator('.premium').count()) throw new Error('free user should not see the Premium badge');
     await audit('checkout (free user)');
   });
   await step('pay with Paystack starts checkout and redirects', async () => {
-    const payBtn = page.getByRole('button', { name: /Pay ₦12,000 with Paystack/ });
+    const payBtn = page.getByRole('button', { name: /Pay ₦7,500 with Paystack/ });
     if (!(await payBtn.isDisabled())) throw new Error('Pay must stay disabled until the parent consents');
     await page.getByRole('button', { name: 'privacy policy' }).click();
     await page.getByRole('dialog').getByText('Version 3').waitFor(); await page.getByRole('dialog').getByText('Our promise to families').waitFor(); await audit('privacy dialog');
@@ -62,7 +62,7 @@ const BASE = 'http://localhost:8096';
   await step('checkout shows a clear message when the server refuses', async () => {
     state.checkoutError = 'You already have an active Premium subscription.'; await goto('/checkout/?plan=monthly');
     await page.getByLabel(/I am the parent or guardian/).check();
-    await page.getByRole('button', { name: /Pay ₦5,000/ }).click(); await page.getByRole('alert').getByText('already have an active Premium').waitFor(); state.checkoutError = null;
+    await page.getByRole('button', { name: /Pay ₦3,000/ }).click(); await page.getByRole('alert').getByText('already have an active Premium').waitFor(); state.checkoutError = null;
   });
   await step('account (free)', async () => {
     await goto('/account/'); await page.getByRole('heading', { name: 'Your account' }).waitFor(); await page.getByText('Free plan').first().waitFor(); await page.getByRole('link', { name: 'Get Premium' }).waitFor();
@@ -85,7 +85,7 @@ const BASE = 'http://localhost:8096';
     await page.getByText('Premium Monthly').first().waitFor(); await page.getByText('Active', { exact: true }).waitFor(); await audit('account (premium)');
     await goto('/plans/'); await page.locator('main .banner .premium').waitFor(); await page.getByText('Thank you for being a Premium family.').waitFor(); await page.getByText('Your plan').first().waitFor(); await audit('plans (premium)');
     await goto('/checkout/?plan=monthly'); await page.locator('main .banner .premium').waitFor(); await page.getByText('You already have Premium').waitFor();
-    if (!(await page.getByRole('button', { name: /Pay ₦5,000/ }).isDisabled())) throw new Error('pay should be disabled while Premium is active');
+    if (!(await page.getByRole('button', { name: /Pay ₦3,000/ }).isDisabled())) throw new Error('pay should be disabled while Premium is active');
     await audit('checkout (premium)');
   });
   await step('grace period: overdue warning, amber badge, renew', async () => {
@@ -93,7 +93,7 @@ const BASE = 'http://localhost:8096';
     await goto('/account/'); await page.getByText('Your last payment did not go through').waitFor(); await page.locator('main .premium.warn').waitFor();
     await page.getByText('Payment overdue (grace period)').waitFor(); await page.getByRole('link', { name: 'Renew now' }).waitFor();
     await goto('/checkout/?plan=monthly'); await page.getByText('Your renewal is overdue').waitFor(); await page.getByLabel(/I am the parent or guardian/).check();
-    if (await page.getByRole('button', { name: /Pay ₦5,000/ }).isDisabled()) throw new Error('late payers must be able to pay');
+    if (await page.getByRole('button', { name: /Pay ₦3,000/ }).isDisabled()) throw new Error('late payers must be able to pay');
   });
   await step('manage subscription opens Paystack', async () => {
     state.access = premium(); await goto('/account/'); await page.getByRole('button', { name: 'Manage or cancel subscription' }).click(); await page.waitForURL(/paystack\.test\/manage/, { timeout: 8000 });

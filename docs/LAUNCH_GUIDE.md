@@ -80,7 +80,7 @@ Prices were not re-checked on the vendors' pages; check at checkout. **Start the
 
 ### 2.2 Paystack (live)
 1. In Paystack, complete **business verification** for live mode.
-2. **Plans:** Dashboard > Products > Plans. Create **Genova Premium Monthly** (₦5,000, monthly) and **Genova Premium Quarterly** (₦12,000, quarterly). Copy both `PLN_…` codes into the Supabase secrets above. The amount charged comes from the Paystack plan, so it must match the prices on the website (`plans` table).
+2. **Plans:** Dashboard > Products > Plans. Create **Genova Premium Monthly** (₦3,000, monthly) and **Genova Premium Quarterly** (₦7,500, quarterly). Copy both `PLN_…` codes into the Supabase secrets above. The amount charged comes from the Paystack plan, so it must match the prices on the website (`plans` table).
 3. **Webhook:** Settings > API Keys & Webhooks > Live Webhook URL = `https://cjdrlddvbyfataumdztg.supabase.co/functions/v1/paystack-webhook`.
    **Paystack allows one webhook URL per mode.** The URL you sent earlier (`lotwise.ng/...`) belongs to another site. If that site uses the same Paystack business, create a separate Paystack business for Genova, or have that site forward events to Genova's function. Do not swap the URL until you decide.
 4. **Smoke test with a real payment:** subscribe on the website with a small plan on a test account, then check: (a) the account page shows the Premium badge, (b) in the SQL editor `select event, created_at from payment_events order by created_at desc limit 5;` shows the events, (c) the receipt email arrives. **If Premium does not appear,** open `payment_events` and compare the stored payload to `supabase/functions/_shared/paystack.ts`; I wrote the field names from Paystack's docs and could not test them live.
@@ -171,7 +171,7 @@ Install the Android build on a real phone and test the whole list in 4.6.
 - Forgot password: code arrives, new password works.
 - Create the grown-up passcode; the gate asks for it; five wrong tries lock it; "Forgot passcode" works.
 - Both themes (Purple and Teal), all three reader modes.
-- Kiosk mode on Android: see `docs/KIOSK.md` (pin prompt, Back does nothing, wrong PIN refuses, right PIN releases). **If the store reviewer questions the device-admin component** the kiosk module declares, you can remove the `<receiver>` from `app/modules/genova-kiosk/android/src/main/AndroidManifest.xml`; screen pinning still works without it.
+- Screen Lock on Android: see `docs/KIOSK.md` (pin prompt, Back does nothing, wrong PIN refuses, right PIN releases). **If the store reviewer questions the device-admin component** the kiosk module declares, you can remove the `<receiver>` from `app/modules/genova-kiosk/android/src/main/AndroidManifest.xml`; screen pinning still works without it.
 - No ads, no third-party analytics SDKs (Kids Category and Families rules). Do not add any without a lawyer.
 
 ---
@@ -217,7 +217,7 @@ Apple's rule for informational links is in guideline 3.1.3(a). To show the accou
 If they say no: remove the link for that storefront (build with `EXPO_PUBLIC_WEB_LINKS=off`) and rely on the website for sign-up.
 
 ### 6.8 Review notes and a demo account
-Apple reviewers must be able to use every feature. In **App Review Information** give: a **demo parent account** (email + password) with **Premium access**. Create it on the website, then in the admin go to Subscribers > Access and set it to complimentary (long end date, label "app review"). Add notes: "Genova is a children's storybook app. Parents create accounts on our website; children are reader profiles on the device. Payments happen only on the website; the app has no purchases. Grown-up areas are behind a parental gate (a 4-digit passcode once the parent creates one, otherwise a number puzzle). Kiosk mode is optional and off by default. No ads or third-party analytics."
+Apple reviewers must be able to use every feature. In **App Review Information** give: a **demo parent account** (email + password) with **Premium access**. Create it on the website, then in the admin go to Subscribers > Access and set it to complimentary (long end date, label "app review"). Add notes: "Genova is a children's storybook app. Parents create accounts on our website; children are reader profiles on the device. Payments happen only on the website; the app has no purchases. Grown-up areas are behind a parental gate (a 4-digit passcode once the parent creates one, otherwise a number puzzle). Screen Lock is optional and off by default. No ads or third-party analytics."
 
 ### 6.9 Submit and release
 1. **Add for Review** > **Submit**. Typical review time is 1–3 days; rejections are common the first time and are fixed by replying or resubmitting.

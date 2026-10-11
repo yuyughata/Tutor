@@ -69,9 +69,21 @@ const NUM = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eigh
     await audit('forgot password');
     await page.getByRole('button', { name: 'Done' }).click();
   });
+  await step('free plan: "Change plan" link goes to the website plans page; premium has no such link', async () => {
+    await tab('Home').click(); await tab('Grown-ups').click(); await page.getByText('Free plan', { exact: true }).waitFor({ timeout: 6000 });
+    const link = page.getByRole('link', { name: /Change plan/ });
+    await link.waitFor(); if (!(await link.innerText()).includes('Change plan – to access premium stories')) throw new Error('link text: ' + (await link.innerText()));
+    // tapping it opens the website's plans page (same tab on web). Stop that navigation so the app stays put and just record the address.
+    let hit = null; const catcher = (r) => { hit = r.request().url(); return r.abort(); };
+    await ctx.route(/genova\.test\/plans/, catcher);
+    await link.click(); for (let i = 0; i < 30 && !hit; i++) await page.waitForTimeout(100);
+    await ctx.unroute(/genova\.test\/plans/, catcher);
+    if (!hit || !/genova\.test\/plans\/$/.test(hit)) throw new Error('the link did not open the plans page: ' + hit);
+    await page.screenshot({ path: `${process.env.OUT || '.'}/grownups-free-plan.png` });
+  });
   await step('premium unlocks after sign-in', async () => {
     state.access = { active: true, status: 'active', plan: 'monthly', current_period_end: new Date(Date.now() + 20 * 864e5).toISOString(), access_until: new Date(Date.now() + 25 * 864e5).toISOString(), in_grace: false };
-    await page.waitForTimeout(500); await tab('Home').click(); await tab('Grown-ups').click(); await page.getByText('Premium is active').waitFor({ timeout: 6000 }); await audit('grown-ups (premium)');
+    await page.waitForTimeout(500); await tab('Home').click(); await tab('Grown-ups').click(); await page.getByText('Premium is active').waitFor({ timeout: 6000 }); if (await page.getByRole('link', { name: /Change plan/ }).count()) throw new Error('premium accounts must not see the change-plan link'); await audit('grown-ups (premium)');
   });
   await step('theme: switch to teal, stay on Grown-ups, amber actions, reader modes per theme', async () => {
     const rgb = async (loc, prop = 'backgroundColor') => loc.evaluate((el, p) => getComputedStyle(el)[p], prop);
@@ -120,7 +132,7 @@ const NUM = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eigh
     await tapDigits('9999'); await page.getByText('Not quite. Try again.').waitFor();
     await tapDigits('1234'); await page.getByText('Premium is active').waitFor();
     // kiosk: turn on, then off needs the passcode again (fresh)
-    const sw = page.getByRole('switch', { name: 'Kiosk mode' });
+    const sw = page.getByRole('switch', { name: 'Screen Lock' });
     await sw.click(); await page.waitForTimeout(500);
     if (!(await sw.isChecked())) throw new Error('kiosk should be on');
     await sw.click(); await page.getByText('Enter your passcode').waitFor(); await tapDigits('1234'); await page.waitForTimeout(500);
@@ -135,13 +147,13 @@ const NUM = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eigh
   });
   await step('passcode: forgot it, confirm with the account password, choose a new one', async () => {
     const tapDigits = async (d) => { for (const c of d) await page.getByRole('button', { name: ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'][Number(c)], exact: true }).last().click(); };
-    await page.getByRole('switch', { name: 'Kiosk mode' }).click(); await page.getByText(/Try again in \d+s|Enter your passcode/).first().waitFor();
+    await page.getByRole('switch', { name: 'Screen Lock' }).click(); await page.getByText(/Try again in \d+s|Enter your passcode/).first().waitFor();
     // lock window is still active: use a fresh page state by reloading
     await page.reload({ waitUntil: 'networkidle' }); await page.getByText('Enter your passcode').waitFor(); // a fresh launch on the Grown-ups screen must ask for the passcode, never the easier puzzle
     await page.getByRole('button', { name: 'Forgot passcode?' }).click(); await page.getByLabel('Account password').fill('wrong-one'); await page.getByRole('button', { name: 'Continue' }).click(); await page.getByText('That password is not right.').waitFor();
     await page.getByLabel('Account password').fill(state.password); await page.getByRole('button', { name: 'Continue' }).click(); await page.getByText('Choose a new passcode').first().waitFor();
     await tapDigits('4321'); await page.getByText('Repeat the new passcode').waitFor(); await tapDigits('4321'); await page.getByText('Premium is active').waitFor({ timeout: 8000 });
-    const sw = page.getByRole('switch', { name: 'Kiosk mode' });
+    const sw = page.getByRole('switch', { name: 'Screen Lock' });
     await sw.click(); await page.getByText('Enter your passcode').waitFor(); await tapDigits('4321'); await page.waitForTimeout(500);
     if ((await sw.isChecked())) throw new Error('kiosk should turn off with the new passcode');
   });

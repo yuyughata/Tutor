@@ -15,7 +15,7 @@ With no `app/.env` the app runs on built-in sample stories. To use the live back
 ## 2. Resume with Claude in a new chat or account
 1. Give Claude access to the GitHub repo `yuyughata/Tutor` (Claude Code on the web: connect GitHub and select the repo; the Claude GitHub app must be installed on it).
 2. `CLAUDE.md` loads automatically. First message to send:
-   > Read CLAUDE.md and docs/HANDOFF.md, then continue with the Backlog in CLAUDE.md (scheduled reminder emails, first real Resend test, device test of kiosk mode). Work on branch `claude/gifted-brahmagupta-a0jtkt`.
+   > Read CLAUDE.md and docs/HANDOFF.md, then continue with the Backlog in CLAUDE.md (scheduled reminder emails, first real Resend test, device test of Screen Lock). Work on branch `claude/gifted-brahmagupta-a0jtkt`.
 3. To let Claude change the live database/functions, connect the **Supabase** connector (the account that owns the project) so it can run migrations and deploy functions. Without it, Claude can still edit code and you apply SQL and deploys yourself (section 4).
 4. Ask Claude to keep `CLAUDE.md` current at the end of each batch.
 
@@ -55,7 +55,7 @@ With no `app/.env` the app runs on built-in sample stories. To use the live back
      PAYSTACK_PLAN_MONTHLY=PLN_... PAYSTACK_PLAN_QUARTERLY=PLN_...
    ```
    (`SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` are provided to functions automatically.)
-5. **Paystack dashboard:** Paystack allows ONE webhook URL per mode (test/live) per business. Use a Paystack business that is not already pointing its webhook at another site. Create two Plans (monthly ₦5,000, quarterly ₦12,000) and copy their `PLN_...` codes; Settings > API Keys & Webhooks: webhook URL `https://<ref>.supabase.co/functions/v1/paystack-webhook`.
+5. **Paystack dashboard:** Paystack allows ONE webhook URL per mode (test/live) per business. Use a Paystack business that is not already pointing its webhook at another site. Create two Plans (monthly ₦3,000, quarterly ₦7,500) and copy their `PLN_...` codes; Settings > API Keys & Webhooks: webhook URL `https://<ref>.supabase.co/functions/v1/paystack-webhook`.
    Prices shown on the site come from the `plans` table; the amount charged comes from the Paystack plan, so keep them equal.
 6. **First admin:** sign up once on the website, then run
    `update public.profiles set is_admin = true where email = 'you@example.com';`
@@ -79,7 +79,7 @@ eas build -p android --profile preview      # test build (APK)
 eas build -p ios --profile preview          # needs an Apple Developer account
 ```
 Set the `EXPO_PUBLIC_*` values as EAS environment variables (they are public). Before store submission read the risks in `docs/MVP_BRIEF.md` (Kids Category and Families policy, children's privacy, review of the privacy policy text).
-Songs use the `expo-audio` native module, so phone builds made before it was added need a new EAS build. Kiosk mode needs a native build (Android Lock Task Mode); it will not work in Expo Go. Read `docs/KIOSK.md` (device-owner setup for dedicated tablets) and test it on a real Android device before release.
+Songs use the `expo-audio` native module, so phone builds made before it was added need a new EAS build. Screen Lock needs a native build (Android Lock Task Mode); it will not work in Expo Go. Read `docs/KIOSK.md` (device-owner setup for dedicated tablets) and test it on a real Android device before release.
 
 ## 7. Day-to-day workflow
 - Content: stories are created in the admin (`/admin/`): cover, pages with images and text, reading level, free or Premium, draft/live/scheduled; Title of the Week/Month in Featured. Target 15-20 launch stories.

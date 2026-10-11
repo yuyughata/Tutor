@@ -1,6 +1,7 @@
 import { h, icon, clear, field, slugify, toast, busy, statusPill, storyState, toLocalInput, fromLocalInput } from '../ui.js';
 import { LEVELS, levelName } from '../levels.js';
 import { compressSong, formatSize, formatTime } from '../audio.js';
+import { MAX_PUZZLE_WORDS, normalizePuzzleWord, suggestPuzzleWords } from '../puzzle.js';
 
 const key = () => Math.random().toString(36).slice(2);
 const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${key()}`);
@@ -22,8 +23,9 @@ export async function render(ctx, { id }) {
   const load = (s) => {
     story = s
       ? { id: s.id, slug: s.slug, title: s.title, synopsis: s.synopsis, cover_url: s.cover_url || '', author_id: s.author_id || authors[0]?.id || null, reading_level: s.reading_level, is_free: s.is_free, has_chapters: !!s.has_chapters, reading_minutes: s.reading_minutes, status: s.status, published_at: s.published_at,
+          puzzle_words: [...(s.puzzle_words || [])],
           song_path: s.song_path || '', song_title: s.song_title || '', song_seconds: s.song_seconds || null, song_bytes: s.song_bytes || null }
-      : { id: uuid(), slug: '', title: '', synopsis: '', cover_url: '', author_id: authors[0]?.id || null, reading_level: 'spark', is_free: false, has_chapters: false, reading_minutes: 3, status: 'draft', published_at: null, song_path: '', song_title: '', song_seconds: null, song_bytes: null };
+      : { id: uuid(), slug: '', title: '', synopsis: '', cover_url: '', author_id: authors[0]?.id || null, reading_level: 'spark', is_free: false, has_chapters: false, reading_minutes: 3, status: 'draft', published_at: null, puzzle_words: [], song_path: '', song_title: '', song_seconds: null, song_bytes: null };
     categoryIds = new Set(s ? s.categoryIds : []);
     pages = (s ? s.pages : []).map((p) => ({ key: key(), id: p.id, image_url: p.image_url, text: p.text, chapter_title: p.chapter_title || '', preview: null }));
     wordList = (s?.words || []).map((w) => ({ key: key(), id: w.id, word: w.word, meaning: w.meaning, example: w.example || '', page_position: w.page_position || null }));
@@ -114,7 +116,7 @@ export async function render(ctx, { id }) {
   authorSel.onchange = () => { story.author_id = authorSel.value; touch(); };
   chap.onchange = () => { story.has_chapters = chap.checked; paintPages(); touch(); };
   free.onchange = () => { story.is_free = free.checked; touch(); paintAside(); };
-  const paintBand = () => bandSeg.replaceChildren(...LEVELS.map((l) => h('button', { type: 'button', title: l.descriptor, 'aria-pressed': String(story.reading_level === l.id), onclick: () => { story.reading_level = l.id; syncWords(); paintBand(); paintWords(); touch(); } }, `${l.name} · ${l.descriptor}`)));
+  const paintBand = () => bandSeg.replaceChildren(...LEVELS.map((l) => h('button', { type: 'button', title: l.descriptor, 'aria-pressed': String(story.reading_level === l.id), onclick: () => { story.reading_level = l.id; syncWords(); paintBand(); paintWords(); paintHunt(); touch(); } }, `${l.name} · ${l.descriptor}`)));
   const paintChips = () => chipBox.replaceChildren(...cats.map((c) => h('button', { type: 'button', class: 'chip', 'aria-pressed': String(categoryIds.has(c.id)), onclick: () => { categoryIds.has(c.id) ? categoryIds.delete(c.id) : categoryIds.add(c.id); paintChips(); touch(); } }, c.name)));
   const autoMinutes = () => { if (!minutesTouched) { story.reading_minutes = Math.max(1, Math.ceil(pages.reduce((n, p) => n + words(p.text), 0) / 90)); minutes.value = story.reading_minutes; } };
 
@@ -239,6 +241,38 @@ export async function render(ctx, { id }) {
       }));
   }
 
+  // ---------- word hunt (the word search played after a story, Spark and Seeker only) ----------
+  const huntBox = h('div', {});
+  const HUNT = { spark: 4, seeker: 6 }; // how many of the words one attempt uses
+  function addHuntWord(raw) {
+    const w = normalizePuzzleWord(raw);
+    if (!w) return toast('Use letters only, 3 to 10 of them (for example LUNA or FIREFLY).', 'err');
+    if (story.puzzle_words.includes(w)) return toast(`${w} is already in the list.`, 'err');
+    if (story.puzzle_words.length >= MAX_PUZZLE_WORDS) return toast(`Up to ${MAX_PUZZLE_WORDS} words.`, 'err');
+    story.puzzle_words.push(w); touch(); paintHunt();
+  }
+  function paintHunt() {
+    const need = HUNT[story.reading_level];
+    if (!need) { huntBox.replaceChildren(h('p', { class: 'muted', style: { margin: 0 } }, 'Sunrise stories are for assisted reading, so they have no word hunt. Choose Spark or Seeker to add words.')); return; }
+    const input = h('input', { type: 'text', maxlength: 14, placeholder: 'e.g. FIREFLY', 'aria-label': 'Add a word for the word hunt', style: { textTransform: 'uppercase' } });
+    const add = () => { addHuntWord(input.value); };
+    input.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); add(); } };
+    const suggest = () => {
+      const picks = suggestPuzzleWords(pages.map((p) => p.text), wordList.map((w) => w.word), MAX_PUZZLE_WORDS);
+      let added = 0;
+      for (const w of picks) if (story.puzzle_words.length < MAX_PUZZLE_WORDS && !story.puzzle_words.includes(w)) { story.puzzle_words.push(w); added++; }
+      toast(added ? `Added ${added} ${added === 1 ? 'word' : 'words'} from the story. Remove any you do not want.` : 'Nothing new to suggest. Add the story pages first.', added ? undefined : 'err');
+      if (added) { touch(); paintHunt(); }
+    };
+    const n = story.puzzle_words.length;
+    huntBox.replaceChildren(
+      h('p', { class: 'small muted', style: { marginTop: 0 } }, `After the story, ${levelName(story.reading_level)} readers can play a word search. Add characters, key words and events (up to ${MAX_PUZZLE_WORDS}). Each attempt uses ${need} of them at random and re-shuffles the grid, so it is different every time.${story.reading_level === 'seeker' ? ' Seeker grids are bigger and words can run in any direction.' : ' Spark grids are small and easy: words run across or down.'}`),
+      h('div', { class: 'row', style: { alignItems: 'flex-end' } }, h('div', { class: 'grow' }, field('Add a word', input)), h('button', { class: 'btn secondary sm', type: 'button', onclick: add }, icon('plus'), 'Add'), h('button', { class: 'btn secondary sm', type: 'button', onclick: suggest }, 'Suggest from the story')),
+      h('div', { class: 'chips', style: { marginTop: '10px' } }, story.puzzle_words.map((w) => h('span', { class: 'chip static' }, w, h('button', { type: 'button', 'aria-label': `Remove ${w}`, style: { marginLeft: '8px', background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', font: 'inherit', padding: '0 2px' }, onclick: () => { story.puzzle_words = story.puzzle_words.filter((x) => x !== w); touch(); paintHunt(); } }, '×')))),
+      h('div', { class: 'small', style: { marginTop: '8px', color: n === 0 ? 'var(--muted)' : n < 3 ? 'var(--danger)' : n < need ? 'var(--amber-deep)' : 'var(--teal-deep, #0b6f6b)' } },
+        n === 0 ? 'No words yet, so readers will not see a word hunt.' : n < 3 ? `${n} of at least 3 words. The word hunt needs 3 to start.` : n < need ? `${n} words. Add ${need - n} more so each attempt can choose a different set.` : `${n} words. Each attempt picks ${need} at random.`));
+  }
+
   // ---------- song (one MP3 per story, made light in the browser before it is uploaded) ----------
   const songBox = h('div', {});
   const songInput = h('input', { type: 'file', accept: 'audio/mpeg,.mp3', class: 'sr', tabindex: -1, 'aria-label': 'Song MP3 file' });
@@ -326,7 +360,7 @@ export async function render(ctx, { id }) {
     title.value = story.title; slug.value = story.slug; synopsis.value = story.synopsis; synCount.textContent = `${story.synopsis.length}/400`;
     minutes.value = story.reading_minutes; authorSel.value = story.author_id || ''; free.checked = story.is_free; chap.checked = !!story.has_chapters;
     when.value = toLocalInput(publishAt);
-    paintBand(); paintChips(); paintCover(); paintPages(); paintWords(); paintSong(); paintStatus(); paintAside();
+    paintBand(); paintChips(); paintCover(); paintPages(); paintWords(); paintHunt(); paintSong(); paintStatus(); paintAside();
     headState.replaceChildren(statusPill(visibility));
   }
 
@@ -355,6 +389,7 @@ export async function render(ctx, { id }) {
           pageInput, pageList,
           h('p', { class: 'small muted', style: { marginBottom: 0 } }, 'Each page is one picture with text underneath. Long text scrolls for the reader. Drag the number to reorder. Pick several images at once to create many pages.')),
         h('div', { class: 'card', style: { marginTop: '16px' } }, h('h2', {}, 'Word Explorer'), wordBox),
+        h('div', { class: 'card', style: { marginTop: '16px' } }, h('h2', {}, 'Word hunt'), huntBox),
         h('div', { class: 'card', style: { marginTop: '16px' } }, h('h2', {}, 'Song'),
           h('p', { class: 'small muted', style: { marginTop: 0 } }, 'One song per story. While reading, children see friendly hints that a song is waiting. It unlocks on The End and plays only when they tap it.'),
           songInput, songBox)),

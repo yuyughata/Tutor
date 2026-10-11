@@ -86,6 +86,7 @@ textarea { resize:vertical; min-height:96px; }
 .seg button[aria-pressed="true"] { background:var(--card); color:var(--purple-deep); box-shadow:0 1px 4px rgba(0,0,0,.12); }
 .chips { display:flex; gap:8px; flex-wrap:wrap; }
 .chip { border:2px solid var(--line); background:var(--card); border-radius:99px; padding:6px 14px; font-weight:800; cursor:pointer; }
+.chip.static { background:var(--purple-soft); border-color:var(--purple-soft); color:var(--purple-deep); cursor:default; }
 .chip[aria-pressed="true"] { background:var(--purple); border-color:var(--purple); color:#fff; }
 .switch { display:inline-flex; align-items:center; gap:10px; cursor:pointer; font-weight:800; }
 .switch input { appearance:none; width:44px; height:26px; border-radius:99px; background:var(--line); position:relative; cursor:pointer; transition:background .15s; }

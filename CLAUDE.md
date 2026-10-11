@@ -6,7 +6,7 @@ Read `README.md` for setup, `docs/MVP_BRIEF.md` for scope, `docs/HANDOFF.md` for
 ## Product decisions (do not re-litigate)
 - **Reading levels, never ages.** Sunrise = Assisted Reader, Spark = Emergent Reader, Seeker = Developing Reader. No age or age-group text may appear in the app, website, admin or docs. DB enum is `reading_level` (`sunrise|spark|seeker`).
 - **Payments on the web only** (Paystack). The app shows no prices and no purchase buttons; it links to the website behind the parental gate.
-- **Plans:** Free; Paid ₦5,000/month; ₦12,000/quarter (table `plans`).
+- **Plans:** Free; Paid ₦3,000/month; ₦7,500/quarter (changed from ₦5,000 / ₦12,000 on 2026-10-11; update the Paystack plan amounts to match) (table `plans`).
 - **Access rule (single source of truth in the DB, `my_access()` + hourly expiry job):** active/trialing/past_due keep Premium until `current_period_end` + 5 days, then Free. Cancelled keeps access until period end. Active with no end date = complimentary.
 - **Brand:** purple `#ab46d2`, teal `#10a19c`, amber `#ffbe00`, charcoal `#232323`; font Nunito. Use charcoal (not white) text on teal/amber and `purpleDeep`/`tealDeep`/`amberDeep` for small coloured text (contrast).
 - Parents have accounts (created on the website); children are reader profiles on the device (name/nickname, avatar, level only).
@@ -16,7 +16,7 @@ Read `README.md` for setup, `docs/MVP_BRIEF.md` for scope, `docs/HANDOFF.md` for
 - `app/` Expo SDK 57 / React Native 0.86 / expo-router, TypeScript. react + react-dom are pinned exactly (19.2.3); keep them equal.
 - `web/` Next.js 16 static export (`output: 'export'`, trailingSlash). Admin CMS is vanilla JS in `web/public/admin/` and shares the site's Supabase session.
 - `tools/qa/` browser tests (fake Supabase backend), screenshot and PDF scripts. `supabase/seed_legal.sql` = sample privacy policy.
-- `supabase/migrations/0001–0009` (all applied to the live project), `supabase/functions/` (paystack-checkout, paystack-webhook, paystack-manage, admin-user-support, send-email, support-request, send-reminders), `supabase/tests/`.
+- `supabase/migrations/0001–0011` (all applied to the live project), `supabase/functions/` (paystack-checkout, paystack-webhook, paystack-manage, admin-user-support, send-email, support-request, send-reminders), `supabase/tests/`.
 - Supabase project **GenovaStorybook**, ref `cjdrlddvbyfataumdztg`.
 
 ## Commands
@@ -68,6 +68,14 @@ One optional **MP3 song per story** (MP3 only, no YouTube). It **unlocks on The 
 - **App**: `getSong(story)` in `repository.ts` (signed URL, or the saved local file); `src/lib/song.ts` `useSongPlayer` (expo-audio; created with the reader, `replace({uri})` as soon as reading starts so the file is loaded before The End; pauses on app background and when leaving The End; no background playback, no autoplay). `SongHint` pill on a few pages only (`songHint()` in `lib/story.ts`: first page, middle of a 5+ page story, last page), `SongCard` on The End (play/pause, progress, time; "Getting your song ready…" until loaded). If the song cannot be fetched there is no hint and no card. Story page shows a "Has a song" fact. Offline: `saveStory(..., song)` downloads `song.mp3` on phones/tablets (`SavedStory.song`).
 - **Native build needed**: `expo-audio` is a new native module (like the kiosk module), so phone apps need a fresh EAS build; Expo Go may not have it. Web, website and tests are unaffected. Not yet run on a physical device.
 - Tests: `tools/qa/song-e2e.cjs` (hints, preload before The End, tap-to-play, axe), the admin Song step in `admin-new.cjs`, `songHint`/`clock` in `app/tests/story.test.mjs`, admin API tests for song fields. Mock backend serves a generated tone (needs `ffmpeg`).
+
+## Update of 2026-10-11 (migrations 0010 and 0011 applied live)
+- **Prices:** Premium Monthly ₦3,000, Quarterly ₦7,500 (`plans`, migration 0010; saving shows as 17%). The Paystack plans must carry the same amounts (the checkout passes the plan code; amounts come from Paystack's plan).
+- **App icon** is the logo mark (star + book/leaves, no wordmark) on white: `assets/icon.png`, `adaptive-icon.png` (white adaptive background), `favicon.png`. Splash uses the full logo on white.
+- **"Kiosk Mode" is now called "Screen Lock"** everywhere users can see it (app, support page, landing, docs). Code, module and `docs/KIOSK.md` keep the word kiosk.
+- **Grown-ups > Account, Free plan:** link "Change plan – to access premium stories" opens `<WEB_URL>/plans/` (hidden when `EXPO_PUBLIC_WEB_URL` is blank or `EXPO_PUBLIC_WEB_LINKS=off`, so set the website URL as a build variable for the APK).
+- **Word hunt (word search) after a story**, Spark and Seeker only: `stories.puzzle_words` (up to 8 words, A-Z, 3-10 letters, validated by `puzzle_words_ok`, migration 0011). `app/src/lib/puzzle.ts` (pure, tested in `app/tests/puzzle.test.mjs`): Spark = 7x7, 4 words, right/down; Seeker = 10x10, 6 words, 8 directions. Every attempt re-picks words (when the story has more), re-places them and re-fills the grid. Screen `app/puzzle/[slug].tsx` (tap first then last letter, hint, new puzzle, star burst, no scores or timers); entry is the "Play the word hunt" button on The End when the story has >= 3 words. Admin: "Word hunt" card in the story editor (add/remove words, "Suggest from the story" = `web/public/admin/js/puzzle.js`). Test: `tools/qa/puzzle-e2e.cjs`.
+- **Landing page:** the Storybook Bundles section and every "Shop ..." button (hero, level cards, final CTA, sticky bar), the Storybooks header/footer links and the bundles FAQ are switched off (INACTIVE comments in `web/content/*.html`, `SiteHeader.tsx`, `SiteFooter.tsx`).
 
 ## Launch (see docs/LAUNCH_GUIDE.md)
 `app/eas.json` (profiles preview / production / production-android), store fields and placeholder icons in `app/app.json` + `app/assets`, public `/support/` page, `web/public/_headers` + `robots.txt`. **Store-policy switch:** `EXPO_PUBLIC_WEB_LINKS=off` (see `src/lib/webLinks.ts`) hides every link-out; the Android production profile sets it. The app's only account link says "Manage my account on the web" (no "Get Premium"). Not yet built: self-service account deletion, Terms page, final brand icon.

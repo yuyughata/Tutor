@@ -24,7 +24,7 @@ export default function Page() {
         <p>In the app, open Grown-ups, choose Forgot passcode, confirm with your account password, then choose a new passcode.</p>
         <h3>How do I cancel my subscription?</h3>
         <p>Sign in to <Link href="/account/">your account</Link> and choose Manage or cancel subscription. Premium stays on until the end of the period you paid for.</p>
-        <h3>How does kiosk mode work?</h3>
+        <h3>How does Screen Lock work?</h3>
         <p>Turn it on in the app under Grown-ups. It keeps a child inside Genova until the grown-up passcode is entered.</p>
       </div>
 

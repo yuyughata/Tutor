@@ -11,7 +11,7 @@ const root = join(here, '..', '..');
 const templates = JSON.parse(readFileSync(join(here, 'templates.json'), 'utf8'));
 
 export const SAMPLE = {
-  parent_email: 'ada.parent@example.com', plan: 'Premium Quarterly', amount: '₦12,000', paid_date: '9 October 2026',
+  parent_email: 'ada.parent@example.com', plan: 'Premium Quarterly', amount: '₦7,500', paid_date: '9 October 2026',
   access_until: '9 January 2027', renew_date: '9 January 2027', due_date: '9 January 2027', what: 'passcode',
   story_title: 'Luna and the Firefly', synopsis: 'Luna follows a tiny light through the garden and learns where fireflies go at dawn.',
   story_url: 'https://genova.example/', cover_url: 'https://genova.example/cover.png', site_url: 'https://genova.example', support_email: 'support@custar.com',

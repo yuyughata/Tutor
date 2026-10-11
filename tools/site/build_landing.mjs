@@ -62,8 +62,8 @@ const header = `
 // Plans as they are seeded in the database (supabase/migrations/0004). On the website these cards are live from the database.
 const PLANS = [
   { id: 'free', name: 'Free', tag: 'A taste of Genova', price: '₦0', per: 'forever', features: ['A growing set of free stories', 'Reader profiles for every child', 'Favourites and reading progress', 'No ads, ever'], cta: 'Get started free', href: '/signup/', free: true },
-  { id: 'monthly', name: 'Premium Monthly', tag: 'Pay month to month', price: '₦5,000', per: 'per month', features: ['Every story in the library', 'New stories every week', 'Read offline', 'Cancel any time'], cta: 'Sign up and subscribe', href: '/signup/?next=%2Fcheckout%2F%3Fplan%3Dmonthly' },
-  { id: 'quarterly', name: 'Premium Quarterly', tag: 'Best value: save 20%', price: '₦12,000', per: 'every 3 months', features: ['Everything in Monthly', 'Three months for the price of 2.4', 'Cancel any time'], cta: 'Sign up and subscribe', href: '/signup/?next=%2Fcheckout%2F%3Fplan%3Dquarterly', best: true, save: 20 },
+  { id: 'monthly', name: 'Premium Monthly', tag: 'Pay month to month', price: '₦3,000', per: 'per month', features: ['Every story in the library', 'New stories every week', 'Read offline', 'Cancel any time'], cta: 'Sign up and subscribe', href: '/signup/?next=%2Fcheckout%2F%3Fplan%3Dmonthly' },
+  { id: 'quarterly', name: 'Premium Quarterly', tag: 'Best value: save 17%', price: '₦7,500', per: 'every 3 months', features: ['Everything in Monthly', 'Three months for the price of 2.5', 'Cancel any time'], cta: 'Sign up and subscribe', href: '/signup/?next=%2Fcheckout%2F%3Fplan%3Dquarterly', best: true, save: 17 },
 ];
 const plans = `
   <section id="plans" class="plans-section" aria-label="Plans">
@@ -90,7 +90,7 @@ const footer = `
         <p class="blurb">A storybook world built on seven pillars of wholesome development, for families raising readers, thinkers, and people of real character.</p>
       </div>
       <div class="foot-col"><h5>Explore</h5>
-        <a href="/#about">About Genova</a><a href="/#pillars">7 Pillars</a><a href="/#levels">Reading Levels</a><a href="/#products">Storybooks</a></div>
+        <a href="/#about">About Genova</a><a href="/#pillars">7 Pillars</a><a href="/#levels">Reading Levels</a></div>
       <div class="foot-col"><h5>Programs</h5>
         <a href="/#grp">Reading Program (GRP)</a><a href="/#grp-form">Request a Session</a><a href="/#preorder">Request a Title</a><a href="/#library">Genova Library</a></div>
       <div class="foot-col"><h5>Genova App</h5>
