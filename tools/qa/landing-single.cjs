@@ -24,6 +24,9 @@ const FILE = 'file://' + path.resolve(__dirname, '..', '..', 'docs', 'Genova_Lan
     for (const t of ['Stories That Stay and', 'Reading is where it starts. Character is where it goes.', 'Seven pillars. One whole child.', 'Every child reads differently.', 'From struggling reader to confident reader', 'A real library where children walk in, pick a book, and read.', 'Real homes. Real reading wins.', 'Genova stories, in your child', 'Simple plans', 'Good questions, honest answers.']) {
       if (!(await p.locator('body').innerText()).includes(t) && !(await p.content()).includes(t.replace(/'/g, '&#39;'))) throw new Error('missing: ' + t);
     }
+    for (const [store, label] of [['android', 'Download for Android'], ['ios', 'Download for iOS']]) {
+      const a = p.locator(`#app a[data-store="${store}"]`); if ((await a.count()) !== 1 || !(await a.innerText()).includes(label)) throw new Error('missing store button: ' + label);
+    }
     // Storybook bundles and every "Shop ..." button are switched off (kept as INACTIVE comments)
     const links = await p.$$eval('a[href*="selar.com"], #products, a[href="#products"]', (a) => a.length); if (links !== 0) throw new Error('bundle/shop elements still visible: ' + links);
     const shop = (await p.locator('body').innerText()).match(/Shop (the )?(Storybooks|\w+ Books)|Storybook Bundles|Order \w+ P1/); if (shop) throw new Error('shop text visible: ' + shop[0]);
