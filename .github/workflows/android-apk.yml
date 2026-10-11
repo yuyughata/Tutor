@@ -1,9 +1,12 @@
 # Builds an installable Android APK for testing (debug-keystore signed, not for the Play Store).
-# Run it from GitHub: Actions > "Android APK" > Run workflow. The APK is attached to the run as the "genova-apk" artifact.
+# Runs on every push that changes app/ on the development branch, or by hand: Actions > "Android APK" > Run workflow. The APK is attached to the run as the "genova-apk" artifact.
 name: Android APK
 
 on:
   workflow_dispatch:
+  push:
+    branches: [claude/gifted-brahmagupta-a0jtkt]
+    paths: ['.github/workflows/android-apk.yml', 'app/**']
 
 jobs:
   apk:
