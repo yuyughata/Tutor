@@ -54,4 +54,4 @@ SHOTS=$OUT python3 build_pdf.py                         # -> .work/ui-screens.ht
 HTML=$PWD/.work/ui-screens.html node check_pdf_layout.cjs   # fails if anything spills off a page
 HTML=$PWD/.work/ui-screens.html PDF=$PWD/../../docs/Genova_UI_Screens.pdf node print_pdf.cjs
 ```
-Edit captions and page order at the top of `build_pdf.py`. Layout rules: up to 4 phones per page (a bigger group continues on the next page), website and landing shots two per page in slices, admin shots wide with tall ones continued over pages.
+The PDF is compressed by default (JPEG, screen-resolution images, about 7.5 MB); `COMPRESS=0 SHOTS=$OUT python3 build_pdf.py` makes a lossless version (about 28 MB). Edit captions and page order at the top of `build_pdf.py`. Layout rules: up to 4 phones per page (a bigger group continues on the next page), website and landing shots two per page in slices, admin shots wide with tall ones continued over pages.

@@ -162,7 +162,17 @@ if os.path.exists(_src):
     _im = Image.open(_src); _im.crop((0, 470, _im.size[0], 470 + 1790)).save(f'{SHOTS}/m29c-grownups-settings.png')
 
 # ======================================================================= helpers
-def img_url(path): return 'file://' + path
+COMPRESS = os.environ.get('COMPRESS', '1') != '0'   # JPEG + sensible resolution keeps the PDF small (set COMPRESS=0 for lossless)
+JPG = f'{S}/pdf-jpg'
+os.makedirs(JPG, exist_ok=True)
+def img_url(path, max_w=None):
+    if COMPRESS and max_w:
+        im = Image.open(path).convert('RGB')
+        if im.size[0] > max_w: im = im.resize((max_w, round(im.size[1] * max_w / im.size[0])), Image.LANCZOS)
+        out = f'{JPG}/{os.path.splitext(os.path.basename(path))[0]}-{max_w}.jpg'
+        im.save(out, 'JPEG', quality=76, optimize=True, progressive=True)
+        path = out
+    return 'file://' + path
 
 def blank_cut(im, target, window):
     """Row near `target` (within +-window) that looks blank (few distinct colours), so a cut never goes through text."""
@@ -228,7 +238,7 @@ def head(kicker, title, sub, part=None):
 def phone_pages(kicker, title, sub, items, cap=None):
     chunks = phone_chunks(len(items))
     for ci, (a, b) in enumerate(chunks):
-        figs = ''.join(f'<figure><div class="phone"><img src="{img_url(f"{SHOTS}/{n}.png")}"></div><figcaption><b>{e(t)}</b><span>{e(d)}</span></figcaption></figure>' for n, t, d in items[a:b])
+        figs = ''.join(f'<figure><div class="phone"><img src="{img_url(f"{SHOTS}/{n}.png", 520)}"></div><figcaption><b>{e(t)}</b><span>{e(d)}</span></figcaption></figure>' for n, t, d in items[a:b])
         add(f'{kicker}|{title}', head(kicker, title, sub, (ci + 1, len(chunks))) + f'<div class="phones n{b - a}">{figs}</div>', first=ci == 0)
 
 COL_W, COL_H = 130.0, 136.0   # mm, side-by-side columns (website and landing)
@@ -255,7 +265,7 @@ def desktop_pages(kicker, title, sub, items, mode):
         for p, a, cap in ch:
             w = min(COL_W if mode == 'cols' and len(ch) > 1 else WIDE_W, (COL_H if mode == 'cols' else WIDE_H) / a)
             if mode == 'cols' and len(ch) == 1: w = min(WIDE_W, WIDE_H / a, 205.0)
-            cells += f'<figure class="df" style="width:{w:.1f}mm"><img src="{img_url(p)}"><figcaption>{e(cap)}</figcaption></figure>'
+            cells += f'<figure class="df" style="width:{w:.1f}mm"><img src="{img_url(p, 800 if mode == 'cols' else 1150)}"><figcaption>{e(cap)}</figcaption></figure>'
         add(f'{kicker}|{title}', head(kicker, title, sub, (ci + 1, len(chunks))) + f'<div class="dgrid">{cells}</div>', first=ci == 0)
 
 # ---- cover
