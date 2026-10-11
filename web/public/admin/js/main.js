@@ -12,7 +12,7 @@ import * as support from './views/support.js';
 import * as readers from './views/readers.js';
 
 const app = document.getElementById('app');
-const logo = () => h('span', {}, 'Gen', h('i', {}, 'o'), 'va');
+const logo = () => h('img', { src: 'img/genova-logo.png', alt: 'Genova', width: 146, height: 30, class: 'brand-logo' });
 const cfg = window.GENOVA || {};
 
 const NAV = [
