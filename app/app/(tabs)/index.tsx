@@ -16,6 +16,7 @@ import { openStory, StoryCard } from '../../src/components/StoryCard';
 import { Tap } from '../../src/components/Tap';
 import { getHome } from '../../src/data/repository';
 import { levelName } from '../../src/levels';
+import { browseRows, SHELF_LIMIT } from '../../src/lib/story';
 import { useGate } from '../../src/state/gate';
 import { useReadingLevel, useProfiles } from '../../src/state/profiles';
 import { colors, fonts, radius, shadow, space, type, themed } from '../../src/theme';
@@ -93,7 +94,7 @@ export default function Home() {
   useEffect(() => { setData(null); setError(false); fetchHome(); }, [fetchHome]);
   const onRefresh = async () => { setRefreshing(true); await fetchHome(); setRefreshing(false); };
 
-  const filter = (list: Story[]) => (category ? list.filter((s) => s.categories.includes(category)) : list);
+  const rows = data ? browseRows(data.latest, data.categories, category) : [];
   const switchChild = async () => {
     if (await ask()) router.push('/profile/switch');
   };
@@ -130,19 +131,28 @@ export default function Home() {
             {data.week && <WeekHero story={data.week} />}
             {data.month && <MonthCard story={data.month} />}
 
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips} style={{ marginTop: space.xl }}>
-              <Chip label="All" icon="apps" active={category === null} onPress={() => setCategory(null)} />
-              {data.categories.map((c) => (
-                <Chip key={c.slug} label={c.name} icon={c.icon} active={category === c.slug} onPress={() => setCategory(c.slug)} />
-              ))}
-            </ScrollView>
-
             <Section title="Popular right now" subtitle="Most read this month">
-              <Shelf stories={filter(data.popular)} />
+              <Shelf stories={data.popular.slice(0, SHELF_LIMIT)} />
             </Section>
             <Section title="New stories" subtitle="Fresh off the press">
-              <Shelf stories={filter(data.latest)} />
+              <Shelf stories={data.latest.slice(0, SHELF_LIMIT)} />
             </Section>
+
+            {/* Everything, old and new: a row per category. The chips below filter these rows. */}
+            <Section title="Browse all stories" subtitle="Old and new, by category">
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+                <Chip label="All" icon="apps" active={category === null} onPress={() => setCategory(null)} />
+                {data.categories.map((c) => (
+                  <Chip key={c.slug} label={c.name} icon={c.icon} active={category === c.slug} onPress={() => setCategory(c.slug)} />
+                ))}
+              </ScrollView>
+            </Section>
+            {rows.length === 0 && <Text style={[styles.none, { marginTop: space.md }]}>Nothing here yet. Try another category.</Text>}
+            {rows.map((r) => (
+              <Section key={r.slug} title={r.name} subtitle={`${r.stories.length} ${r.stories.length === 1 ? 'story' : 'stories'}`}>
+                <Shelf stories={r.stories} />
+              </Section>
+            ))}
           </>
         )}
       </ScrollView>

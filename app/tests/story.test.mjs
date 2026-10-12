@@ -72,3 +72,19 @@ test('clock formats seconds as m:ss and survives bad numbers', () => {
   assert.equal(clock(75), '1:15'); assert.equal(clock(9.9), '0:09'); assert.equal(clock(600), '10:00');
   assert.equal(clock(NaN), '0:00'); assert.equal(clock(-3), '0:00'); assert.equal(clock(Infinity), '0:00');
 });
+
+test('browse rows: every story, old and new, appears in a category row; a selected category shows only its row', async () => {
+  const { browseRows, OTHER_ROW } = await import('../src/lib/story.ts');
+  const mk = (slug, publishedAt, categories) => ({ slug, publishedAt, categories });
+  const stories = [mk('old-fox', '2026-01-01', ['animals']), mk('new-drum', '2026-10-12', ['adventure']), mk('both', '2026-05-01', ['animals', 'adventure']), mk('loose', '2026-03-01', []), mk('odd', '2026-02-01', ['gone'])];
+  const cats = [{ slug: 'adventure', name: 'Adventure' }, { slug: 'animals', name: 'Animals' }, { slug: 'empty', name: 'Empty' }];
+  const rows = browseRows(stories, cats);
+  assert.deepEqual(rows.map((r) => r.slug), ['adventure', 'animals', OTHER_ROW], 'category order kept, empty categories hidden, loose stories last');
+  assert.deepEqual(rows[0].stories.map((s) => s.slug), ['new-drum', 'both'], 'newest first');
+  assert.deepEqual(rows[1].stories.map((s) => s.slug), ['both', 'old-fox']);
+  assert.deepEqual(rows[2].stories.map((s) => s.slug), ['loose', 'odd'], 'uncategorised and unknown-category stories are not lost');
+  assert.deepEqual(new Set(rows.flatMap((r) => r.stories.map((s) => s.slug))), new Set(stories.map((s) => s.slug)), 'nothing is missing');
+  assert.deepEqual(browseRows(stories, cats, 'animals').map((r) => r.slug), ['animals']);
+  assert.deepEqual(browseRows(stories, cats, 'empty'), []);
+  assert.equal(browseRows([], cats).length, 0);
+});

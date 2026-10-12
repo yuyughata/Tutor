@@ -1,4 +1,4 @@
-import type { LearnedWord, ReadingLevel, StoryPage } from '../types';
+import type { LearnedWord, ReadingLevel, Story, StoryPage } from '../types';
 
 // Pure helpers for chapters, the word explorer and reading stats (no React Native imports, so they are unit tested in Node).
 
@@ -93,4 +93,22 @@ export function songHint(pageIndex: number, pageCount: number): string | null {
 export function clock(seconds: number): string {
   const s = Number.isFinite(seconds) && seconds > 0 ? Math.floor(seconds) : 0;
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+}
+
+export type BrowseRow = { slug: string; name: string; icon?: string; stories: Story[] };
+export const OTHER_ROW = '_other';
+export const SHELF_LIMIT = 10; // the "Popular" and "New" shelves show the first 10; everything lives in the browse rows below
+
+/**
+ * The "Browse all stories" rows: one row per category holding EVERY story in it (old and new, newest first), in the
+ * categories' own order. A story in two categories shows in both. Stories with no category go in a last "More stories" row.
+ * With `selected` set, only that category's row is returned (an empty array when it has no stories).
+ */
+export function browseRows(stories: Story[], categories: { slug: string; name: string; icon?: string }[], selected: string | null = null): BrowseRow[] {
+  const newest = [...stories].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
+  const known = new Set(categories.map((c) => c.slug));
+  const rows: BrowseRow[] = categories.map((c) => ({ slug: c.slug, name: c.name, icon: c.icon, stories: newest.filter((s) => s.categories.includes(c.slug)) }));
+  const loose = newest.filter((s) => !s.categories.some((c) => known.has(c)));
+  if (loose.length) rows.push({ slug: OTHER_ROW, name: 'More stories', stories: loose });
+  return rows.filter((r) => r.stories.length && (selected === null || r.slug === selected));
 }
