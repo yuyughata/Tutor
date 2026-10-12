@@ -38,7 +38,7 @@ export function SiteFooter() {
             <h5>Get In Touch</h5>
             <a className="foot-email" href="mailto:Custarlc25@gmail.com">Custarlc25@gmail.com</a>
             <a href={`mailto:${SUPPORT_EMAIL}`}>App support: {SUPPORT_EMAIL}</a>
-            <a href="https://wa.me/2349015487736" target="_blank" rel="noopener noreferrer">WhatsApp Us</a>
+            <a href="https://wa.me/2348128787969?text=Hello%2C%20my%20name%20is%20%5BInsert%20your%20name%5D%20I%27d%20like%20to%20inquire%20about....." target="_blank" rel="noopener noreferrer">WhatsApp Us</a>
             <div className="foot-socials"><span>IG</span><span>FB</span><span>TT</span></div>
           </div>
         </div>

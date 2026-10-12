@@ -32,7 +32,10 @@ const FILE = 'file://' + path.resolve(__dirname, '..', '..', 'docs', 'Genova_Lan
     const shop = (await p.locator('body').innerText()).match(/Shop (the )?(Storybooks|\w+ Books)|Storybook Bundles|Order \w+ P1/); if (shop) throw new Error('shop text visible: ' + shop[0]);
     for (const old of ['₦5,000', '₦12,000', '₦2,500']) if ((await p.locator('body').innerText()).includes(old)) throw new Error('old price visible: ' + old);
     for (const price of ['₦3,000', '₦7,500']) if (!(await p.locator('body').innerText()).includes(price)) throw new Error('new price missing: ' + price);
-    if ((await p.$$eval('a[href*="wa.me"]', (a) => a.length)) < 2) throw new Error('WhatsApp links missing');
+    const wa = await p.$$eval('a[href*="wa.me"]', (a) => a.map((x) => x.getAttribute('href')));
+    if (wa.length < 2) throw new Error('WhatsApp links missing');
+    for (const h of wa) { const u = new URL(h); if (u.pathname !== '/2348128787969') throw new Error('wrong WhatsApp number: ' + h); if (decodeURIComponent(u.searchParams.get('text') || '') !== "Hello, my name is [Insert your name] I'd like to inquire about.....") throw new Error('wrong WhatsApp message: ' + h); }
+    if ((await p.content()).includes('2349015487736')) throw new Error('the old WhatsApp number is still in the page');
     const txt = await p.locator('body').innerText();
     if (/\bAges?\b|Age\(s\)|child_ages/.test(txt) || (await p.content()).includes('child_ages')) throw new Error('age text found');
     if (await p.locator('img').evaluateAll((im) => im.filter((i) => !i.src.startsWith('data:')).length)) throw new Error('an image is not inlined');

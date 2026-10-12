@@ -97,7 +97,7 @@ const footer = `
         <a href="/#app">About the app</a><a href="/plans/">Plans</a><a href="/account/">Your account</a><a href="/support/">Help and support</a><a href="/account/#support">Contact support</a><a href="/privacy/">Privacy policy</a></div>
       <div class="foot-col"><h5>Get In Touch</h5>
         <a class="foot-email" href="mailto:Custarlc25@gmail.com">Custarlc25@gmail.com</a>
-        <a href="https://wa.me/2349015487736" target="_blank" rel="noopener noreferrer">WhatsApp Us</a>
+        <a href="https://wa.me/2348128787969?text=Hello%2C%20my%20name%20is%20%5BInsert%20your%20name%5D%20I%27d%20like%20to%20inquire%20about....." target="_blank" rel="noopener noreferrer">WhatsApp Us</a>
         <div class="foot-socials"><span>IG</span><span>FB</span><span>TT</span></div></div>
     </div>
     <div class="foot-bottom">
