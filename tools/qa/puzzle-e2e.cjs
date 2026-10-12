@@ -45,7 +45,7 @@ const AXE = fs.readFileSync(process.env.AXE, 'utf8');
     }
     return null;
   };
-  const cell = (page, r, c, grid) => page.getByRole('button', { name: new RegExp(`^${grid[r][c]}, row ${r + 1}, column ${c + 1}`) });
+  const cell = (page, r, c, grid) => page.getByRole('button', { name: new RegExp(`^${grid[r][c]}, row ${r + 1}, column ${c + 1}(,|$)`) });
 
   const a = await open('Spark'); let { page } = a; let firstGrid;
   await step('Spark: the story ends with a word hunt button (Sunrise has none)', async () => {
