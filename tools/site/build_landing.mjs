@@ -4,8 +4,9 @@
 //   node tools/site/build_landing.mjs [outfile]            -> docs/Genova_Landing_Page.html
 //   SITE_URL=https://genova.example node tools/site/build_landing.mjs
 //
-// SITE_URL (optional) points the sign-in / sign-up / account / privacy links at the live website. Without it those links stay
-// site-relative (/signup/ ...), which is right when this file is uploaded to the same domain as the website.
+// SITE_URL points the sign-in / sign-up / account / privacy links at the live website. It defaults to https://www.custar.ng/Genova
+// (set SITE_URL= to an empty value to keep them site-relative, e.g. when this file is uploaded to the same domain as the website).
+// An optional first argument is the output file.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -13,7 +14,7 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const web = path.join(root, 'web');
 const out = process.argv[2] || path.join(root, 'docs', 'Genova_Landing_Page.html');
-const SITE = (process.env.SITE_URL || '').replace(/\/$/, '');
+const SITE = (process.env.SITE_URL ?? 'https://www.custar.ng/Genova').replace(/\/$/, '');
 const read = (...p) => fs.readFileSync(path.join(web, ...p), 'utf8');
 
 // ---- navigation: one source of truth (components/SiteHeader.tsx) ----

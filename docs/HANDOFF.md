@@ -90,3 +90,11 @@ Songs use the `expo-audio` native module, so phone builds made before it was add
 
 ## 8. What is done and what is next
 See the Status and Backlog sections of `CLAUDE.md` (items 5.1, 5.2, 6, 7, 8). Also remaining before launch: smoke test on the live project, device testing, legal review, store listings.
+
+## Hosting at /Genova (www.custar.ng)
+The landing page is the single file at the site root (`www.custar.ng/`), the Next.js site lives in the `/Genova` folder (`www.custar.ng/Genova/`).
+- Website: `cd web && NEXT_PUBLIC_BASE_PATH=/Genova npm run build` (output `web/out`, upload it as the `Genova` folder). Without the variable the build is for a domain root.
+- Landing: `SITE_URL=https://www.custar.ng/Genova node tools/site/build_landing.mjs` (that address is also the default) -> `docs/Genova_Landing_Page.html`, upload as `index.html` at the root.
+- Raw `<a>`, `<img>`, `fetch` and script paths must go through `withBase()` (`web/lib/config.ts`); `<Link>` and the router prefix themselves. Test: `tools/qa/subpath-e2e.cjs`.
+- Supabase secret `WEB_URL=https://www.custar.ng/Genova`; edge functions take CORS from `new URL(WEB_URL).origin` (`webOrigin()`), so the updated code must be deployed (support-request, admin-user-support, send-email, send-reminders still run the old code until redeployed).
+- Ready-made upload package with README and `.htaccess` files: `docs/Genova_Web_Upload.zip`.

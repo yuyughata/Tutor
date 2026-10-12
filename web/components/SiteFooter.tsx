@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { SUPPORT_EMAIL } from '@/lib/config';
+import { SUPPORT_EMAIL, withBase } from '@/lib/config';
 
 export function SiteFooter() {
   return (
@@ -7,27 +7,27 @@ export function SiteFooter() {
       <div className="wrap">
         <div className="foot-grid">
           <div>
-            <img className="foot-logo" src="/img/genova-logo.png" width={83} height={36} alt="Custar Genova logo" />
+            <img className="foot-logo" src={withBase('/img/genova-logo.png')} width={83} height={36} alt="Custar Genova logo" />
             <p className="blurb">A storybook world built on seven pillars of wholesome development, for families raising readers, thinkers, and people of real character.</p>
           </div>
           <div className="foot-col">
             <h5>Explore</h5>
-            <a href="/#about">About Genova</a>
-            <a href="/#pillars">7 Pillars</a>
-            <a href="/#levels">Reading Levels</a>
-            {/* Storybooks link switched off while the storybook bundles section is hidden: <a href="/#products">Storybooks</a> */}
-            {/* Title Catalog link switched off while the catalog section is hidden: <a href="/#catalog">Title Catalog</a> */}
+            <a href={withBase('/#about')}>About Genova</a>
+            <a href={withBase('/#pillars')}>7 Pillars</a>
+            <a href={withBase('/#levels')}>Reading Levels</a>
+            {/* Storybooks link switched off while the storybook bundles section is hidden: <a href={withBase('/#products')}>Storybooks</a> */}
+            {/* Title Catalog link switched off while the catalog section is hidden: <a href={withBase('/#catalog')}>Title Catalog</a> */}
           </div>
           <div className="foot-col">
             <h5>Programs</h5>
-            <a href="/#grp">Reading Program (GRP)</a>
-            <a href="/#grp-form">Request a Session</a>
-            <a href="/#preorder">Request a Title</a>
-            <a href="/#library">Genova Library</a>
+            <a href={withBase('/#grp')}>Reading Program (GRP)</a>
+            <a href={withBase('/#grp-form')}>Request a Session</a>
+            <a href={withBase('/#preorder')}>Request a Title</a>
+            <a href={withBase('/#library')}>Genova Library</a>
           </div>
           <div className="foot-col">
             <h5>Genova App</h5>
-            <a href="/#app">About the app</a>
+            <a href={withBase('/#app')}>About the app</a>
             <Link href="/plans/">Plans</Link>
             <Link href="/account/">Your account</Link>
             <Link href="/support/">Help and support</Link>
@@ -44,7 +44,7 @@ export function SiteFooter() {
         </div>
         <div className="foot-bottom">
           <span>© {new Date().getFullYear()} Custar. Built for a generation of bright minds. Payments are processed securely by Paystack.</span>
-          <span>Built in homes, Reaching for the world. · <a href="/admin/">Staff sign in</a></span>
+          <span>Built in homes, Reaching for the world. · <a href={withBase('/admin/')}>Staff sign in</a></span>
         </div>
       </div>
     </footer>

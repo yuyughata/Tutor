@@ -3,9 +3,11 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { handleEmail } from '../_shared/emailAdmin.ts';
 import { verifyResendKey } from '../_shared/email.ts';
+// CORS needs the site's origin (scheme + host), even when WEB_URL includes a folder such as https://www.custar.ng/Genova.
+const webOrigin = () => { try { return new URL(Deno.env.get('WEB_URL') ?? '').origin; } catch { return '*'; } };
 
 const service = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } });
-const cors = { 'Access-Control-Allow-Origin': Deno.env.get('WEB_URL') ?? '*', 'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info' };
+const cors = { 'Access-Control-Allow-Origin': webOrigin(), 'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info' };
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
 
 Deno.serve(async (req) => {

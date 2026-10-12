@@ -1,5 +1,6 @@
 'use client';
 import { useEffect } from 'react';
+import { BASE_PATH } from '@/lib/config';
 
 declare global { interface Window { genovaLanding?: { init: () => () => void } } }
 
@@ -12,7 +13,8 @@ export function LandingEnhance() {
     if (window.genovaLanding) start();
     else {
       const s = document.createElement('script');
-      s.src = '/landing.js';
+      (window as unknown as { GENOVA_BASE?: string }).GENOVA_BASE = BASE_PATH;
+      s.src = `${BASE_PATH}/landing.js`;
       s.async = true;
       s.onload = start;
       document.body.appendChild(s);

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth';
+import { withBase } from '@/lib/config';
 import { PremiumBadge } from './PremiumBadge';
 
 // Section links on the landing page (they work from every page), then the app's own pages.
@@ -28,7 +29,7 @@ export function SiteHeader() {
     <header className="site-head">
       <div className="nav">
         <Link href="/" className="logo-link" aria-label="Custar Genova home">
-          <img className="logo-img" src="/img/genova-logo.png" width={92} height={40} alt="Custar Genova logo" />
+          <img className="logo-img" src={withBase('/img/genova-logo.png')} width={92} height={40} alt="Custar Genova logo" />
         </Link>
         <nav className="nav-links" aria-label="Main">
           {NAV_LINKS.map((l) => <Link key={l.href} href={l.href} aria-current={cur(l.href)}>{l.label}</Link>)}

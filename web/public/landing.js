@@ -17,7 +17,7 @@
     if (catalogPromise) return catalogPromise;
     var inline = document.getElementById('catalogData');
     if (inline) { catalogPromise = Promise.resolve(JSON.parse(inline.textContent)); return catalogPromise; }
-    catalogPromise = fetch('/catalog.json').then(function (r) { if (!r.ok) throw new Error('catalog'); return r.json(); });
+    catalogPromise = fetch((window.GENOVA_BASE || '') + '/catalog.json').then(function (r) { if (!r.ok) throw new Error('catalog'); return r.json(); });
     catalogPromise.catch(function () { catalogPromise = null; });
     return catalogPromise;
   }

@@ -1,9 +1,11 @@
 // Called by the website with the parent's Supabase JWT.
 // Starts a Paystack subscription checkout for the chosen plan and returns the hosted payment URL.
 import { createClient } from 'npm:@supabase/supabase-js@2';
+// CORS needs the site's origin (scheme + host), even when WEB_URL includes a folder such as https://www.custar.ng/Genova.
+const webOrigin = () => { try { return new URL(Deno.env.get('WEB_URL') ?? '').origin; } catch { return '*'; } };
 
 const cors = {
-  'Access-Control-Allow-Origin': Deno.env.get('WEB_URL') ?? '*',
+  'Access-Control-Allow-Origin': webOrigin(),
   'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info',
 };
 const json = (body: unknown, status = 200) =>
@@ -46,7 +48,7 @@ Deno.serve(async (req) => {
       amount: String(plan.price_minor), // the plan's own amount wins; this is the fallback
       currency: plan.currency,
       plan: code,
-      callback_url: `${Deno.env.get('WEB_URL') ?? ''}/account?paid=1`,
+      callback_url: `${(Deno.env.get('WEB_URL') ?? '').replace(/\/$/, '')}/account/?paid=1`,
       metadata: { user_id: user.id, plan: plan.id },
     }),
   });

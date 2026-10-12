@@ -3,9 +3,11 @@
 // Deploy with verify_jwt OFF: the handler does its own authentication.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { handleReminders } from '../_shared/reminders.ts';
+// CORS needs the site's origin (scheme + host), even when WEB_URL includes a folder such as https://www.custar.ng/Genova.
+const webOrigin = () => { try { return new URL(Deno.env.get('WEB_URL') ?? '').origin; } catch { return '*'; } };
 
 const service = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } });
-const cors = { 'Access-Control-Allow-Origin': Deno.env.get('WEB_URL') ?? '*', 'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info, x-job-secret' };
+const cors = { 'Access-Control-Allow-Origin': webOrigin(), 'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info, x-job-secret' };
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
 
 Deno.serve(async (req) => {
