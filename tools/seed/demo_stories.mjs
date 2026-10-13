@@ -253,6 +253,8 @@ export const stories = [
     puzzle: ['AMARA', 'OWL', 'MOON', 'NEEM', 'BLANKET', 'WINDOW', 'LULLABY', 'FEATHER'] },
 ];
 
+// A quarter of the demo catalogue (9 of 36, counting the older demo stories) is Premium; the rest is free.
+export const PREMIUM = new Set(['tomi-and-the-grumpy-cloud', 'two-friends-one-umbrella', 'sade-and-the-new-neighbour', 'luna-and-the-firefly', 'the-case-of-the-missing-shoe', 'the-child-and-the-snow-leopard', 'ifeoma-and-the-lost-coin-purse', 'folake-and-the-old-lagos-map', 'the-sunday-long-table']);
 const q = (s) => `'${s.replace(/'/g, "''")}'`;
 const maxW = { sunrise: 0, spark: 1, seeker: 3 };
 
@@ -290,7 +292,7 @@ declare sid uuid;
 begin
   if exists (select 1 from stories where slug = ${q(s.slug)}) then return; end if;
   insert into stories (slug, title, synopsis, cover_url, author_id, reading_level, status, is_free, reading_minutes, published_at, puzzle_words)
-  values (${q(s.slug)}, ${q(s.title)}, ${q(s.synopsis)}, ${q(`https://picsum.photos/seed/${s.slug}/600/800`)}, '00000000-0000-0000-0000-0000000000a1', '${s.level}', 'published', true, ${s.min}, now() - interval '${(stories.length - i) * 7} minutes', ${puzzle})
+  values (${q(s.slug)}, ${q(s.title)}, ${q(s.synopsis)}, ${q(`https://picsum.photos/seed/${s.slug}/600/800`)}, '00000000-0000-0000-0000-0000000000a1', '${s.level}', 'published', ${PREMIUM.has(s.slug) ? 'false' : 'true'}, ${s.min}, now() - interval '${(stories.length - i) * 7} minutes', ${puzzle})
   returning id into sid;
   insert into story_pages (story_id, position, image_url, text) select sid, v.p, v.i, v.t from (values
     ${pages}) v(p, i, t);
