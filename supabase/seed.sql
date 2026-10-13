@@ -12,9 +12,12 @@ insert into categories (slug, name, sort_order) values
   ('emotional', 'Emotional', 5),
   ('culture-history', 'Culture & History', 6),
   ('faith', 'Faith', 7),
-  ('investigation', 'Investigation', 8),
+  ('discovery-science', 'Discovery & Science', 8),
   ('health-wellbeing', 'Health & Wellbeing', 9),
-  ('sports', 'Sports', 10);
+  ('sports', 'Sports', 10),
+  ('media-technology', 'Media & Technology', 11),
+  ('business', 'Business', 12),
+  ('bedtime', 'Bedtime', 13);
 
 insert into stories (id, slug, title, synopsis, cover_url, author_id, reading_level, status, is_free, page_count, reading_minutes, published_at) values
   ('00000000-0000-0000-0000-0000000000b1', 'the-curious-little-fox', 'The Curious Little Fox',

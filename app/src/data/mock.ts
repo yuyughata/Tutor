@@ -9,9 +9,12 @@ export const categories: Category[] = [
   { slug: 'emotional', name: 'Emotional', icon: 'heart' },
   { slug: 'culture-history', name: 'Culture & History', icon: 'earth' },
   { slug: 'faith', name: 'Faith', icon: 'star' },
-  { slug: 'investigation', name: 'Investigation', icon: 'search' },
+  { slug: 'discovery-science', name: 'Discovery & Science', icon: 'search' },
   { slug: 'health-wellbeing', name: 'Health & Wellbeing', icon: 'fitness' },
   { slug: 'sports', name: 'Sports', icon: 'football' },
+  { slug: 'media-technology', name: 'Media & Technology', icon: 'hardware-chip' },
+  { slug: 'business', name: 'Business', icon: 'briefcase' },
+  { slug: 'bedtime', name: 'Bedtime', icon: 'moon' },
 ];
 
 const day = 86_400_000;

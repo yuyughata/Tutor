@@ -19,5 +19,4 @@ select s.id, c.id from (values
 ) v(title, slug) join stories s on s.title = v.title join categories c on c.slug = v.slug
 on conflict do nothing;
 
--- Retire the old categories (their story links go with them).
-delete from categories where slug in ('animals', 'bedtime', 'fantasy');
+-- Animals and Fantasy are retired in 0013; Bedtime was kept at the owner's request.

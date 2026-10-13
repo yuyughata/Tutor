@@ -18,7 +18,8 @@ export function createDemoApi() {
   let signedIn = false;
   const cats = [
     ['adventure', 'Adventure'], ['family-friendship', 'Family & Friendship'], ['character-growth', 'Character & Growth'], ['nature', 'Nature'], ['emotional', 'Emotional'],
-    ['culture-history', 'Culture & History'], ['faith', 'Faith'], ['investigation', 'Investigation'], ['health-wellbeing', 'Health & Wellbeing'], ['sports', 'Sports'],
+    ['culture-history', 'Culture & History'], ['faith', 'Faith'], ['discovery-science', 'Discovery & Science'], ['health-wellbeing', 'Health & Wellbeing'], ['sports', 'Sports'],
+    ['media-technology', 'Media & Technology'], ['business', 'Business'], ['bedtime', 'Bedtime'],
   ].map(([slug, name], i) => ({ id: 'c' + (i + 1), slug, name, sort_order: i + 1 }));
   const authors = [{ id: 'a1', name: 'CUSTAR' }];
   const mk = (id, title, band, free, status, pub, key, cover, categoryIds, texts) => ({
