@@ -36,6 +36,7 @@ mkdir -p $OUT
 node app-e2e.cjs        # app: levels, sign-in, forgot password, privacy, offline, axe audits  (needs :8097)
 node site-e2e.cjs       # website: plans, checkout, account, badge, grace state, admin gate, axe audits (needs :8096)
 node reader-e2e.cjs     # app reader: chapters, Word Explorer, long page text scrolls, stats (needs :8097)
+node offline-session-e2e.cjs # a Premium parent stays signed in offline, even with an expired access token (needs :8097)
 node home-e2e.cjs      # home: New stories, then chips, then a row per category with every story (needs :8097)
 node puzzle-e2e.cjs    # word hunt: Spark 7x7 / Seeker 10x10, solvable, reshuffled each attempt (needs :8097)
 node song-e2e.cjs      # app song feature: hints, preload before The End, tap-to-play, offline-safe failure (needs :8097 and ffmpeg)

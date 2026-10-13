@@ -1,7 +1,8 @@
 import type { Session } from '@supabase/supabase-js';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { AppState } from 'react-native';
-import { supabase } from '../lib/supabase';
+import * as Network from 'expo-network';
+import { storedSession, supabase } from '../lib/supabase';
 import { load, save } from './storage';
 import type { Story } from '../types';
 
@@ -47,41 +48,70 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const free: Entitlement = { active: false };
     const apply = (next: Entitlement) => setEntitlement((prev) => (prev.active === next.active && prev.until === next.until && prev.status === next.status && prev.inGrace === next.inGrace ? prev : next));
     if (!supabase || !s) { save(ACCESS_KEY, null); apply(free); setAccessReady(true); return; }
-    try {
-      const { data, error } = await supabase.rpc('my_access');
+    const fromCache = async () => {
+      const cached = await load<CachedAccess | null>(ACCESS_KEY, null);
+      const stillValid = cached && cached.userId === s.user.id && cached.active && (!cached.until || new Date(cached.until) > new Date());
+      apply(stillValid ? { active: true, until: cached.until, status: cached.status, plan: cached.plan, inGrace: cached.inGrace } : free);
+      setAccessReady(true);
+    };
+    // With no connection the request can take a long time to fail (supabase-js retries an expired token for ~30 s),
+    // so after a few seconds the remembered answer is used; a late real answer still replaces it.
+    const ask = (async () => {
+      const { data, error } = await supabase!.rpc('my_access');
       if (error) throw error;
       const row = Array.isArray(data) ? data[0] : data;
       const next: Entitlement = row ? { active: !!row.active, until: row.access_until ?? null, status: row.status, plan: row.plan, inGrace: !!row.in_grace } : free;
       save(ACCESS_KEY, { ...next, userId: s.user.id } satisfies CachedAccess);
       apply(next);
       setAccessReady(true);
-    } catch {
-      const cached = await load<CachedAccess | null>(ACCESS_KEY, null);
-      const stillValid = cached && cached.userId === s.user.id && cached.active && (!cached.until || new Date(cached.until) > new Date());
-      apply(stillValid ? { active: true, until: cached.until, status: cached.status, plan: cached.plan, inGrace: cached.inGrace } : free);
-      setAccessReady(true);
-    }
+    })();
+    let answered = false;
+    ask.then(() => { answered = true; }, () => { answered = true; fromCache(); });
+    await Promise.race([ask.catch(() => {}), new Promise((r) => setTimeout(r, 4000))]);
+    if (!answered) await fromCache();
+  }, []);
+
+  // The signed-in session, also when offline. supabase-js returns no session once the access token has expired and
+  // the refresh cannot reach the server; a parent who is still signed in stays signed in on the stored copy until
+  // they sign out or the server really rejects the sign-in. Queries then fall back to cached data, and the token
+  // refreshes by itself when the connection returns.
+  const currentSession = useCallback(async (): Promise<Session | null> => {
+    const { data } = (await supabase?.auth.getSession()) ?? { data: { session: null } };
+    return data.session ?? (await storedSession());
   }, []);
 
   useEffect(() => {
     if (!supabase) return;
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      loadEntitlement(data.session);
-    });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
-      setSession(s);
-      loadEntitlement(s);
+    const apply = (s: Session | null) => { setSession(s); loadEntitlement(s); };
+    // The stored sign-in shows at once; getSession() then confirms it (offline with an expired token it can take a
+    // while to give up, and it returns nothing even though the sign-in is still stored).
+    let settled = false;
+    storedSession().then((s) => { if (s && !settled) apply(s); });
+    currentSession().then((s) => { settled = true; apply(s); });
+    const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
+      // A null session that is not an explicit sign-out (or a rejected sign-in, which clears the stored copy) is
+      // usually just "offline": keep the stored sign-in.
+      if (s || event === 'SIGNED_OUT') apply(s);
+      else currentSession().then(apply);
     });
     // Subscriptions are bought on the web: re-check access whenever the app comes back to the foreground.
     const app = AppState.addEventListener('change', (st) => {
-      if (st === 'active') supabase!.auth.getSession().then(({ data }) => loadEntitlement(data.session));
+      if (st === 'active') { supabase!.auth.startAutoRefresh(); currentSession().then((s) => loadEntitlement(s)); }
+      else supabase!.auth.stopAutoRefresh();
+    });
+    // ...and as soon as the connection comes back (refreshes the token and the access check).
+    const net = Network.addNetworkStateListener((n) => {
+      if (n.isConnected !== false && n.isInternetReachable !== false) {
+        supabase!.auth.getSession().then(({ data }) => { if (data.session) setSession((prev) => (prev?.access_token === data.session!.access_token ? prev : data.session)); });
+        currentSession().then((s) => loadEntitlement(s));
+      }
     });
     return () => {
       sub.subscription.unsubscribe();
       app.remove();
+      net.remove();
     };
-  }, [loadEntitlement]);
+  }, [loadEntitlement, currentSession]);
 
   const value = useMemo<Ctx>(
     () => ({
@@ -102,7 +132,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return data.session ? null : 'Check your email to confirm your account, then sign in.';
       },
       signOut: async () => {
-        await supabase?.auth.signOut();
+        // Offline the server call can fail: still sign out on this device.
+        const { error } = (await supabase?.auth.signOut()) ?? { error: null };
+        if (error) await supabase?.auth.signOut({ scope: 'local' });
       },
       requestReset: async (email) => {
         if (!supabase) return 'Sign-in is not set up in this build.';
@@ -120,11 +152,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return error ? friendly(error.message) : null;
       },
       refresh: async () => {
-        const { data } = (await supabase?.auth.getSession()) ?? { data: { session: null } };
-        await loadEntitlement(data.session);
+        await loadEntitlement(await currentSession());
       },
     }),
-    [session, entitlement, accessReady, loadEntitlement],
+    [session, entitlement, accessReady, loadEntitlement, currentSession],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
