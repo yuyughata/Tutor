@@ -3,9 +3,15 @@ import type { Art, Category, Story, StoryPage, StoryWord } from '../types';
 // Sample catalogue that works fully offline: illustrations are drawn from `art`, not downloaded.
 export const categories: Category[] = [
   { slug: 'adventure', name: 'Adventure', icon: 'compass' },
-  { slug: 'animals', name: 'Animals', icon: 'paw' },
-  { slug: 'bedtime', name: 'Bedtime', icon: 'moon' },
-  { slug: 'fantasy', name: 'Fantasy', icon: 'sparkles' },
+  { slug: 'family-friendship', name: 'Family & Friendship', icon: 'people' },
+  { slug: 'character-growth', name: 'Character & Growth', icon: 'trending-up' },
+  { slug: 'nature', name: 'Nature', icon: 'leaf' },
+  { slug: 'emotional', name: 'Emotional', icon: 'heart' },
+  { slug: 'culture-history', name: 'Culture & History', icon: 'earth' },
+  { slug: 'faith', name: 'Faith', icon: 'star' },
+  { slug: 'investigation', name: 'Investigation', icon: 'search' },
+  { slug: 'health-wellbeing', name: 'Health & Wellbeing', icon: 'fitness' },
+  { slug: 'sports', name: 'Sports', icon: 'football' },
 ];
 
 const day = 86_400_000;
@@ -24,19 +30,19 @@ type Seed = Omit<Story, 'coverUrl' | 'author' | 'pageCount'> & { artKey: string 
 const seeds: Seed[] = [
   { id: 'b1', slug: 'the-curious-little-fox', title: 'The Curious Little Fox', artKey: 'fox',
     synopsis: 'A little fox follows a trail of glowing berries deep into the forest.',
-    level: 'sunrise', isFree: true, readingMinutes: 2, publishedAt: ago(2), categories: ['animals', 'adventure'], reads30d: 41 },
+    level: 'sunrise', isFree: true, readingMinutes: 2, publishedAt: ago(2), categories: ['nature', 'adventure'], reads30d: 41 },
   { id: 'b2', slug: 'luna-and-the-firefly', title: 'Luna and the Firefly', artKey: 'firefly',
     synopsis: 'Luna follows a tiny light through the garden and learns where fireflies go at dawn.',
-    level: 'spark', isFree: true, readingMinutes: 4, publishedAt: ago(9), categories: ['bedtime', 'fantasy'], reads30d: 87 },
+    level: 'spark', isFree: true, readingMinutes: 4, publishedAt: ago(9), categories: ['nature', 'adventure'], reads30d: 87 },
   { id: 'b3', slug: 'the-child-and-the-snow-leopard', title: 'The Child and the Snow Leopard', artKey: 'leopard',
     synopsis: 'A brave journey across frozen mountains to discover courage and friendship.',
-    level: 'seeker', isFree: false, readingMinutes: 6, publishedAt: ago(20), categories: ['adventure', 'animals', 'fantasy'], reads30d: 64, hasChapters: true },
+    level: 'seeker', isFree: false, readingMinutes: 6, publishedAt: ago(20), categories: ['adventure', 'nature'], reads30d: 64, hasChapters: true },
   { id: 'b4', slug: 'bedtime-for-bear', title: 'Bedtime for Bear', artKey: 'bear',
     synopsis: 'Bear has counted every star twice. Why is sleep so hard to find tonight?',
-    level: 'sunrise', isFree: true, readingMinutes: 2, publishedAt: ago(1), categories: ['bedtime', 'animals'], reads30d: 52 },
+    level: 'sunrise', isFree: true, readingMinutes: 2, publishedAt: ago(1), categories: ['health-wellbeing', 'nature'], reads30d: 52 },
   { id: 'b5', slug: 'the-dragon-who-hated-fire', title: 'The Dragon Who Hated Fire', artKey: 'dragon',
     synopsis: 'Ember would rather bake cakes than burn castles. Can a gentle dragon change a kingdom?',
-    level: 'spark', isFree: false, readingMinutes: 5, publishedAt: ago(5), categories: ['fantasy', 'adventure'], reads30d: 73 },
+    level: 'spark', isFree: false, readingMinutes: 5, publishedAt: ago(5), categories: ['character-growth', 'adventure'], reads30d: 73 },
   { id: 'b6', slug: 'captain-pip-and-the-paper-boat', title: 'Captain Pip and the Paper Boat', artKey: 'boat',
     synopsis: 'One paper boat, one big puddle, and an ocean of imagination.',
     level: 'spark', isFree: false, readingMinutes: 4, publishedAt: ago(14), categories: ['adventure'], reads30d: 38 },

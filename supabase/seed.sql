@@ -6,9 +6,15 @@ insert into authors (id, name, bio) values
 
 insert into categories (slug, name, sort_order) values
   ('adventure', 'Adventure', 1),
-  ('animals', 'Animals', 2),
-  ('bedtime', 'Bedtime', 3),
-  ('fantasy', 'Fantasy', 4);
+  ('family-friendship', 'Family & Friendship', 2),
+  ('character-growth', 'Character & Growth', 3),
+  ('nature', 'Nature', 4),
+  ('emotional', 'Emotional', 5),
+  ('culture-history', 'Culture & History', 6),
+  ('faith', 'Faith', 7),
+  ('investigation', 'Investigation', 8),
+  ('health-wellbeing', 'Health & Wellbeing', 9),
+  ('sports', 'Sports', 10);
 
 insert into stories (id, slug, title, synopsis, cover_url, author_id, reading_level, status, is_free, page_count, reading_minutes, published_at) values
   ('00000000-0000-0000-0000-0000000000b1', 'the-curious-little-fox', 'The Curious Little Fox',
@@ -34,9 +40,9 @@ insert into story_pages (story_id, position, image_url, text) values
 
 insert into story_categories (story_id, category_id)
 select s.id, c.id from stories s, categories c where
-  (s.slug = 'the-curious-little-fox' and c.slug in ('animals', 'adventure')) or
-  (s.slug = 'luna-and-the-firefly' and c.slug in ('bedtime', 'fantasy')) or
-  (s.slug = 'the-child-and-the-snow-leopard' and c.slug in ('adventure', 'animals', 'fantasy'));
+  (s.slug = 'the-curious-little-fox' and c.slug in ('nature', 'adventure')) or
+  (s.slug = 'luna-and-the-firefly' and c.slug in ('nature', 'adventure')) or
+  (s.slug = 'the-child-and-the-snow-leopard' and c.slug in ('adventure', 'nature'));
 
 insert into featured_slots (type, story_id, starts_at, ends_at) values
   ('week',  '00000000-0000-0000-0000-0000000000b2', date_trunc('week', now()),  date_trunc('week', now()) + interval '7 days'),

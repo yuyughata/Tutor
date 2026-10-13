@@ -50,7 +50,7 @@ const fontCss = Object.keys(fontFile).map((w) => `@font-face{font-family:'Nunito
     await nav('Stories').click(); await page.getByRole('link', { name: 'New story' }).first().click(); await page.getByRole('heading', { name: 'New story' }).waitFor();
     await page.locator('input[maxlength="80"]').fill('The Brave Little Turtle');
     await page.locator('textarea[maxlength="400"]').fill('A turtle, a very tall hill and a view that changes everything.');
-    await page.getByRole('button', { name: 'Animals', exact: true }).click(); await page.getByRole('button', { name: 'Adventure', exact: true }).click();
+    await page.getByRole('button', { name: 'Nature', exact: true }).click(); await page.getByRole('button', { name: 'Adventure', exact: true }).click();
     await page.locator('.cover-drop input[type=file]').setInputFiles(cover);
     await page.locator('input[type=file][multiple]').setInputFiles(pagesArt);
     await page.waitForFunction(() => document.querySelectorAll('.page-card .page-img').length === 3);

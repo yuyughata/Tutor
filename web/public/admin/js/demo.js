@@ -17,9 +17,9 @@ const delay = (v) => new Promise((r) => setTimeout(() => r(structuredClone(v)), 
 export function createDemoApi() {
   let signedIn = false;
   const cats = [
-    { id: 'c1', slug: 'adventure', name: 'Adventure', sort_order: 1 }, { id: 'c2', slug: 'animals', name: 'Animals', sort_order: 2 },
-    { id: 'c3', slug: 'bedtime', name: 'Bedtime', sort_order: 3 }, { id: 'c4', slug: 'fantasy', name: 'Fantasy', sort_order: 4 },
-  ];
+    ['adventure', 'Adventure'], ['family-friendship', 'Family & Friendship'], ['character-growth', 'Character & Growth'], ['nature', 'Nature'], ['emotional', 'Emotional'],
+    ['culture-history', 'Culture & History'], ['faith', 'Faith'], ['investigation', 'Investigation'], ['health-wellbeing', 'Health & Wellbeing'], ['sports', 'Sports'],
+  ].map(([slug, name], i) => ({ id: 'c' + (i + 1), slug, name, sort_order: i + 1 }));
   const authors = [{ id: 'a1', name: 'CUSTAR' }];
   const mk = (id, title, band, free, status, pub, key, cover, categoryIds, texts) => ({
     id, slug: title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-$/, ''), title, synopsis: `The story of ${title}.`, cover_url: cover,
@@ -27,11 +27,11 @@ export function createDemoApi() {
     categoryIds, pages: texts.map((t, i) => ({ id: uid(), position: i + 1, image_url: art[key], text: t })),
   });
   const stories = [
-    mk('s1', 'The Curious Little Fox', 'sunrise', true, 'published', iso(-12), 'fox', art.fox, ['c2', 'c1'], ['Fox woke up and sniffed the air.', 'A trail of glowing berries led past the old oak tree.', 'All his friends were waiting. Surprise!']),
-    mk('s2', 'Luna and the Firefly', 'spark', true, 'published', iso(-30), 'moon', art.moon, ['c3', 'c4'], ['Late one evening, Luna sat by her window.', 'A soft sparkle danced across her room.']),
-    mk('s3', 'The Child and the Snow Leopard', 'seeker', false, 'published', iso(-45), 'leopard', art.leopard, ['c1', 'c2'], ['The mountain wind howled.', 'Two pale eyes watched from the ridge.', 'Side by side, they walked on.']),
-    mk('s4', 'The Dragon Who Hated Fire', 'spark', false, 'scheduled', iso(6), 'dragon', art.dragon, ['c4'], ['Ember was a dragon with a secret.', 'She baked the fluffiest cakes.']),
-    mk('s5', 'Bedtime for Bear', 'sunrise', true, 'draft', null, 'bear', art.bear, ['c3'], ['Bear yawned a great big yawn.']),
+    mk('s1', 'The Curious Little Fox', 'sunrise', true, 'published', iso(-12), 'fox', art.fox, ['c4', 'c1'], ['Fox woke up and sniffed the air.', 'A trail of glowing berries led past the old oak tree.', 'All his friends were waiting. Surprise!']),
+    mk('s2', 'Luna and the Firefly', 'spark', true, 'published', iso(-30), 'moon', art.moon, ['c4', 'c1'], ['Late one evening, Luna sat by her window.', 'A soft sparkle danced across her room.']),
+    mk('s3', 'The Child and the Snow Leopard', 'seeker', false, 'published', iso(-45), 'leopard', art.leopard, ['c1', 'c4'], ['The mountain wind howled.', 'Two pale eyes watched from the ridge.', 'Side by side, they walked on.']),
+    mk('s4', 'The Dragon Who Hated Fire', 'spark', false, 'scheduled', iso(6), 'dragon', art.dragon, ['c3', 'c1'], ['Ember was a dragon with a secret.', 'She baked the fluffiest cakes.']),
+    mk('s5', 'Bedtime for Bear', 'sunrise', true, 'draft', null, 'bear', art.bear, ['c9', 'c4'], ['Bear yawned a great big yawn.']),
     mk('s6', 'Captain Pip and the Paper Boat', 'spark', false, 'draft', null, 'boat', '', [], []),
   ];
   const leopard = stories.find((s) => s.id === 's3');

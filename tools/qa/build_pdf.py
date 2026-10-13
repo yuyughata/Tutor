@@ -322,7 +322,7 @@ found = '''<div class="head"><div class="kick">FOUNDATIONS</div><h2>Brand, type 
   <div class="col">
     <h3>Components (app)</h3>
     <div class="comp"><span class="btn p">Start reading</span><span class="btn s">Add a reader</span><span class="btn g">Cancel</span><span class="btn d">Delete</span></div>
-    <div class="comp"><span class="chip on">All</span><span class="chip">Adventure</span><span class="chip">Animals</span><span class="chip">Bedtime</span></div>
+    <div class="comp"><span class="chip on">All</span><span class="chip">Adventure</span><span class="chip">Family &amp; Friendship</span><span class="chip">Nature</span></div>
     <div class="comp"><span class="pill live">Live</span><span class="pill sched">Scheduled</span><span class="pill draft">Draft</span><span class="pill free">FREE</span><span class="pill prem">Premium</span></div>
     <div class="comp"><span class="seg"><b>Sunrise</b><b class="on">Spark</b><b>Seeker</b></span></div>
     <h3>Design principles</h3>

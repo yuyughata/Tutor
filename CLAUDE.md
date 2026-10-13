@@ -78,6 +78,9 @@ One optional **MP3 song per story** (MP3 only, no YouTube). It **unlocks on The 
 - **Home screen layout:** Title of the Week, Title of the Month, Popular right now (first 10), New stories (first 10, `SHELF_LIMIT` in `lib/story.ts`), then **Browse all stories**: the category chips and one row per category with EVERY story in it, old and new, newest first (`browseRows()`, a story in two categories shows in both; stories with no category go in a "More stories" row). The chips filter only those rows. Test: `tools/qa/home-e2e.cjs`.
 - **Landing page:** the Storybook Bundles section and every "Shop ..." button (hero, level cards, final CTA, sticky bar), the Storybooks header/footer links and the bundles FAQ are switched off (INACTIVE comments in `web/content/*.html`, `SiteHeader.tsx`, `SiteFooter.tsx`).
 
+## Categories (2026-10-13, migration 0012)
+Ten categories, in order: Adventure, Family & Friendship, Character & Growth, Nature, Emotional, Culture & History, Faith, Investigation, Health & Wellbeing, Sports (slugs `adventure`, `family-friendship`, `character-growth`, `nature`, `emotional`, `culture-history`, `faith`, `investigation`, `health-wellbeing`, `sports`). The old Animals / Bedtime / Fantasy were retired and the demo stories remapped. Chip icons (Ionicons) are in `app/src/data/mock.ts`; the live names and order come from the `categories` table (edit there). The QA mock backend keeps its own fixture slugs.
+
 ## Hosting (2026-10-12)
 Landing page at `www.custar.ng/` (single file), Next.js site at `www.custar.ng/Genova/` via `NEXT_PUBLIC_BASE_PATH=/Genova`; see `docs/HANDOFF.md` "Hosting at /Genova" and `docs/Genova_Web_Upload.zip`. Edge functions use `webOrigin()` for CORS; deployed so far: paystack-manage, paystack-checkout. **Not yet redeployed (deploy was declined):** admin-user-support, support-request, send-email, send-reminders.
 
