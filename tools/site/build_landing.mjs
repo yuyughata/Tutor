@@ -22,6 +22,13 @@ const headerSrc = read('components', 'SiteHeader.tsx').split('\n').filter((l) =>
 const nav = [...headerSrc.matchAll(/\{ href: '([^']+)', label: '([^']+)' \}/g)].map((m) => ({ href: m[1], label: m[2] }));
 if (nav.length < 6) throw new Error('could not read NAV_LINKS from SiteHeader.tsx');
 
+// ---- the request forms save to Supabase with the public anon key (same values the website uses: web/lib/config.ts) ----
+const cfgSrc = read('lib', 'config.ts');
+const forms = {
+  url: process.env.SUPABASE_URL ?? cfgSrc.match(/SUPABASE_URL = [^']*'(https:[^']+)'/)[1],
+  key: process.env.SUPABASE_ANON_KEY ?? cfgSrc.match(/'(eyJ[\w.-]+)'/)[1],
+};
+
 // ---- fonts, css ----
 const fontsUrl = read('app', 'layout.tsx').match(/const FONTS = '([^']+)'/)[1];
 const css = read('app', 'design.css');
@@ -140,6 +147,7 @@ ${inlineImages(fix(body))}
 ${inlineImages(fix(footer))}
 
 <script type="application/json" id="catalogData">${fs.readFileSync(path.join(web, 'public', 'catalog.json'), 'utf8').trim().replace(/</g, '\\u003c')}</script>
+<script>window.GENOVA_FORMS=${JSON.stringify(forms)};</script>
 <script>
 ${fs.readFileSync(path.join(web, 'public', 'landing.js'), 'utf8')}
 </script>

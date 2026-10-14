@@ -121,6 +121,12 @@ async function install(context, state, { host = 'mock.supabase.test' } = {}) {
     }
     if (p === '/rest/v1/plans') return send(200, PLANS);
     if (p === '/rest/v1/support_requests' && method === 'GET') return send(200, state.supportRequests || []);
+    if (p === '/rest/v1/rpc/submit_grp_request' || p === '/rest/v1/rpc/submit_title_request') {
+      // landing-page forms: the real functions validate and rate-limit; here one name triggers the friendly error path
+      (state.formRequests ||= []).push({ fn: p.split('/').pop(), body });
+      if (body?.p_full_name === 'Rate Limited') return send(400, { code: 'P0001', details: null, hint: null, message: 'You have already sent a few requests. We will be in touch soon.' });
+      return send(204);
+    }
     if (p === '/rest/v1/rpc/my_access') return send(200, state.access ? [state.access] : []);
     if (p === '/rest/v1/child_profiles' && method === 'GET') return send(200, state.children || []);
     if (p === '/rest/v1/profiles') return send(200, wantsObject ? { id: state.user.id, email: state.user.email, is_admin: !!state.isAdmin } : [{ id: state.user.id, email: state.user.email, is_admin: !!state.isAdmin }]);

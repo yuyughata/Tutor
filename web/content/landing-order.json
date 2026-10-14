@@ -3,6 +3,7 @@
   "sections": [
     "landing-hero.html",
     "landing-grp.html",
+    "landing-testimonials.html",
     "landing-app.html",
     "@plans",
     "landing-faq.html",

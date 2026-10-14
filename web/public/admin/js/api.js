@@ -272,6 +272,24 @@ export function createApi(sb) {
       const { count, error } = await sb.from('support_requests').select('id', { count: 'exact', head: true }).eq('status', 'open');
       if (error) throw friendly(error); return count ?? 0;
     },
+    // ---------- landing-page form requests (saved by the submit_grp_request / submit_title_request functions) ----------
+    /** kind: 'grp' (Reading Program spot) or 'title' (title request). */
+    async listRequests(kind, status) {
+      const t = REQUEST_TABLE[kind];
+      let q = sb.from(t).select(REQUEST_COLUMNS[kind]).order('created_at', { ascending: false }).limit(500);
+      if (status) q = q.eq('status', status);
+      return unwrap(await q);
+    },
+    async updateRequest(kind, id, patch) {
+      const row = {};
+      if (patch.status) row.status = patch.status;
+      if ('admin_note' in patch) row.admin_note = patch.admin_note;
+      return unwrap(await sb.from(REQUEST_TABLE[kind]).update(row).eq('id', id).select(REQUEST_COLUMNS[kind]).single());
+    },
+    async newRequestCounts() {
+      const one = async (t) => { const { count, error } = await sb.from(t).select('id', { count: 'exact', head: true }).eq('status', 'new'); if (error) throw friendly(error); return count ?? 0; };
+      return { grp: await one(REQUEST_TABLE.grp), title: await one(REQUEST_TABLE.title) };
+    },
     // ---------- reader leaderboard and awards ----------
     /** period: 'week' | 'month' | 'all_time'. Different stories finished, Monday-start weeks, Nigerian time. */
     async listLeaderboard(period, limit = 20) { return unwrap(await sb.rpc('admin_leaderboard', { p_period: period, p_limit: limit })); },
@@ -284,6 +302,12 @@ export function createApi(sb) {
   };
 }
 
+const REQUEST_TABLE = { grp: 'grp_requests', title: 'title_requests' };
+const REQUEST_COLUMNS = {
+  grp: 'id, full_name, phone, email, reading_level, mode, comments, status, admin_note, source, created_at, updated_at',
+  title: 'id, full_name, phone, email, storybook_title, reader_level, comments, status, admin_note, source, created_at, updated_at',
+};
+
 export const API_METHODS = [
   'session', 'signIn', 'signOut', 'onAuthChange', 'me', 'stats', 'recentPayments', 'listStories', 'getStory', 'saveStory',
   'setStoryStatus', 'deleteStory', 'uploadCover', 'uploadPageImage', 'pageImageUrl', 'uploadSong', 'songUrl', 'listAuthors', 'listCategories',
@@ -292,4 +316,5 @@ export const API_METHODS = [
   'emailStatus', 'emailSaveSettings', 'emailActivate', 'emailDeactivate', 'emailTest', 'emailPreview', 'emailCount', 'emailSend',
   'listEmailTemplates', 'saveEmailTemplate', 'listEmailLog', 'listSupportRequests', 'updateSupportRequest', 'openSupportCount',
   'listReminderRules', 'saveReminderRule', 'runReminders', 'listReminderLog', 'listLeaderboard', 'giveAward',
+  'listRequests', 'updateRequest', 'newRequestCounts',
 ];

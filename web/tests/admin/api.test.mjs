@@ -226,3 +226,23 @@ test('word hunt words are normalised, de-duplicated and capped on save', async (
   const up = calls.find((c) => c.method === 'POST' && rest(c, 'stories'));
   assert.deepEqual(up.body.puzzle_words, ['LUNA', 'FIREFLY', 'ABC', 'MOON', 'GARDEN', 'WINDOW', 'SPARKLE', 'STAR']);
 });
+
+test('landing-page form requests: read from the right table, update only status and note, count new ones', async () => {
+  const { api, calls } = harness((c) => {
+    if (c.method === 'HEAD') return [200, []];
+    if (c.method === 'GET') return [200, [{ id: 'r1', full_name: 'Amaka', status: 'new' }]];
+    return [200, { id: 'r1', status: 'contacted' }];
+  });
+  await api.listRequests('grp', 'new');
+  const g = calls.find((c) => rest(c, 'grp_requests'));
+  assert.equal(g.query.status, 'eq.new'); assert.match(g.query.select, /reading_level/); assert.match(g.query.select, /mode/);
+  await api.listRequests('title');
+  const t = calls.find((c) => rest(c, 'title_requests'));
+  assert.match(t.query.select, /storybook_title/); assert.equal('status' in t.query, false);
+  await api.updateRequest('title', 'r1', { status: 'contacted', admin_note: 'called', full_name: 'Hacker', email: 'x@y.z' });
+  const up = calls.find((c) => c.method === 'PATCH' && rest(c, 'title_requests'));
+  assert.deepEqual(up.body, { status: 'contacted', admin_note: 'called' }, 'only status and note can be changed');
+  assert.equal(up.query.id, 'eq.r1');
+  const counts = await api.newRequestCounts();
+  assert.deepEqual(Object.keys(counts).sort(), ['grp', 'title']);
+});

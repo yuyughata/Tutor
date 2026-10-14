@@ -1,4 +1,4 @@
-/* Genova landing page behaviour: scroll reveal, the full title catalog dialog and the request forms.
+/* Genova landing page behaviour: scroll reveal, the full title catalog dialog and the request forms (saved in Supabase).
    Plain JavaScript with no dependencies. The website calls window.genovaLanding.init() whenever the landing page is shown;
    the single-file version of the page calls it once. init() returns a function that undoes everything. */
 (function () {
@@ -116,20 +116,40 @@
       undo.push(function () { modal.classList.remove('open'); document.body.style.overflow = ''; });
     }
 
-    /* ----- request forms (Formspree, no page reload) ----- */
-    document.querySelectorAll('.js-formspree-form').forEach(function (form) {
+    /* ----- request forms: saved in the Genova database (Supabase), no page reload -----
+       The two forms call the submit_grp_request / submit_title_request functions with the public anon key
+       (window.GENOVA_FORMS = { url, key }, set by the website or inlined in the single-file page). */
+    var val = function (form, name) { var el = form.elements[name]; return el ? String(el.value || '').trim() : ''; };
+    var REQUESTS = {
+      grp: function (f) { return { fn: 'submit_grp_request', body: { p_full_name: val(f, 'full_name'), p_phone: val(f, 'phone'), p_email: val(f, 'email'), p_reading_level: val(f, 'reading_level'), p_mode: val(f, 'mode'), p_comments: val(f, 'comments') || null } }; },
+      title: function (f) { return { fn: 'submit_title_request', body: { p_full_name: val(f, 'full_name'), p_phone: val(f, 'phone'), p_email: val(f, 'email'), p_reader_level: val(f, 'reader_level'), p_storybook_title: val(f, 'storybook_title') || null, p_comments: val(f, 'comments') || null } }; }
+    };
+    document.querySelectorAll('.js-request-form').forEach(function (form) {
       on(form, 'submit', function (e) {
         e.preventDefault();
         var statusEl = form.querySelector('.form-status');
         var btn = form.querySelector('button[type="submit"]');
         var label = btn ? btn.textContent : '';
         var say = function (msg, color) { if (statusEl) { statusEl.textContent = msg; statusEl.style.color = color; statusEl.style.display = 'block'; } };
+        var cfg = window.GENOVA_FORMS || {};
+        var make = REQUESTS[form.getAttribute('data-request')];
+        if (!make || !cfg.url || !cfg.key) { say('Sorry, the form is not available right now. Please message us on WhatsApp instead.', '#B3261E'); return; }
+        var req = make(form);
+        req.body.p_source = (location.hostname || 'page') + location.pathname;
+        req.body.p_website = val(form, 'website'); // hidden trap field: stays empty for people
         if (btn) { btn.disabled = true; btn.textContent = 'Sending...'; }
         if (statusEl) statusEl.style.display = 'none';
-        fetch(form.action, { method: 'POST', body: new FormData(form), headers: { Accept: 'application/json' } })
+        fetch(cfg.url.replace(/\/$/, '') + '/rest/v1/rpc/' + req.fn, {
+          method: 'POST',
+          headers: { apikey: cfg.key, Authorization: 'Bearer ' + cfg.key, 'Content-Type': 'application/json' },
+          body: JSON.stringify(req.body)
+        })
           .then(function (r) {
             if (r.ok) { say(SUCCESS[form.id] || 'Thank you! Your request has been sent.', 'var(--teal-text)'); form.reset(); return; }
-            return r.json().then(function (d) { say(d && d.errors ? d.errors.map(function (x) { return x.message; }).join(', ') : 'Something went wrong. Please try again.', '#B3261E'); });
+            return r.json().catch(function () { return {}; }).then(function (d) {
+              // The database's own messages are written for people ("Please enter a valid phone number."); anything else is generic.
+              say(r.status === 400 && d && d.message && /^[A-Z][^{}]{5,160}[.]$/.test(d.message) ? d.message : 'Something went wrong. Please try again, or message us on WhatsApp.', '#B3261E');
+            });
           })
           .catch(function () { say('Something went wrong. Please check your connection and try again.', '#B3261E'); })
           .then(function () { if (btn) { btn.disabled = false; btn.textContent = label; } });

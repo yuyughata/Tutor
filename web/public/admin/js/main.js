@@ -9,6 +9,7 @@ import * as subscribers from './views/subscribers.js';
 import * as settings from './views/settings.js';
 import * as email from './views/email.js';
 import * as support from './views/support.js';
+import * as requests from './views/requests.js';
 import * as readers from './views/readers.js';
 
 const app = document.getElementById('app');
@@ -23,6 +24,7 @@ const NAV = [
   { path: 'subscribers', label: 'Subscribers', icon: 'users', view: subscribers },
   { path: 'readers', label: 'Readers', icon: 'trophy', view: readers },
   { path: 'email', label: 'Email', icon: 'mail', view: email },
+  { path: 'requests', label: 'Requests', icon: 'inbox', view: requests },
   { path: 'support', label: 'Support', icon: 'help', view: support },
   { path: 'settings', label: 'Settings', icon: 'settings', view: settings },
 ];

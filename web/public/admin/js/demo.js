@@ -70,6 +70,15 @@ export function createDemoApi() {
   };
   const hasAccess = (p) => { const u = accessUntil(p); return u === null || (u !== undefined && new Date(u) > new Date()); };
   let legal = { slug: 'privacy-policy', title: 'Privacy Policy', version: 1, updated_at: iso(-3), body: 'SAMPLE TEXT: placeholder wording.\n\n# Our promise to families\nGenova is a children\'s storybook app made by CUSTAR. We do not show ads and we never sell personal information.\n\n# What we collect\n- Parent email address\n- A child\'s first name or nickname, avatar and reading level\n- Reading activity such as stories started and finished' };
+  const formRequests = {
+    grp: [
+      { id: 'g1', full_name: 'Amaka Johnson', phone: '08012345678', email: 'amaka@example.com', reading_level: 'Reads with help', mode: 'Online', comments: 'Weekday evenings are best for us.', status: 'new', admin_note: null, source: 'www.custar.ng/', created_at: iso(-0.2), updated_at: iso(-0.2) },
+      { id: 'g2', full_name: 'Tunde Bello', phone: '+234 803 555 0101', email: 'tunde@example.com', reading_level: "Can't read yet", mode: 'On site', comments: null, status: 'contacted', admin_note: 'Called on Monday, visiting Saturday.', source: 'www.custar.ng/Genova/', created_at: iso(-2), updated_at: iso(-1) },
+    ],
+    title: [
+      { id: 't1', full_name: 'Chidi Okafor', phone: '08098765432', email: 'chidi@example.com', storybook_title: 'Amazing Adventures / Combo Pack P1', reader_level: 'Genova Spark — Emergent Reader', comments: 'Do you have it in hardcover?', status: 'new', admin_note: null, source: 'www.custar.ng/', created_at: iso(-0.5), updated_at: iso(-0.5) },
+    ],
+  };
   const supportLog = [{ id: 1, action: 'send_reset', target_email: 'amara@example.com', created_at: iso(-1) }];
   let admins = [{ id: 'me', email: 'you@custar.example' }];
   let mail = { configured: false, key_hint: null, from_name: 'Genova', from_email: null, reply_to: null, notify_email: null, enabled: false, verified_at: null };
@@ -237,6 +246,11 @@ export function createDemoApi() {
       const r = requests.find((x) => x.id === id); Object.assign(r, patch, patch.status === 'resolved' ? { resolved_at: new Date().toISOString() } : patch.status === 'open' ? { resolved_at: null } : {}); return delay({ ...r });
     },
     async openSupportCount() { return delay(requests.filter((r) => r.status === 'open').length); },
+    async listRequests(kind, status) { return delay(formRequests[kind].filter((r) => !status || r.status === status).map((r) => ({ ...r }))); },
+    async updateRequest(kind, id, patch) {
+      const r = formRequests[kind].find((x) => x.id === id); if (patch.status) r.status = patch.status; if ('admin_note' in patch) r.admin_note = patch.admin_note; r.updated_at = new Date().toISOString(); return delay({ ...r });
+    },
+    async newRequestCounts() { return delay({ grp: formRequests.grp.filter((r) => r.status === 'new').length, title: formRequests.title.filter((r) => r.status === 'new').length }); },
     async listLeaderboard(period, limit = 20) {
       const label = period === 'week' ? weekLabel : period === 'month' ? monthLabel : 'all-time';
       const key = period === 'all_time' ? 'all_time' : period;
