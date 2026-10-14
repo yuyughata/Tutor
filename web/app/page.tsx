@@ -11,19 +11,24 @@ const read = (n: string) => fs.readFileSync(path.join(process.cwd(), 'content', 
 const base = (html: string) => (BASE_PATH ? html.replace(/(\s(?:src|href)=")\/(?!\/)/g, `$1${BASE_PATH}/`) : html);
 const Html = ({ file }: { file: string }) => <div style={{ display: 'contents' }} dangerouslySetInnerHTML={{ __html: base(read(file)) }} />;
 
+// Top-to-bottom order of the sections is in content/landing-order.json ('@plans' = the live plans block).
+const SECTIONS: string[] = JSON.parse(read('landing-order.json')).sections;
+
 export default function Home() {
   return (
     <div className="lp" id="top">
-      <Html file="landing-a.html" />
-      <Html file="landing-app.html" />
-      <section id="plans" className="plans-section" aria-label="Plans">
-        <div className="wrap">
-          <Html file="landing-plans-head.html" />
-          <PlansPreview />
-        </div>
-      </section>
-      <Html file="landing-faq.html" />
-      <Html file="landing-b.html" />
+      {SECTIONS.map((file) =>
+        file === '@plans' ? (
+          <section key={file} id="plans" className="plans-section" aria-label="Plans">
+            <div className="wrap">
+              <Html file="landing-plans-head.html" />
+              <PlansPreview />
+            </div>
+          </section>
+        ) : (
+          <Html key={file} file={file} />
+        ),
+      )}
       <Html file="landing-modal.html" />
       <Html file="landing-float.html" />
       <LandingEnhance />

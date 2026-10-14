@@ -8,14 +8,15 @@ import { PremiumBadge } from './PremiumBadge';
 
 // Section links on the landing page (they work from every page), then the app's own pages.
 export const NAV_LINKS = [
+  // Same order as the sections on the landing page (see content/landing-order.json).
+  { href: '/#grp', label: 'Reading Program' },
+  { href: '/#app', label: 'Genova App' },
+  { href: '/plans/', label: 'Plans' },
   { href: '/#about', label: 'About' },
   { href: '/#pillars', label: '7 Pillars' },
   { href: '/#levels', label: 'Reading Levels' },
-  { href: '/#app', label: 'Genova App' },
   // Storybooks link switched off while the storybook bundles section is hidden: { href: '/#products', label: 'Storybooks' },
   // Title Catalog link switched off while the catalog section is hidden: { href: '/#catalog', label: 'Title Catalog' },
-  { href: '/#grp', label: 'Reading Program' },
-  { href: '/plans/', label: 'Plans' },
 ];
 
 export function SiteHeader() {

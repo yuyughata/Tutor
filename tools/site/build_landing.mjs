@@ -108,8 +108,10 @@ const footer = `
   </div>
 </footer>`;
 
+// Section order lives in web/content/landing-order.json (shared with the website's home page).
+const order = JSON.parse(frag('landing-order.json')).sections;
 const body = [
-  frag('landing-a.html'), frag('landing-app.html'), plans, frag('landing-faq.html'), frag('landing-b.html'), frag('landing-modal.html'), frag('landing-float.html'),
+  ...order.map((n) => (n === '@plans' ? plans : frag(n))), frag('landing-modal.html'), frag('landing-float.html'),
 ].join('\n');
 
 const html = `<!DOCTYPE html>

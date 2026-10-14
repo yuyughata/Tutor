@@ -1,0 +1,69 @@
+  <!-- GRP -->
+  <section id="grp" class="bg-cream2">
+    <div class="wrap">
+      <div class="grp-panel reveal">
+        <div>
+          <span class="eyebrow"><span class="spark"><i></i><i></i><i></i><i></i><i></i></span> Genova Reading Program</span>
+          <h2 class="display">From struggling reader to confident reader — in 4 to 8 weeks.</h2>
+          <p class="lead">GRP is our after-school reading program. Your child joins after school hours, on-site or online, and follows a guided path built around Genova storybooks and reading tools, with you kept in the loop every step of the way.</p>
+          <div class="grp-modes">
+            <span class="mode-chip">🏫 On-Site Sessions</span>
+            <span class="mode-chip">💻 Online Sessions</span>
+            <span class="mode-chip">👪 Parent Guidance Included</span>
+          </div>
+          <a href="#grp-form" class="btn btn-gold">Request a GRP Spot</a>
+        </div>
+        <div class="grp-media">
+          <img src="/img/grp-program.jpg" width="960" height="720" loading="lazy" alt="Children reading and pointing at pictures in a book together">
+          <div class="grp-weeks"><b>4–8</b><span>weeks to confident</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GRP FORM -->
+  <section id="grp-form">
+    <div class="wrap form-section">
+      <div class="form-card reveal" style="order:2;">
+        <h3>GRP Request Form</h3>
+        <p class="form-sub">Tell us about your child's current reading level and preferred mode.</p>
+        <form id="grpForm" class="js-formspree-form" action="https://formspree.io/f/mvkpjddd" method="POST">
+          <input type="hidden" name="_subject" value="New GRP Request — Custar Genova">
+          <div class="field"><label for="grpForm-full_name">Full Name</label><input id="grpForm-full_name" type="text" name="full_name" placeholder="Parent / Guardian name" required></div>
+          <div class="field-row">
+            <div class="field"><label for="grpForm-phone">Phone Number</label><input id="grpForm-phone" type="tel" name="phone" placeholder="080..." required></div>
+            <div class="field"><label for="grpForm-email">Email</label><input id="grpForm-email" type="email" name="email" placeholder="you@email.com" required></div>
+          </div>
+          <div class="field">
+            <label for="grpForm-reading_level">Reading Level</label><select id="grpForm-reading_level" name="reading_level" required>
+              <option value="">Select current level</option>
+              <option>Can't read yet</option>
+              <option>Beginner</option>
+              <option>Reads with help</option>
+              <option>Reads independently</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="grpForm-mode">Mode</label><select id="grpForm-mode" name="mode" required>
+              <option value="">Select mode</option>
+              <option>On site</option>
+              <option>Online</option>
+            </select>
+          </div>
+          <div class="field"><label for="grpForm-comments">Comments</label><textarea id="grpForm-comments" name="comments" placeholder="Preferred days, current school, any concerns..."></textarea></div>
+          <p class="form-privacy">We only use these details to reply to you. Read our <a href="/privacy/">privacy policy</a>.</p>
+          <button type="submit" class="btn btn-teal btn-block">Submit GRP Request</button>
+          <p class="form-status" role="status" aria-live="polite" style="display:none;margin-top:10px;font-size:.92rem;"></p>
+        </form>
+      </div>
+      <div class="reveal d1" style="order:1;">
+        <span class="eyebrow"><span class="spark"><i></i><i></i><i></i><i></i><i></i></span> Join the Program</span>
+        <h2 class="display" style="font-size:2.4rem;margin-bottom:16px;">Reading confidence, built session by session.</h2>
+        <p style="color:var(--ink-soft);font-size:1.04rem;line-height:1.72;">Every child starts with a simple reading check, then follows a path tailored to them through the Genova levels, with honest feedback for you all along the way. No child left guessing. No parent left in the dark.</p>
+        <div class="stat-row" style="margin-top:26px;">
+          <div class="stat"><b>1-on-1</b><span>Personalised path</span></div>
+          <div class="stat"><b>Weekly</b><span>Parent updates</span></div>
+        </div>
+      </div>
+    </div>
+  </section>

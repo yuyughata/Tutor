@@ -1,0 +1,14 @@
+{
+  "_note": "Order of the landing page sections, top to bottom (used by web/app/page.tsx and tools/site/build_landing.mjs). '@plans' is the live plans block. Move a line to move a section; rebuild docs/Genova_Landing_Page.html afterwards.",
+  "sections": [
+    "landing-hero.html",
+    "landing-grp.html",
+    "landing-app.html",
+    "@plans",
+    "landing-faq.html",
+    "landing-about.html",
+    "landing-pillars.html",
+    "landing-levels.html",
+    "landing-b.html"
+  ]
+}
