@@ -1,0 +1,18 @@
+tunnel: d660f2f2-9e5f-4046-a870-b34bda78956b
+
+ingress:
+  - hostname: custar.ng
+    service: http://web:80
+    originRequest:
+      connectTimeout: 30s
+      tcpKeepAlive: 30s
+      noTLSVerify: false
+
+  - hostname: www.custar.ng
+    service: http://web:80
+    originRequest:
+      connectTimeout: 30s
+      tcpKeepAlive: 30s
+
+  # Catch-all (required): reject everything else
+  - service: http_status:404

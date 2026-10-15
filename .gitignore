@@ -5,3 +5,7 @@ app/play-service-account.json
 *.p8
 *.jks
 *.keystore
+.env
+.env.*
+deploy/.env
+supabase/.temp/

@@ -150,8 +150,20 @@ export async function getPages(story: Story, opts: { fresh?: boolean } = {}): Pr
   const paths = rows.filter((p) => !/^https?:/.test(p.image_url)).map((p) => p.image_url as string);
   const signed = new Map<string, string>();
   if (paths.length) {
-    const { data: urls } = await supabase.storage.from('pages').createSignedUrls(paths, 3600);
-    for (const u of urls ?? []) if (u.path && u.signedUrl) signed.set(u.path, u.signedUrl);
+    if (process.env.EXPO_PUBLIC_STORAGE_DRIVER === 'r2') {
+      try {
+        const { data } = await supabase.functions.invoke('r2-storage', {
+          body: { action: 'get_signed_urls', bucket: 'pages', paths },
+        });
+        for (const u of data?.urls ?? []) if (u.path && u.signedUrl) signed.set(u.path, u.signedUrl);
+      } catch {
+        /* fallback to supabase */
+      }
+    }
+    if (signed.size === 0) {
+      const { data: urls } = await supabase.storage.from('pages').createSignedUrls(paths, 3600);
+      for (const u of urls ?? []) if (u.path && u.signedUrl) signed.set(u.path, u.signedUrl);
+    }
   }
   return rows.map((p) => ({
     position: p.position, imageUrl: signed.get(p.image_url) ?? p.image_url, text: p.text,
@@ -211,6 +223,16 @@ export async function getSong(story: Story, opts: { fresh?: boolean } = {}): Pro
   if (/^(https?:|data:|blob:)/.test(song.path)) return { title: song.title, url: song.path, seconds: song.seconds }; // sample data
   if (!supabase) return null;
   try {
+    if (process.env.EXPO_PUBLIC_STORAGE_DRIVER === 'r2') {
+      try {
+        const { data } = await supabase.functions.invoke('r2-storage', {
+          body: { action: 'get_signed_url', bucket: 'songs', path: song.path },
+        });
+        if (data?.signedUrl) return { title: song.title, url: data.signedUrl, seconds: song.seconds };
+      } catch {
+        /* fallback to supabase */
+      }
+    }
     const { data, error } = await supabase.storage.from('songs').createSignedUrl(song.path, 3600);
     if (error || !data?.signedUrl) return null;
     return { title: song.title, url: data.signedUrl, seconds: song.seconds };

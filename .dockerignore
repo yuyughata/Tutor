@@ -1,0 +1,11 @@
+node_modules
+.next
+.git
+.github
+out
+app
+tools
+supabase
+docs
+*.log
+.DS_Store

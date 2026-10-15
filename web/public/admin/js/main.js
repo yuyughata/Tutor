@@ -47,7 +47,7 @@ async function createBackend() {
     message("Couldn't load Supabase", 'The Supabase library failed to load. Check your connection and refresh.');
     return null;
   }
-  return createApi(window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey));
+  return createApi(window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey), { storageDriver: cfg.storageDriver });
 }
 
 const api = await createBackend();
