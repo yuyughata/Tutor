@@ -22,8 +22,10 @@ const FONT = "'Nunito','Avenir Next',-apple-system,'Segoe UI',Helvetica,Arial,sa
 const INK = '#232323', SOFT = '#4a4650', MUTED = '#8a8490', LINE = '#ebe7e2', PAPER = '#f6f4f0', AMBER = '#ffbe00';
 const P = `margin:0 0 18px;font-size:16px;line-height:1.7;color:${SOFT}`;
 
-/** Wordmark: "Genova" with an amber o. */
-const wordmark = (size: number) => `<span class="ink" style="font-size:${size}px;font-weight:900;letter-spacing:-0.04em;color:${INK}">Gen<span style="color:${AMBER}">o</span>va</span>`;
+/** The Genova logo (the same image as the admin dashboard), served from the website. Email clients need an absolute https URL. */
+export const LOGO_PATH = '/admin/img/genova-logo.png';
+const DEFAULT_SITE = 'https://www.custar.ng/Genova';
+const logo = (site: string, override?: string) => `<img src="${esc(override || `${site || DEFAULT_SITE}${LOGO_PATH}`)}" width="168" alt="Genova" style="display:block;margin:0 auto;border:0;outline:none;text-decoration:none;width:168px;max-width:60%;height:auto;font-size:26px;font-weight:900;color:${INK}">`;
 
 /**
  * Turn the plain template body into a branded, minimal HTML email plus a plain-text alternative.
@@ -105,7 +107,7 @@ export function renderEmail(subject: string, body: string, vars: Vars, opts: { e
 <body class="page" style="margin:0;padding:0;background:${PAPER};font-family:${FONT};-webkit-font-smoothing:antialiased">
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent">${esc(pre)}</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="page" style="background:${PAPER}"><tr><td align="center" style="padding:36px 14px 40px">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px"><tr><td align="center" style="padding:0 0 22px">${wordmark(26)}</td></tr></table>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px"><tr><td align="center" style="padding:0 0 22px">${logo(site, vars.logo_url ? String(vars.logo_url) : undefined)}</td></tr></table>
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="card" style="max-width:560px;background:#ffffff;border:1px solid ${LINE};border-radius:18px;overflow:hidden">
     <tr><td style="height:4px;line-height:4px;font-size:0;background:linear-gradient(90deg,#ab46d2 0%,#10a19c 55%,${AMBER} 100%)">&nbsp;</td></tr>
     <tr><td class="pad" style="padding:40px 42px 22px">${eyebrow}${blocks.join('')}</td></tr>

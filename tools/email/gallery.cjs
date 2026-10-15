@@ -17,7 +17,7 @@ const items = [
   const page = await b.newPage({ viewport: { width: 640, height: 900 }, deviceScaleFactor: 1.5 });
   const shots = [];
   for (const [i, it] of items.entries()) {
-    let html = fs.readFileSync(it.file, 'utf8').replace('https://genova.example/cover.png', 'cover.png');
+    let html = fs.readFileSync(it.file, 'utf8').replace('https://genova.example/cover.png', 'cover.png').replace('{{ .SiteURL }}/admin/img/genova-logo.png', 'file://' + path.join(root, 'web', 'public', 'admin', 'img', 'genova-logo.png'));
     const tmp = path.join(root, 'docs', 'email-templates', `.tmp-${i}.html`); fs.writeFileSync(tmp, html);
     await page.goto('file://' + tmp); await page.waitForTimeout(300);
     const out = path.join(work, `e${i}.png`); await page.screenshot({ path: out, fullPage: true }); fs.unlinkSync(tmp);

@@ -21,7 +21,7 @@ export const SAMPLE = {
 mkdirSync(join(root, 'docs', 'email-templates'), { recursive: true });
 const index = [];
 for (const t of templates) {
-  const vars = { ...SAMPLE };
+  const vars = { ...SAMPLE, logo_url: '../../web/public/admin/img/genova-logo.png' }; // previews open from docs/email-templates, so use the repo file
   if (t.key === 'support_received') vars.message = 'My tablet still shows the Free plan after I paid yesterday.';
   const r = renderEmail(t.subject, t.body, vars, { eyebrow: t.eyebrow });
   writeFileSync(join(root, 'docs', 'email-templates', `${t.key}.html`), r.html);
