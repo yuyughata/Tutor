@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Genova: Paystack set-up and payment plans</title>
+<style>
+@page { size: A4; margin: 18mm 16mm 18mm 16mm; }
+* { box-sizing: border-box; }
+body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #232323; font-size: 10.5pt; line-height: 1.5; margin: 0; }
+.cover { background: #6C2BD9; color: #fff; padding: 26px 28px; border-radius: 14px; margin-bottom: 18px; }
+.cover small { letter-spacing: .12em; text-transform: uppercase; opacity: .85; font-weight: 700; }
+.cover h1 { margin: 6px 0 4px; font-size: 24pt; line-height: 1.15; }
+.cover p { margin: 0; opacity: .92; }
+h2 { font-size: 14pt; color: #4A1C99; margin: 22px 0 6px; border-bottom: 2px solid #E9DDFB; padding-bottom: 4px; break-after: avoid; }
+h3 { font-size: 11pt; margin: 14px 0 4px; color: #232323; break-after: avoid; }
+p { margin: 6px 0; }
+table { width: 100%; border-collapse: collapse; margin: 8px 0 12px; font-size: 9.8pt; break-inside: avoid; }
+th { background: #F3ECFD; color: #4A1C99; text-align: left; padding: 7px 9px; border: 1px solid #DCCBF7; }
+td { padding: 7px 9px; border: 1px solid #E4DAF3; vertical-align: top; }
+code { font-family: 'Courier New', monospace; background: #F5F2FA; padding: 1px 5px; border-radius: 4px; font-size: 9.4pt; word-break: break-all; }
+.steps { counter-reset: s; list-style: none; padding: 0; margin: 8px 0; }
+.steps li { counter-increment: s; position: relative; padding: 4px 0 4px 34px; break-inside: avoid; }
+.steps li::before { content: counter(s); position: absolute; left: 0; top: 4px; width: 24px; height: 24px; border-radius: 50%; background: #6C2BD9; color: #fff; font-weight: 700; text-align: center; line-height: 24px; font-size: 10pt; }
+.note { background: #FFF6E0; border-left: 4px solid #F5A623; padding: 8px 12px; border-radius: 6px; margin: 10px 0; break-inside: avoid; }
+.warn { background: #FDECEC; border-left: 4px solid #D33; padding: 8px 12px; border-radius: 6px; margin: 10px 0; break-inside: avoid; }
+.ok { color: #0a7a68; font-weight: 700; } .todo { color: #b4560b; font-weight: 700; }
+.check { break-inside: avoid; list-style: none; padding: 0; margin: 6px 0; } .check li { padding: 3px 0 3px 26px; position: relative; break-inside: avoid; }
+.check li::before { content: ''; position: absolute; left: 2px; top: 6px; width: 13px; height: 13px; border: 2px solid #6C2BD9; border-radius: 3px; }
+footer { margin-top: 24px; font-size: 8.5pt; color: #6b6b6b; border-top: 1px solid #E4DAF3; padding-top: 8px; }
+</style></head><body>
+
+<div class="cover"><small>Genova by CUSTAR</small><h1>Paystack set-up and payment plans</h1><p>How parents pay on the website, what is already configured, and what you still need to do. Prepared 15 October 2026.</p></div>
+
+<h2>1. How payments work</h2>
+<ul>
+  <li>Parents pay <b>only on the website</b> (www.custar.ng/Genova). The app shows no prices and no purchase buttons.</li>
+  <li>The parent picks a plan, ticks the privacy-policy consent, and is sent to Paystack's secure payment page. Card details never touch Genova.</li>
+  <li>Paystack charges the <b>amount set on the Paystack plan</b>, then repeats the charge every month or quarter.</li>
+  <li>Paystack tells Genova about each payment through a <b>webhook</b>. Genova then turns Premium on, keeps it on while payments continue, and sends the receipt and reminder emails.</li>
+  <li>Parents manage or cancel their subscription from the Account page on the website. A cancelled plan keeps Premium until the end of the paid period.</li>
+</ul>
+
+<h2>2. Payment plans</h2>
+<table>
+  <tr><th>Genova plan</th><th>Price</th><th>Paystack interval</th><th>Paystack plan code</th></tr>
+  <tr><td><b>Free</b></td><td>₦0</td><td>none (no payment)</td><td>none</td></tr>
+  <tr><td><b>Premium Monthly</b></td><td>₦3,000 every month</td><td>Monthly</td><td><code>PLN_l1pv5yvp8t3goub</code></td></tr>
+  <tr><td><b>Premium Quarterly</b></td><td>₦7,500 every 3 months (saves 17%)</td><td>Quarterly</td><td><code>PLN_5rpvsuh1azkeqso</code></td></tr>
+</table>
+<p><span class="ok">Done:</span> both plan codes are saved in the live Genova database (table <code>plans</code>), so checkout already uses them.</p>
+<div class="warn"><b>Check the amounts in Paystack.</b> Open each plan in the Paystack dashboard and confirm Monthly says ₦3,000 and Quarterly says ₦7,500. Paystack charges whatever amount the plan holds. The older prices (₦5,000 and ₦12,000) must not be on these plans.</div>
+<h3>Access rules (set in the database)</h3>
+<table>
+  <tr><th>Situation</th><th>What the parent gets</th></tr>
+  <tr><td>Paid and up to date</td><td>Premium</td></tr>
+  <tr><td>Payment late</td><td>Premium kept for 5 days after the due date, then back to Free</td></tr>
+  <tr><td>Cancelled</td><td>Premium until the end of the period already paid</td></tr>
+</table>
+
+<h2>3. Paystack dashboard set-up</h2>
+<h3>3.1 Create the plans (done)</h3>
+<ol class="steps">
+  <li>Paystack dashboard, <b>Plans</b>, <b>Create Plan</b>.</li>
+  <li>Name <i>Genova Premium Monthly</i>, amount <b>₦3,000</b>, interval <b>Monthly</b>. Leave the invoice limit blank so it renews until cancelled.</li>
+  <li>Name <i>Genova Premium Quarterly</i>, amount <b>₦7,500</b>, interval <b>Quarterly</b>. Same settings.</li>
+  <li>Copy each plan's code (starts with <code>PLN_</code>). These are the codes in section 2.</li>
+</ol>
+<h3>3.2 Webhook</h3>
+<ol class="steps">
+  <li>Paystack dashboard, <b>Settings</b>, <b>API Keys &amp; Webhooks</b>.</li>
+  <li>Set the <b>Webhook URL</b> (use the same URL in Test and Live mode) to:<br><code>https://cjdrlddvbyfataumdztg.supabase.co/functions/v1/paystack-webhook</code></li>
+  <li>Save. This URL must point at the Genova Supabase function, not at another website.</li>
+</ol>
+<p>Genova checks the signature on every webhook with your secret key, so anyone posting to that URL without Paystack's signature is ignored.</p>
+<h3>3.3 API keys</h3>
+<p>On the same page copy the <b>Secret Key</b> (starts with <code>sk_test_</code> or <code>sk_live_</code>). Never put it in the website, the app or a document. It goes only into Supabase (next section).</p>
+
+<h2 style="break-before:page">4. Supabase configuration</h2>
+<p>Open the Supabase project <b>GenovaStorybook</b>, <b>Edge Functions</b>, <b>Secrets</b>, and add:</p>
+<table>
+  <tr><th>Secret name</th><th>Value</th><th>Status</th></tr>
+  <tr><td><code>PAYSTACK_SECRET_KEY</code></td><td>Your Paystack secret key. Use the <b>test</b> key while testing, then the <b>live</b> key. It must be from the same mode as the plans.</td><td class="todo">To do</td></tr>
+  <tr><td><code>WEB_URL</code></td><td><code>https://www.custar.ng/Genova</code> (where Paystack sends the parent back after paying, and the base of the email links)</td><td class="todo">To do</td></tr>
+  <tr><td><code>SUPPORT_EMAIL</code></td><td>Optional. The address shown in receipts, for example your support inbox.</td><td>Optional</td></tr>
+  <tr><td><code>PAYSTACK_PLAN_MONTHLY</code><br><code>PAYSTACK_PLAN_QUARTERLY</code></td><td>Not needed. The plan codes are already in the database. These secrets are only a backup.</td><td class="ok">Not needed</td></tr>
+</table>
+<div class="note"><b>Security:</b> a Paystack secret key was pasted into a chat earlier. In Paystack, regenerate the key and enter only the <i>new</i> value in Supabase.</div>
+<p><b>Auth settings (Supabase, Authentication):</b> set <b>Site URL</b> to <code>https://www.custar.ng/Genova</code> and add <code>https://www.custar.ng/Genova/**</code> to the redirect URLs. Set up custom email sending (Resend) so parents can create accounts reliably.</p>
+
+<h2>5. Test before going live</h2>
+<ol class="steps">
+  <li>Use Paystack <b>Test mode</b>: test secret key in Supabase, and test-mode copies of both plans (test and live plans have different codes).</li>
+  <li>On the website create a parent account, open <b>Plans</b>, choose Premium Monthly, tick the consent and continue to Paystack.</li>
+  <li>Pay with a test card from Paystack's documentation (https://paystack.com/docs/payments/test-payments).</li>
+  <li>You return to the Account page. It should show the <b>Premium badge</b> and the renewal date. Open the app signed in to the same account: the premium stories are unlocked.</li>
+  <li>In Supabase, table <code>payment_events</code> should contain the webhook events. This confirms Paystack's data matches what Genova expects.</li>
+  <li>Check that the receipt email arrives (needs email activated in the admin).</li>
+  <li>Try <b>Manage subscription</b> and cancel. Premium should stay until the end of the paid period.</li>
+</ol>
+<ul class="check">
+  <li>Plan amounts are ₦3,000 and ₦7,500 in Paystack</li>
+  <li>Webhook URL saved in Paystack</li>
+  <li><code>PAYSTACK_SECRET_KEY</code> and <code>WEB_URL</code> set in Supabase</li>
+  <li>Test payment shows the Premium badge</li>
+  <li><code>payment_events</code> has rows</li>
+  <li>Receipt email arrives</li>
+</ul>
+
+<h2>6. Going live</h2>
+<ol class="steps">
+  <li>Complete Paystack's business verification so live payments are enabled.</li>
+  <li>Create the same two plans in <b>Live</b> mode (₦3,000 monthly, ₦7,500 quarterly). The live plans have new <code>PLN_</code> codes. Send them to be saved in the database.</li>
+  <li>Replace the Supabase secret <code>PAYSTACK_SECRET_KEY</code> with the <b>live</b> secret key.</li>
+  <li>Check the webhook URL is set under Live mode too.</li>
+  <li>Make one real small payment and cancel it, to confirm the full cycle.</li>
+</ol>
+<p>Changing a price later: edit the plan in Paystack (it offers to update existing subscribers or not) and change the price in the Genova <code>plans</code> table so the website shows the same amount.</p>
+
+<h2>7. If something goes wrong</h2>
+<table>
+  <tr><th>What you see</th><th>Likely cause and fix</th></tr>
+  <tr><td>"Payments for this plan are not set up yet"</td><td>The plan has no Paystack code. Codes are saved for both plans, so check the plan is marked active.</td></tr>
+  <tr><td>"Could not start checkout" or a Paystack error</td><td>Secret key missing, wrong mode (test key with live plan, or the reverse), or the plan code does not exist in that mode.</td></tr>
+  <tr><td>Parent paid but is not Premium</td><td>Webhook not reaching Genova. Check the webhook URL, then Paystack's webhook log and the <code>payment_events</code> table.</td></tr>
+  <tr><td>Wrong amount charged</td><td>The amount on the Paystack plan is wrong. Fix it in Paystack.</td></tr>
+  <tr><td>Parent returned to the wrong site</td><td><code>WEB_URL</code> is missing or wrong.</td></tr>
+</table>
+
+<h2>8. Status summary</h2>
+<table>
+  <tr><th>Item</th><th>Status</th></tr>
+  <tr><td>Plans created in Paystack, codes saved in Genova</td><td class="ok">Done</td></tr>
+  <tr><td>Checkout, webhook, manage-subscription functions deployed</td><td class="ok">Done</td></tr>
+  <tr><td>Paystack plan amounts confirmed (₦3,000 / ₦7,500)</td><td class="todo">You: check</td></tr>
+  <tr><td>Webhook URL saved in Paystack</td><td class="todo">You: do</td></tr>
+  <tr><td>Supabase secrets <code>PAYSTACK_SECRET_KEY</code>, <code>WEB_URL</code></td><td class="todo">You: do</td></tr>
+  <tr><td>Test payment end to end</td><td class="todo">Not yet run (this has never been tested against the real Paystack)</td></tr>
+  <tr><td>Live plans and live key</td><td class="todo">After testing</td></tr>
+</table>
+
+<footer>Genova by CUSTAR · Paystack set-up · This document contains no secret keys.</footer>
+</body></html>
