@@ -49,12 +49,13 @@ const { chromium } = require(process.env.PW);
   });
   await step('email: connect, activate, test', async () => {
     await nav('Email').click(); await page.getByRole('heading', { name: 'Resend connection' }).waitFor();
-    await page.getByRole('button', { name: 'Activate email' }).click(); await page.getByText('Add your Resend API key first.').waitFor();
+    await page.getByRole('button', { name: 'Activate email' }).click(); await page.getByText('Type the "From email" first').waitFor();
     await page.getByLabel('Resend API key').fill('sk_wrong'); await page.getByLabel('From email', { exact: false }).first().fill('hello@custar.com').catch(() => {});
     await page.locator('input[type=email]').first().fill('hello@custar.com');
     await page.getByRole('button', { name: 'Save settings' }).click(); await page.getByText('does not look like a Resend API key').waitFor();
-    await page.getByLabel('Resend API key').fill('re_testkey12345678'); await page.getByRole('button', { name: 'Save settings' }).click(); await page.getByText('Settings saved').waitFor();
-    await page.getByRole('button', { name: 'Activate email' }).click(); await page.getByText(/Email is on\. Verified/).waitFor();
+    // Activate saves what is typed (key + From email) by itself, no separate Save needed
+    await page.getByLabel('Resend API key').fill('re_testkey12345678'); await page.getByRole('button', { name: 'Activate email' }).click(); await page.getByText(/Email is on\. Verified/).waitFor();
+    await page.getByRole('button', { name: 'Save settings' }).click(); await page.getByText('Settings saved').waitFor();
     await page.getByRole('button', { name: 'Send test email' }).click(); await page.getByText(/Test email sent to/).waitFor();
     await page.screenshot({ path: `${out}/email-connection.png`, fullPage: true });
   });

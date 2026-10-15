@@ -189,7 +189,7 @@ export async function render(ctx) {
     const state = h('div', { class: `callout ${status.enabled ? 'ok' : ''}`, role: 'status' });
     const paintState = () => {
       state.className = `callout ${status.enabled ? 'ok' : ''}`;
-      state.textContent = status.enabled ? `Email is on. Verified ${fmtDateTime(status.verified_at)}.` : status.configured ? 'Your key is saved but email is switched off. Press Activate to check it with Resend and turn email on.' : 'Not connected yet. Follow the steps below.';
+      state.textContent = status.enabled ? `Email is on. Verified ${fmtDateTime(status.verified_at)}.` : status.configured ? 'Your key is saved but email is switched off. Type the From email below, then press Activate to check it with Resend and turn email on.' : 'Not connected yet. Follow the steps below.';
     };
     paintState();
     const save = h('button', { class: 'btn secondary' }, 'Save settings');
@@ -200,7 +200,13 @@ export async function render(ctx) {
     });
     const activate = h('button', { class: 'btn' }, status.enabled ? 'Email is on' : 'Activate email');
     activate.disabled = status.enabled;
-    activate.onclick = busy(activate, async () => { await api.emailActivate(); await reload(); toast('Email is on'); await show(); });
+    // Activate uses what is typed in the form: it saves the settings first, so nothing has to be saved separately.
+    activate.onclick = busy(activate, async () => {
+      if (!fromEmail.value.trim()) { fromEmail.focus(); throw new Error('Type the "From email" first, an address on your verified domain such as hello@yourdomain.com.'); }
+      await api.emailSaveSettings({ api_key: key.value.trim(), from_name: fromName.value.trim(), from_email: fromEmail.value.trim(), reply_to: replyTo.value.trim(), notify_email: notify.value.trim() });
+      key.value = '';
+      await api.emailActivate(); await reload(); toast('Email is on'); await show();
+    });
     const off = h('button', { class: 'btn ghost' }, 'Switch off');
     off.hidden = !status.enabled;
     off.onclick = busy(off, async () => { if (!(await ctx.confirm({ title: 'Switch email off?', body: 'No emails will be sent, including receipts and welcome messages, until you activate it again.', confirmLabel: 'Switch off', danger: true }))) return; await api.emailDeactivate(); await reload(); toast('Email is off'); await show(); });
