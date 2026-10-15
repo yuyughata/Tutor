@@ -191,5 +191,20 @@
    "support_email"
   ],
   "automatic": true
+ },
+ {
+  "key": "change_plan",
+  "name": "Subscribe to change your plan",
+  "description": "Sent when a parent taps \"Change plan\" in the app. Links to the plans page on the website.",
+  "subject": "Subscribe to change your plan",
+  "eyebrow": "Your plan",
+  "body": "# Subscribe to change your plan\n\nYou asked to change your Genova plan. Plans are managed on our website, so use the button below to choose one. It only takes a minute.\n\n> Premium unlocks every story in the library, with new stories added every week.\n\n[Choose a plan]({{plans_url}})\n\nThis email was sent to {{parent_email}}. Need help? Write to {{support_email}}.",
+  "variables": [
+   "parent_email",
+   "plans_url",
+   "site_url",
+   "support_email"
+  ],
+  "automatic": true
  }
 ]

@@ -9,6 +9,7 @@ import { Button } from '../../src/components/Button';
 import { Tap } from '../../src/components/Tap';
 import { formatBytes, removeAll, useDownloads } from '../../src/data/downloads';
 import { levelFull } from '../../src/levels';
+import { emailPlansLink } from '../../src/lib/planEmail';
 import { SUPPORT_EMAIL, WEB_URL } from '../../src/lib/webLinks';
 import { useAuth } from '../../src/state/auth';
 import { useGate } from '../../src/state/gate';
@@ -31,6 +32,14 @@ export default function GrownUps() {
   const insets = useSafeAreaInsets();
   const ask = useGate();
   const { configured, session, entitlement, signOut, refresh } = useAuth();
+  const [planBusy, setPlanBusy] = useState(false);
+  const [planMsg, setPlanMsg] = useState<{ ok: boolean; text?: string } | null>(null);
+  const changePlan = async () => {
+    setPlanBusy(true); setPlanMsg(null);
+    const r = await emailPlansLink();
+    setPlanBusy(false);
+    setPlanMsg(r.ok ? { ok: true } : { ok: false, text: r.message });
+  };
   const { children: kids, active, select } = useProfiles();
   const [unlocked, setUnlocked] = useState(false);
   const downloads = useDownloads();
@@ -80,10 +89,17 @@ export default function GrownUps() {
                 {entitlement.inGrace ? 'Payment overdue' : entitlement.active ? 'Premium is active' : 'Free plan'}
               </Text>
             </View>
-            {(!entitlement.active || entitlement.inGrace) && WEB_URL && (
+            {(!entitlement.active || entitlement.inGrace) && (
               <>
-                <Button label="Change plan" icon="star" onPress={() => Linking.openURL(`${WEB_URL}/plans/`)} />
-                <Text style={styles.hint}>Opens the Genova website, where you can choose a plan to unlock every story.</Text>
+                <Button label="Change plan" icon="star" loading={planBusy} onPress={changePlan} />
+                {planMsg ? (
+                  <View style={[styles.notice, planMsg.ok ? styles.noticeOk : styles.noticeBad]} accessibilityLiveRegion="polite" accessibilityRole="alert">
+                    <Text style={[styles.noticeTitle, { color: planMsg.ok ? colors.secondaryDeep : colors.danger }]}>{planMsg.ok ? 'Check your email' : 'Email not sent'}</Text>
+                    <Text style={styles.body}>{planMsg.ok ? `We sent a link to ${session.user.email} so you can choose your plan on the Genova website.` : planMsg.text}</Text>
+                  </View>
+                ) : (
+                  <Text style={styles.hint}>We will email you a link to choose a plan on the Genova website.</Text>
+                )}
               </>
             )}
             {entitlement.inGrace && entitlement.until && (
@@ -204,6 +220,10 @@ const styles = themed(() => StyleSheet.create({
   cardTitle: { ...type.title, color: colors.ink },
   body: { ...type.body, color: colors.muted },
   hint: { ...type.small, color: colors.muted },
+  notice: { borderRadius: radius.md, padding: 14, gap: 4, borderWidth: 1.5 },
+  noticeOk: { backgroundColor: colors.secondarySoft, borderColor: colors.secondary },
+  noticeBad: { backgroundColor: colors.surface, borderColor: colors.danger },
+  noticeTitle: { fontFamily: fonts.black, fontSize: 16 },
   badge: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 6, borderRadius: radius.pill },
   badgeOn: { backgroundColor: colors.secondarySoft },
   badgeOff: { backgroundColor: colors.border },

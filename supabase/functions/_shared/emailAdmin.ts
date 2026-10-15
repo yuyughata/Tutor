@@ -24,7 +24,7 @@ export type Result = { status: number; body: Record<string, unknown> };
 const fail = (status: number, error: string): Result => ({ status, body: { error } });
 const okEmail = (s: unknown) => typeof s === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim());
 const AUDIENCES = ['all', 'subscribers', 'free', 'past_due', 'expiring'] as const;
-const SELF_TEMPLATES = ['welcome', 'security_change'];
+const SELF_TEMPLATES = ['welcome', 'security_change', 'change_plan'];
 const MAX_RECIPIENTS = 1000;
 
 export async function handleEmail(authHeader: string | null, input: unknown, deps: EmailDeps): Promise<Result> {
@@ -44,7 +44,8 @@ export async function handleEmail(authHeader: string | null, input: unknown, dep
     const since = new Date((deps.now?.() ?? Date.now()) - 3_600_000).toISOString();
     if ((await deps.recentSelfSends(caller.email, template, since)) >= 3) return fail(429, 'Too many emails. Try again later.');
     const what = inp.what === 'passcode' ? 'passcode' : 'password';
-    const r = await mailer.sendOne(caller.email, { ...common, parent_email: caller.email, what }, { template, sentBy: caller.id });
+    // "Change plan" in the app: the parent gets a link to the plans page on the website (the app itself never shows prices or buy links)
+    const r = await mailer.sendOne(caller.email, { ...common, parent_email: caller.email, what, plans_url: `${deps.siteUrl}/plans/` }, { template, sentBy: caller.id, logSkipped: template === 'change_plan' });
     return { status: 200, body: { ...r } };
   }
 
@@ -96,7 +97,7 @@ export async function handleEmail(authHeader: string | null, input: unknown, dep
       const body = typeof inp.body === 'string' ? inp.body : t?.body;
       const eyebrow = typeof inp.eyebrow === 'string' ? inp.eyebrow : t?.eyebrow;
       if (subject === undefined || body === undefined) return fail(404, 'Unknown template.');
-      const vars = { ...common, parent_email: 'parent@example.com', plan: 'Premium Monthly', amount: '₦3,000', access_until: '30 November 2026', paid_date: '1 November 2026', due_date: '25 November 2026', what: 'passcode', story_title: 'Luna and the Firefly', synopsis: 'Luna follows a tiny light through the garden.', story_url: `${deps.siteUrl}/`, message: 'Your message appears here.', ...((inp.vars as Vars) ?? {}) };
+      const vars = { ...common, parent_email: 'parent@example.com', plan: 'Premium Monthly', amount: '₦3,000', access_until: '30 November 2026', paid_date: '1 November 2026', due_date: '25 November 2026', what: 'passcode', story_title: 'Luna and the Firefly', synopsis: 'Luna follows a tiny light through the garden.', story_url: `${deps.siteUrl}/`, plans_url: `${deps.siteUrl}/plans/`, message: 'Your message appears here.', ...((inp.vars as Vars) ?? {}) };
       const r = renderEmail(subject, body, vars, { eyebrow });
       return { status: 200, body: { subject: r.subject, html: r.html } };
     }

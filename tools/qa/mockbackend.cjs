@@ -155,7 +155,14 @@ async function install(context, state, { host = 'mock.supabase.test' } = {}) {
       (state.supportRequests ||= []).unshift({ id: 'r' + Date.now(), topic: body.topic, message: body.message, status: 'open', created_at: new Date().toISOString() });
       return send(200, { ok: true });
     }
-    if (p === '/functions/v1/send-email') return send(200, { sent: 1, failed: 0, skipped: 0 });
+    if (p === '/functions/v1/send-email') {
+      (state.emails ||= []).push({ ...body });
+      if (body?.template === 'change_plan') {
+        if (state.emailMode === 'limit') return send(429, { error: 'Too many emails. Try again later.' });
+        if (state.emailMode === 'skipped') return send(200, { sent: 0, failed: 0, skipped: 1 });
+      }
+      return send(200, { sent: 1, failed: 0, skipped: 0 });
+    }
     if (p === '/functions/v1/paystack-manage') return send(200, { url: state.manageUrl });
     return send(404, { message: 'unmocked ' + p });
   });

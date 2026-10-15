@@ -80,18 +80,31 @@ const NUM = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eigh
     await audit('forgot password');
     await page.getByRole('button', { name: 'Done' }).click();
   });
-  await step('free plan: "Change plan" button goes to the website plans page; premium has no such button', async () => {
+  await step('free plan: "Change plan" emails a link to the plans page (no link-out); premium has no such button', async () => {
     await tab('Home').click(); await tab('Grown-ups').click(); await page.getByText('Free plan', { exact: true }).waitFor({ timeout: 6000 });
-    const link = page.getByRole('button', { name: 'Change plan', exact: true });
-    await link.waitFor();
-    // tapping it opens the website's plans page (same tab on web). A 204 reply cancels that navigation so the app stays put and just record the address.
-    let hit = null; const catcher = (r) => { hit = r.request().url(); return r.fulfill({ status: 204 }); };
-    await ctx.route(/genova\.test\/plans/, catcher);
-    await link.click(); for (let i = 0; i < 30 && !hit; i++) await page.waitForTimeout(100);
-    await ctx.unroute(/genova\.test\/plans/, catcher);
-    if (!hit || !/genova\.test\/plans\/$/.test(hit)) throw new Error('the button did not open the plans page: ' + hit);
-    await audit('grown-ups (free, Change plan button)');
+    const btn = page.getByRole('button', { name: 'Change plan', exact: true });
+    await btn.waitFor();
+    await page.getByText('We will email you a link to choose a plan').waitFor();
+    // nothing in the app opens the website for this: the app sends the "Subscribe to change your plan" email instead
+    let nav = null; const catcher = (r) => { nav = r.request().url(); return r.fulfill({ status: 204 }); };
+    await ctx.route(/genova\.test/, catcher);
+    state.emails = []; await btn.click();
+    await page.getByText('Check your email', { exact: true }).waitFor({ timeout: 6000 });
+    await page.getByText('We sent a link to parent@example.com').waitFor();
+    await ctx.unroute(/genova\.test/, catcher);
+    if (nav) throw new Error('the app should not open the website: ' + nav);
+    const sent = state.emails.filter((e) => e.template === 'change_plan');
+    if (sent.length !== 1 || sent[0].action !== 'self') throw new Error('expected one change_plan email request: ' + JSON.stringify(state.emails));
+    await audit('grown-ups (free, check your email)');
     await page.screenshot({ path: `${process.env.OUT || '.'}/grownups-free-plan.png` });
+    // email not activated on the server: the app must not say "check your email"
+    state.emailMode = 'skipped'; await btn.click();
+    await page.getByText('Email not sent', { exact: true }).waitFor({ timeout: 6000 });
+    if (await page.getByText('Check your email', { exact: true }).count()) throw new Error('claimed the email was sent when it was not');
+    // too many requests
+    state.emailMode = 'limit'; await btn.click();
+    await page.getByText(/already emailed you a few times/).waitFor({ timeout: 6000 });
+    state.emailMode = undefined;
   });
   await step('premium unlocks after sign-in', async () => {
     state.access = { active: true, status: 'active', plan: 'monthly', current_period_end: new Date(Date.now() + 20 * 864e5).toISOString(), access_until: new Date(Date.now() + 25 * 864e5).toISOString(), in_grace: false };

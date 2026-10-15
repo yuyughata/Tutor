@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
     template: async (key) => (await service.from('email_templates').select('key, subject, body, eyebrow').eq('key', key).maybeSingle()).data,
     log: async (row) => { await service.from('email_log').insert(row); },
     recentSelfSends: async (recipient, template, since) => (await service.from('email_log').select('id', { count: 'exact', head: true }).eq('recipient', recipient).eq('template', template).gte('created_at', since)).count ?? 0,
-    siteUrl: (Deno.env.get('WEB_URL') ?? '').replace(/\/$/, ''),
+    siteUrl: (Deno.env.get('WEB_URL') || 'https://www.custar.ng/Genova').replace(/\/$/, ''),
     supportEmail: Deno.env.get('SUPPORT_EMAIL') ?? 'support@custar.com',
   }).catch((e) => ({ status: 502, body: { error: e instanceof Error ? e.message : 'Something went wrong' } }));
 

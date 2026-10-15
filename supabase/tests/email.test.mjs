@@ -198,3 +198,27 @@ test('test email reports an inactive account clearly', async () => {
   const r = await run('admin', { action: 'test', to: 'me@x.com' }, d);
   assert.equal(r.status, 400); assert.match(r.body.error, /not activated/);
 });
+
+test('change_plan: a parent can email themselves the plans link, and only themselves', async () => {
+  const body = '# Subscribe to change your plan\n\n[Choose a plan]({{plans_url}})\n\nSent to {{parent_email}}.';
+  const { d, state } = deps({ template: async () => ({ key: 'change_plan', subject: 'Subscribe to change your plan', body, eyebrow: 'Your plan' }) });
+  state.settings.enabled = true;
+  const r = await run('parent', { action: 'self', template: 'change_plan', to: 'someone-else@x.com' }, d);
+  assert.equal(r.status, 200); assert.equal(r.body.sent, 1);
+  const mail = state.sent[0][0];
+  assert.deepEqual(mail.to, ['parent@x.com'], 'goes to the signed-in parent, never to an address in the request');
+  assert.equal(mail.subject, 'Subscribe to change your plan');
+  assert.match(mail.html, /href="https:\/\/site\.test\/plans\/"/, 'button links to the website plans page');
+  assert.match(mail.html, /genova-logo\.png/, 'logo is in the email');
+  assert.equal((await run(null, { action: 'self', template: 'change_plan' }, d)).status, 401);
+  state.selfCount = 3;
+  assert.equal((await run('parent', { action: 'self', template: 'change_plan' }, d)).status, 429);
+});
+
+test('change_plan: reports "skipped" when email is not activated, so the app does not claim it was sent', async () => {
+  const { d, state } = deps(); // settings.enabled is false
+  const r = await run('parent', { action: 'self', template: 'change_plan' }, d);
+  assert.equal(r.status, 200); assert.deepEqual([r.body.sent, r.body.skipped], [0, 1]);
+  assert.equal(state.sent.length, 0);
+  assert.equal(state.logs.at(-1).status, 'skipped');
+});

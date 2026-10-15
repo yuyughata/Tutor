@@ -94,5 +94,13 @@
   "eyebrow": "Support",
   "description": "Sent to a parent right after they contact support.",
   "automatic": true
+ },
+ {
+  "key": "change_plan",
+  "name": "Subscribe to change your plan",
+  "subject": "Subscribe to change your plan",
+  "eyebrow": "Your plan",
+  "description": "Sent when a parent taps \"Change plan\" in the app. Links to the plans page on the website.",
+  "automatic": true
  }
 ]
