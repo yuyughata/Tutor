@@ -106,6 +106,13 @@ const NUM = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eigh
     await page.getByText(/already emailed you a few times/).waitFor({ timeout: 6000 });
     state.emailMode = undefined;
   });
+  await step('"Manage my account on the web" opens the website sign-in page (then the account page)', async () => {
+    let hit = null; const catcher = (r) => { hit = r.request().url(); return r.fulfill({ status: 204 }); };
+    await ctx.route(/genova\.test\/login/, catcher);
+    await page.getByRole('button', { name: 'Manage my account on the web' }).click(); for (let i = 0; i < 30 && !hit; i++) await page.waitForTimeout(100);
+    await ctx.unroute(/genova\.test\/login/, catcher);
+    if (!hit || !/genova\.test\/login\/\?next=%2Faccount%2F$/.test(hit)) throw new Error('did not open the sign-in page: ' + hit);
+  });
   await step('premium unlocks after sign-in', async () => {
     state.access = { active: true, status: 'active', plan: 'monthly', current_period_end: new Date(Date.now() + 20 * 864e5).toISOString(), access_until: new Date(Date.now() + 25 * 864e5).toISOString(), in_grace: false };
     await page.waitForTimeout(500); await tab('Home').click(); await tab('Grown-ups').click(); await page.getByText('Premium is active').waitFor({ timeout: 6000 }); if (await page.getByRole('button', { name: 'Change plan', exact: true }).count()) throw new Error('premium accounts must not see the change-plan button'); await audit('grown-ups (premium)');

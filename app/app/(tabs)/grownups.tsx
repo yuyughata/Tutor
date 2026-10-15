@@ -106,7 +106,7 @@ export default function GrownUps() {
               <Text style={styles.body}>Renew on the website before {new Date(entitlement.until).toLocaleDateString(undefined, { day: 'numeric', month: 'long' })} to keep Premium. After that your account moves back to the Free plan.</Text>
             )}
             {WEB_URL && (
-              <Button label="Manage my account on the web" icon="open-outline" variant="secondary" onPress={() => Linking.openURL(`${WEB_URL}/account/`)} />
+              <Button label="Manage my account on the web" icon="open-outline" variant="secondary" onPress={() => Linking.openURL(`${WEB_URL}/login/?next=${encodeURIComponent('/account/')}`)} />
             )}
             <Button label="Contact support" icon="chatbubble-ellipses-outline" variant="secondary" onPress={() => Linking.openURL(WEB_URL ? `${WEB_URL}/account/#support` : `mailto:${SUPPORT_EMAIL}`)} />
             <Button label="Sign out" variant="ghost" onPress={signOut} />
