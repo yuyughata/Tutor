@@ -207,6 +207,15 @@ export function createDemoApi() {
       if (!password || password.length < 8) throw new Error('Use at least 8 characters.');
       supportLog.unshift({ id: Date.now(), action: 'set_password', target_email: email, created_at: new Date().toISOString() }); return delay({ ok: true });
     },
+    async supportDeleteAccount(email, force = false) {
+      const i = people.findIndex((p) => p.email === email);
+      if (i < 0) throw new Error('No account found for that email.');
+      const p = people[i];
+      if (admins.some((a) => a.id === p.parent_id)) throw new Error('Admin accounts cannot be deleted here. Remove their admin access in Settings first.');
+      if (!force && ['active', 'past_due'].includes(p.status) && ['monthly', 'quarterly'].includes(p.plan)) throw new Error('This parent has an active Paystack subscription. Deleting the account does not stop the billing: cancel it in Paystack first, or delete anyway.');
+      people.splice(i, 1);
+      supportLog.unshift({ id: Date.now(), action: 'delete_account', target_email: email, created_at: new Date().toISOString() }); return delay({ ok: true });
+    },
     async listSupportActions() { return delay(supportLog.slice(0, 8)); },
     async emailStatus() { return delay({ ...mail }); },
     async emailSaveSettings(v) {

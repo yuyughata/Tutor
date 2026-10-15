@@ -32,6 +32,36 @@ const { chromium } = require(process.env.PW);
     await page.screenshot({ path: `${out}/pw2.png` });
     await page.getByRole('button', { name: 'Done' }).click();
   });
+  await step('delete accounts: typed confirmation, subscription warning, bulk', async () => {
+    const dlg = page.locator('dialog').last();
+    await page.getByLabel('Delete account tunde@example.com').click(); await dlg.waitFor();
+    const del = dlg.getByRole('button', { name: 'Delete account' });
+    if (!(await del.isDisabled())) throw new Error('Delete should be disabled until the email is typed');
+    await dlg.getByLabel('Type the account email to confirm').fill('wrong@example.com');
+    if (!(await del.isDisabled())) throw new Error('Delete should stay disabled for a wrong email');
+    await dlg.getByLabel('Type the account email to confirm').fill('tunde@example.com'); await del.click();
+    await page.getByText('Account deleted').first().waitFor(); await page.locator('dialog').waitFor({ state: 'detached' }).catch(() => {});
+    await page.locator('table').getByText('tunde@example.com').waitFor({ state: 'detached' });
+    // a parent with a running subscription: warned first, then can be deleted anyway
+    await page.getByLabel('Delete account zainab@example.com').click(); await dlg.waitFor();
+    await dlg.getByLabel('Type the account email to confirm').fill('zainab@example.com'); await dlg.getByRole('button', { name: 'Delete account' }).click();
+    await dlg.getByText(/active Paystack subscription/).waitFor();
+    await dlg.getByLabel(/Delete anyway/).check(); await dlg.getByRole('button', { name: 'Delete account' }).click();
+    await page.getByText('Account deleted').first().waitFor();
+    await page.locator('table').getByText('zainab@example.com').waitFor({ state: 'detached' });
+    // admins cannot be ticked
+    if (!(await page.getByLabel('Select you@custar.example').isDisabled())) throw new Error('admin row should not be selectable');
+    // bulk: tick two, type DELETE
+    await page.getByLabel('Select review@apple.example').check(); await page.getByLabel('Select kofi@example.com').check();
+    await page.getByRole('button', { name: 'Delete 2 accounts' }).first().click(); await dlg.waitFor();
+    await dlg.getByLabel('Type DELETE to confirm').fill('delete'); await dlg.getByRole('button', { name: 'Delete 2 accounts' }).click();
+    await dlg.getByText(/1 deleted\. Not deleted: kofi@example\.com/).waitFor();
+    await dlg.getByLabel(/Delete anyway/).check(); await dlg.getByRole('button', { name: 'Delete 2 accounts' }).click();
+    await page.getByText('Account deleted').first().waitFor();
+    for (const e of ['review@apple.example', 'kofi@example.com']) await page.locator('table').getByText(e).waitFor({ state: 'detached' });
+    await page.getByText('amara@example.com').waitFor();
+    await page.screenshot({ path: `${out}/delete-accounts.png` });
+  });
   await step('settings privacy editor', async () => {
     await nav('Settings').click(); await page.getByRole('heading', { name: 'Privacy policy', exact: true }).waitFor();
     const ta = page.getByLabel('Privacy policy text'); await ta.fill((await ta.inputValue()) + '\n\n# Contact\nEmail us.');

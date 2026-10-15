@@ -300,6 +300,7 @@ export function createApi(sb, opts = {}) {
     // ---------- password support (runs in an edge function with service-role access) ----------
     async supportSendReset(email) { return support({ action: 'send_reset', email }); },
     async supportSetPassword(email, password) { return support({ action: 'set_password', email, password }); },
+    async supportDeleteAccount(email, force = false) { return support({ action: 'delete_account', email, confirm_email: email, force }); },
     async listSupportActions() {
       return unwrap(await sb.from('admin_actions').select('id, action, target_email, created_at').order('created_at', { ascending: false }).limit(8));
     },
@@ -383,7 +384,7 @@ export const API_METHODS = [
   'session', 'signIn', 'signOut', 'onAuthChange', 'me', 'stats', 'recentPayments', 'listStories', 'getStory', 'saveStory',
   'setStoryStatus', 'deleteStory', 'uploadCover', 'uploadPageImage', 'pageImageUrl', 'uploadSong', 'songUrl', 'listAuthors', 'listCategories',
   'saveCategory', 'deleteCategory', 'listFeatured', 'saveFeatured', 'deleteFeatured', 'listSubscribers', 'setEntitlement',
-  'getLegal', 'saveLegal', 'supportSendReset', 'supportSetPassword', 'listSupportActions', 'listAdmins', 'setAdmin',
+  'getLegal', 'saveLegal', 'supportSendReset', 'supportSetPassword', 'supportDeleteAccount', 'listSupportActions', 'listAdmins', 'setAdmin',
   'emailStatus', 'emailSaveSettings', 'emailActivate', 'emailDeactivate', 'emailTest', 'emailPreview', 'emailCount', 'emailSend',
   'listEmailTemplates', 'saveEmailTemplate', 'listEmailLog', 'listSupportRequests', 'updateSupportRequest', 'openSupportCount',
   'listReminderRules', 'saveReminderRule', 'runReminders', 'listReminderLog', 'listLeaderboard', 'giveAward',

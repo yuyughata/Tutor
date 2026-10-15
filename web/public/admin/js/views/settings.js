@@ -1,6 +1,6 @@
 import { h, field, toast, busy, renderLegal, fmtDate, fmtDateTime, ago } from '../ui.js';
 
-const ACTION_LABEL = { send_reset: 'Sent reset email', set_password: 'Set temporary password' };
+const ACTION_LABEL = { send_reset: 'Sent reset email', set_password: 'Set temporary password', delete_account: 'Deleted account' };
 
 export async function render(ctx) {
   const { api } = ctx;
@@ -56,7 +56,7 @@ export async function render(ctx) {
   const actions = await api.listSupportActions();
   logBox.replaceChildren(...(actions.length
     ? actions.map((a) => h('div', { class: 'row' }, h('b', { class: 'grow' }, ACTION_LABEL[a.action] || a.action), h('span', { class: 'muted' }, a.target_email || ''), h('span', { class: 'muted small nowrap', title: fmtDateTime(a.created_at) }, ago(a.created_at))))
-    : [h('p', { class: 'muted', style: { margin: 0 } }, 'No password support actions yet.')]));
+    : [h('p', { class: 'muted', style: { margin: 0 } }, 'No support actions yet.')]));
 
   await reload(); paint();
   return h('div', {}, h('div', { class: 'page-head' }, h('div', {}, h('h1', {}, 'Settings'), h('p', {}, 'Admins, the privacy policy and support activity.'))),
@@ -68,5 +68,5 @@ export async function render(ctx) {
           h('div', {}, h('label', { class: 'f' }, 'Preview (as parents see it)'), preview))),
       h('div', { class: 'card', style: { maxWidth: '640px' } }, h('h2', {}, 'Admins'), list,
         h('div', { class: 'row', style: { marginTop: '18px', alignItems: 'flex-end' } }, h('div', { class: 'grow' }, field('Add an admin', email, 'They need to have signed up on the website first.')), h('div', { style: { marginBottom: '16px' } }, add))),
-      h('div', { class: 'card', style: { maxWidth: '640px' } }, h('h2', {}, 'Support log'), h('p', { class: 'small muted', style: { marginTop: 0 } }, 'Password resets done from the Subscribers page.'), logBox)));
+      h('div', { class: 'card', style: { maxWidth: '640px' } }, h('h2', {}, 'Support log'), h('p', { class: 'small muted', style: { marginTop: 0 } }, 'Password resets and account deletions done from the Subscribers page.'), logBox)));
 }
