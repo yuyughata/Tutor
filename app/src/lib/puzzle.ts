@@ -9,14 +9,15 @@ export type Puzzle = { level: PuzzleLevel; size: number; grid: string[][]; place
 export type Rng = () => number;
 
 type Dir = [number, number];
-const RIGHT: Dir = [0, 1], DOWN: Dir = [1, 0];
-const ALL: Dir[] = [[0, 1], [1, 0], [1, 1], [-1, 1], [0, -1], [-1, 0], [-1, -1], [1, -1]];
+const RIGHT: Dir = [0, 1], DOWN: Dir = [1, 0], DOWN_RIGHT: Dir = [1, 1];
+/** Words are always spelled FORWARDS, the way a child reads: left to right, top to bottom, or diagonally down to the right. Never backwards. */
+const FORWARD: Dir[] = [RIGHT, DOWN, DOWN_RIGHT];
 
 /** Spark (Emergent Reader): a small grid, 4 words, only left-to-right and top-to-bottom.
- *  Seeker (Developing Reader): a bigger grid, 6 words, in every direction including backwards and diagonal. */
+ *  Seeker (Developing Reader): a bigger grid, 6 words, across, down or diagonally down-right: still always forwards. */
 export const PUZZLE_RULES: Record<PuzzleLevel, { size: number; count: number; dirs: Dir[]; label: string }> = {
   spark: { size: 7, count: 4, dirs: [RIGHT, DOWN], label: 'Easy' },
-  seeker: { size: 10, count: 6, dirs: ALL, label: 'Challenge' },
+  seeker: { size: 10, count: 6, dirs: FORWARD, label: 'Challenge' },
 };
 export const MIN_WORDS = 3;
 
@@ -66,8 +67,35 @@ function attempt(level: PuzzleLevel, words: string[], rng: Rng): { grid: string[
   return { grid, placements };
 }
 
-/** Build a fresh puzzle. Returns null when no usable words could be placed. */
+/** How many times a word is spelled forwards (right, down or diagonally down-right) in a full grid. */
+export function countForward(grid: string[][], word: string): number {
+  const n = grid.length;
+  let count = 0;
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) for (const [dr, dc] of FORWARD) {
+    let i = 0;
+    while (i < word.length && inside(n, r + dr * i, c + dc * i) && grid[r + dr * i][c + dc * i] === word[i]) i++;
+    if (i === word.length) count++;
+  }
+  return count;
+}
+
+/** Safety net: every word must read letter by letter, in order, along a straight FORWARD line of the finished grid. */
+export function puzzleIsValid(p: Puzzle): boolean {
+  return p.placements.every((pl) => {
+    if (pl.cells.length !== pl.word.length || pl.cells.some((c) => !inside(p.size, c.r, c.c))) return false;
+    if (pl.cells.map((c) => p.grid[c.r][c.c]).join('') !== pl.word) return false;
+    const dr = pl.cells[1].r - pl.cells[0].r, dc = pl.cells[1].c - pl.cells[0].c;
+    return FORWARD.some(([r, c]) => r === dr && c === dc) && pl.cells.every((c, i) => c.r === pl.cells[0].r + dr * i && c.c === pl.cells[0].c + dc * i);
+  });
+}
+
+/** Build a fresh puzzle. Returns null when no usable words could be placed. A puzzle is only handed out after it has been checked. */
 export function buildPuzzle(level: PuzzleLevel, storyWords: string[], rng: Rng = Math.random): Puzzle | null {
+  for (let n = 0; n < 5; n++) { const p = buildOnce(level, storyWords, rng); if (!p) return null; if (puzzleIsValid(p)) return p; }
+  return null;
+}
+
+function buildOnce(level: PuzzleLevel, storyWords: string[], rng: Rng): Puzzle | null {
   const { size } = PUZZLE_RULES[level];
   const words = pickWords(level, storyWords, rng).sort((a, b) => b.length - a.length); // long words first fit best
   if (!words.length) return null;
@@ -78,7 +106,12 @@ export function buildPuzzle(level: PuzzleLevel, storyWords: string[], rng: Rng =
   }
   if (!best.placements.length) return null;
   const A = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  for (let r = 0; r < size; r++) for (let c = 0; c < size; c++) if (best.grid[r][c] === '') best.grid[r][c] = A[Math.floor(rng() * 26)];
+  const base = best.grid.map((row) => [...row]);
+  // Fill the empty squares with random letters. If the fill happens to spell one of the words a second time, fill again.
+  for (let n = 0; n < 30; n++) {
+    for (let r = 0; r < size; r++) for (let c = 0; c < size; c++) best.grid[r][c] = base[r][c] === '' ? A[Math.floor(rng() * 26)] : base[r][c];
+    if (best.placements.every((p) => countForward(best.grid, p.word) === 1)) break;
+  }
   return { level, size, grid: best.grid, placements: shuffled(best.placements, rng) };
 }
 
@@ -92,15 +125,20 @@ export function lineCells(a: Cell, b: Cell): Cell[] | null {
 }
 
 /**
- * The word spelled by the line from a to b (forwards or backwards), if it is one of the puzzle's words not yet found.
- * Reads the letters, so an extra copy of a word that the random fill happened to make also counts.
+ * The word spelled by the line from a to b, if it is one of the puzzle's words not yet found. Words only ever read
+ * forwards (left to right, top to bottom, or diagonally down to the right), so the order the child taps the two ends
+ * does not matter: the line is always read from its first letter. Reads the letters, so an extra copy of a word that
+ * the random fill happened to make also counts, but a word spelled backwards never does.
  */
 export function checkSelection(p: Puzzle, a: Cell, b: Cell, found: ReadonlySet<string>): { word: string; cells: Cell[] } | null {
-  const cells = lineCells(a, b);
+  let cells = lineCells(a, b);
   if (!cells || cells.length < 2) return null;
+  const first = cells[0], last = cells[cells.length - 1];
+  if (last.r < first.r || (last.r === first.r && last.c < first.c)) cells = [...cells].reverse(); // start from the end that comes first
+  const dr = Math.sign(cells[1].r - cells[0].r), dc = Math.sign(cells[1].c - cells[0].c);
+  if (!FORWARD.some(([r, c]) => r === dr && c === dc)) return null; // up-right and down-left lines would be read backwards
   const text = cells.map((x) => p.grid[x.r][x.c]).join('');
-  const back = [...text].reverse().join('');
-  const word = p.placements.map((x) => x.word).find((w) => !found.has(w) && (w === text || w === back));
+  const word = p.placements.map((x) => x.word).find((w) => !found.has(w) && w === text);
   return word ? { word, cells } : null;
 }
 

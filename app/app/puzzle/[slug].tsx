@@ -18,7 +18,7 @@ const tints = () => [colors.amberSoft, colors.secondarySoft, colors.primarySoft,
 
 /**
  * The word hunt: a word search played after a story. Spark gets a small, easy grid; Seeker a bigger one where words can
- * go any way. Every new attempt is a fresh, shuffled puzzle. Tap the first letter of a word, then its last letter.
+ * also go diagonally (always forwards, never backwards). Every new attempt is a fresh, shuffled puzzle. Tap the first letter of a word, then its last letter.
  */
 export default function WordHunt() {
   useTheme();
@@ -95,7 +95,7 @@ export default function WordHunt() {
         </View>
 
         <Text style={styles.how}>
-          {done ? 'You found every word. Great reading!' : `Find the hidden words. Tap the first letter of a word, then its last letter.${story.level === 'seeker' ? ' Words can go across, down, diagonally or backwards.' : ''}`}
+          {done ? 'You found every word. Great reading!' : `Find the hidden words. Tap the first letter of a word, then its last letter.${story.level === 'seeker' ? ' Words can go across, down or diagonally, and always read forwards.' : ''}`}
         </Text>
 
         <View style={[styles.board, { width: cellW * size + 12 }]} accessible={false} accessibilityLabel="Word search grid">

@@ -36,7 +36,7 @@ const AXE = fs.readFileSync(process.env.AXE, 'utf8');
     const words = [...document.querySelectorAll('[aria-label]')].map((e) => e.getAttribute('aria-label')).filter((l) => /^[A-Z]{3,10}(, found)?$/.test(l)).map((l) => l.replace(', found', ''));
     return { size, grid: Array.from({ length: size }, (_, r) => Array.from({ length: size }, (_, c) => cells.find((x) => x.r === r && x.c === c).l)), words };
   });
-  const DIRS = [[0, 1], [1, 0], [1, 1], [-1, 1], [0, -1], [-1, 0], [-1, -1], [1, -1]];
+  const DIRS = [[0, 1], [1, 0], [1, 1]]; // words only ever read FORWARDS: across, down, or diagonally down-right (never backwards)
   const locate = (grid, word) => {
     const n = grid.length;
     for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) for (const [dr, dc] of DIRS) {
@@ -99,7 +99,7 @@ const AXE = fs.readFileSync(process.env.AXE, 'utf8');
   await step('Seeker: bigger 10x10 grid, 6 words, any direction, solvable', async () => {
     await toEnd(page, 'The Snow Trek', 4);
     await page.getByRole('button', { name: 'Play the word hunt' }).click(); await page.getByRole('heading', { name: 'Word hunt' }).waitFor();
-    await page.getByText(/Words can go across, down, diagonally or backwards/).waitFor();
+    await page.getByText(/Words can go across, down or diagonally, and always read forwards/).waitFor();
     const dirs = new Set(); let total = 0;
     for (let round = 0; round < 6; round++) {
       const g = await read(page);
@@ -112,7 +112,7 @@ const AXE = fs.readFileSync(process.env.AXE, 'utf8');
       await page.getByRole('button', { name: /Play again/ }).click(); await page.getByText('0 of 6 found').waitFor();
     }
     console.log('  Seeker directions seen over 6 attempts:', dirs.size);
-    if (dirs.size < 4) throw new Error('Seeker words should run in many directions');
+    if (dirs.size < 3) throw new Error('Seeker words should run across, down and diagonally (all forwards)');
   });
   console.log(b.errors.length ? 'page errors: ' + b.errors.join(' | ') : 'no page errors'); await b.ctx.close();
   console.log(fails ? `${fails} FAILED` : 'ALL PASSED');
