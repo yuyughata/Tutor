@@ -80,21 +80,22 @@ const NUM = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eigh
     await audit('forgot password');
     await page.getByRole('button', { name: 'Done' }).click();
   });
-  await step('free plan: "Change plan" link goes to the website plans page; premium has no such link', async () => {
+  await step('free plan: "Change plan" button goes to the website plans page; premium has no such button', async () => {
     await tab('Home').click(); await tab('Grown-ups').click(); await page.getByText('Free plan', { exact: true }).waitFor({ timeout: 6000 });
-    const link = page.getByRole('link', { name: /Change plan/ });
-    await link.waitFor(); if (!(await link.innerText()).includes('Change plan – to access premium stories')) throw new Error('link text: ' + (await link.innerText()));
+    const link = page.getByRole('button', { name: 'Change plan', exact: true });
+    await link.waitFor();
     // tapping it opens the website's plans page (same tab on web). A 204 reply cancels that navigation so the app stays put and just record the address.
     let hit = null; const catcher = (r) => { hit = r.request().url(); return r.fulfill({ status: 204 }); };
     await ctx.route(/genova\.test\/plans/, catcher);
     await link.click(); for (let i = 0; i < 30 && !hit; i++) await page.waitForTimeout(100);
     await ctx.unroute(/genova\.test\/plans/, catcher);
-    if (!hit || !/genova\.test\/plans\/$/.test(hit)) throw new Error('the link did not open the plans page: ' + hit);
+    if (!hit || !/genova\.test\/plans\/$/.test(hit)) throw new Error('the button did not open the plans page: ' + hit);
+    await audit('grown-ups (free, Change plan button)');
     await page.screenshot({ path: `${process.env.OUT || '.'}/grownups-free-plan.png` });
   });
   await step('premium unlocks after sign-in', async () => {
     state.access = { active: true, status: 'active', plan: 'monthly', current_period_end: new Date(Date.now() + 20 * 864e5).toISOString(), access_until: new Date(Date.now() + 25 * 864e5).toISOString(), in_grace: false };
-    await page.waitForTimeout(500); await tab('Home').click(); await tab('Grown-ups').click(); await page.getByText('Premium is active').waitFor({ timeout: 6000 }); if (await page.getByRole('link', { name: /Change plan/ }).count()) throw new Error('premium accounts must not see the change-plan link'); await audit('grown-ups (premium)');
+    await page.waitForTimeout(500); await tab('Home').click(); await tab('Grown-ups').click(); await page.getByText('Premium is active').waitFor({ timeout: 6000 }); if (await page.getByRole('button', { name: 'Change plan', exact: true }).count()) throw new Error('premium accounts must not see the change-plan button'); await audit('grown-ups (premium)');
   });
   await step('theme: switch to teal, stay on Grown-ups, amber actions, reader modes per theme', async () => {
     const rgb = async (loc, prop = 'backgroundColor') => loc.evaluate((el, p) => getComputedStyle(el)[p], prop);

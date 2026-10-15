@@ -80,11 +80,11 @@ export default function GrownUps() {
                 {entitlement.inGrace ? 'Payment overdue' : entitlement.active ? 'Premium is active' : 'Free plan'}
               </Text>
             </View>
-            {!entitlement.active && WEB_URL && (
-              <Tap accessibilityRole="link" accessibilityLabel="Change plan, to access premium stories. Opens the Genova website" onPress={() => Linking.openURL(`${WEB_URL}/plans/`)} style={styles.planLink}>
-                <Ionicons name="star" size={16} color={colors.primaryDeep} />
-                <Text style={styles.planLinkText}>Change plan – to access premium stories</Text>
-              </Tap>
+            {(!entitlement.active || entitlement.inGrace) && WEB_URL && (
+              <>
+                <Button label="Change plan" icon="star" onPress={() => Linking.openURL(`${WEB_URL}/plans/`)} />
+                <Text style={styles.hint}>Opens the Genova website, where you can choose a plan to unlock every story.</Text>
+              </>
             )}
             {entitlement.inGrace && entitlement.until && (
               <Text style={styles.body}>Renew on the website before {new Date(entitlement.until).toLocaleDateString(undefined, { day: 'numeric', month: 'long' })} to keep Premium. After that your account moves back to the Free plan.</Text>
@@ -203,8 +203,7 @@ const styles = themed(() => StyleSheet.create({
   card: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: space.md, gap: 12 },
   cardTitle: { ...type.title, color: colors.ink },
   body: { ...type.body, color: colors.muted },
-  planLink: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44, alignSelf: 'flex-start' },
-  planLinkText: { fontFamily: fonts.bold, fontSize: 15, lineHeight: 20, color: colors.primaryDeep, textDecorationLine: 'underline', flexShrink: 1 },
+  hint: { ...type.small, color: colors.muted },
   badge: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 6, borderRadius: radius.pill },
   badgeOn: { backgroundColor: colors.secondarySoft },
   badgeOff: { backgroundColor: colors.border },
