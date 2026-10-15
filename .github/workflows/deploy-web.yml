@@ -1,0 +1,89 @@
+name: Deploy Web to AWS EC2
+
+on:
+  push:
+    branches:
+      - claude/gifted-brahmagupta-a0jtkt
+      - main
+    paths:
+      - 'web/**'
+      - 'deploy/**'
+      - '.github/workflows/deploy-web.yml'
+  workflow_dispatch:
+    inputs:
+      target_branch:
+        description: 'Branch to deploy (leave empty for current branch)'
+        required: false
+        default: ''
+
+jobs:
+  test:
+    name: Run Tests & Quality Checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Test Next.js static build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://cjdrlddvbyfataumdztg.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZHJsZGR2YnlmYXRhdW1kenRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0NzA0MzcsImV4cCI6MjEwNzA0NjQzN30.SwnZqajinzmRx_6t2oWFlAAV-8v-u9URHImiB1DKhvA
+          NEXT_PUBLIC_SUPPORT_EMAIL: support@custar.com
+
+  deploy:
+    name: Deploy to EC2
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      EC2_HOST: ${{ vars.EC2_HOST || '16.170.250.41' }}
+      EC2_USER: ${{ vars.EC2_USER || 'ubuntu' }}
+      TARGET_BRANCH: ${{ inputs.target_branch || github.ref_name }}
+    steps:
+      - name: Setup SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts
+
+      - name: Deploy and Restart on EC2
+        run: |
+          ssh "$EC2_USER@$EC2_HOST" "
+            set -euo pipefail
+            cd /home/ubuntu/genova
+            bash deploy/deploy.sh '$TARGET_BRANCH'
+          "
+
+      - name: Verify Live Website Health
+        run: |
+          echo "Waiting 5 seconds for Nginx container..."
+          sleep 5
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://custar.ng/ || true)
+          echo "https://custar.ng/ returned HTTP $HTTP_STATUS"
+          if [ "$HTTP_STATUS" -ne 200 ] && [ "$HTTP_STATUS" -ne 301 ]; then
+            echo "::error::Health check failed with HTTP $HTTP_STATUS"
+            exit 1
+          fi
+          echo "Deployment verified live and healthy!"
