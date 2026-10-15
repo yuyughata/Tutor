@@ -10,9 +10,9 @@ import { createDemoApi } from '../../public/admin/js/demo.js';
 
 const { createClient } = process.env.SUPABASE_JS
   ? createRequire(import.meta.url)(process.env.SUPABASE_JS)
-  : await import('../../../app/node_modules/@supabase/supabase-js/dist/index.mjs');
+  : await import('../../node_modules/@supabase/supabase-js/dist/index.mjs').catch(() => import('../../../app/node_modules/@supabase/supabase-js/dist/index.mjs'));
 
-function harness(handler) {
+function harness(handler, opts = {}) {
   const calls = [];
   const fakeFetch = async (input, init = {}) => {
     const url = new URL(typeof input === 'string' ? input : input.url);
@@ -25,7 +25,7 @@ function harness(handler) {
     return new Response(JSON.stringify(payload), { status, headers: { 'content-type': 'application/json' } });
   };
   const sb = createClient('https://example.supabase.co', 'anon-key', { global: { fetch: fakeFetch }, auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
-  return { api: createApi(sb), calls };
+  return { api: createApi(sb, { fetch: fakeFetch, ...opts }), calls };
 }
 const rest = (c, table) => c.path === `/rest/v1/${table}`;
 
@@ -245,4 +245,39 @@ test('landing-page form requests: read from the right table, update only status 
   assert.equal(up.query.id, 'eq.r1');
   const counts = await api.newRequestCounts();
   assert.deepEqual(Object.keys(counts).sort(), ['grp', 'title']);
+});
+
+test('R2 storage driver: uploads via presigned PUT and fetches signed GET URLs via r2-storage function', async () => {
+  const { api, calls } = harness((c) => {
+    if (c.path === '/functions/v1/r2-storage') {
+      if (c.body.action === 'get_upload_url') {
+        return [200, { uploadUrl: 'https://r2.example.com/upload-target', publicUrl: 'https://covers.genova.app/s1/cover.png' }];
+      }
+      if (c.body.action === 'get_signed_url') {
+        return [200, { signedUrl: `https://r2.example.com/${c.body.path}?token=r2-signed` }];
+      }
+    }
+    if (c.path === '/upload-target') {
+      return [200, { ok: true }];
+    }
+    return [200, []];
+  }, { storageDriver: 'r2' });
+
+  // Test cover upload with R2
+  const fakeFile = { name: 'cover.png', type: 'image/png', size: 1000 };
+  const coverUrl = await api.uploadCover('s1', fakeFile);
+  assert.equal(coverUrl, 'https://covers.genova.app/s1/cover.png');
+  const r2FuncCall = calls.find((c) => c.path === '/functions/v1/r2-storage' && c.body.action === 'get_upload_url');
+  assert.ok(r2FuncCall);
+  assert.equal(r2FuncCall.body.bucket, 'covers');
+  const putCall = calls.find((c) => c.path === '/upload-target');
+  assert.ok(putCall, 'PUT request was sent directly to R2 upload target');
+  assert.equal(putCall.method, 'PUT');
+
+  // Test page signed URL with R2
+  const signedUrl = await api.pageImageUrl('s1/p1.png');
+  assert.equal(signedUrl, 'https://r2.example.com/s1/p1.png?token=r2-signed');
+  const signedUrlCall = calls.find((c) => c.path === '/functions/v1/r2-storage' && c.body.action === 'get_signed_url');
+  assert.ok(signedUrlCall);
+  assert.equal(signedUrlCall.body.bucket, 'pages');
 });

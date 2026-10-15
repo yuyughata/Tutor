@@ -92,6 +92,10 @@ Thirteen categories, in order: Adventure, Family & Friendship, Character & Growt
 ## Hosting (2026-10-12)
 Landing page at `www.custar.ng/` (single file), Next.js site at `www.custar.ng/Genova/` via `NEXT_PUBLIC_BASE_PATH=/Genova`; see `docs/HANDOFF.md` "Hosting at /Genova" and `docs/Genova_Web_Upload.zip`. Edge functions use `webOrigin()` for CORS; deployed so far: paystack-manage, paystack-checkout. **Not yet redeployed (deploy was declined):** admin-user-support, support-request, send-email, send-reminders.
 
+## AWS & Cloudflare Deployment (2026-10-15)
+- **Web on AWS EC2 via Cloudflare Tunnel (No Elastic IP):** `deploy/Dockerfile` (multi-stage Nginx Alpine), `deploy/docker-compose.yml`, `deploy/nginx.conf`, and `deploy/ec2-user-data.sh` (cloud-init automated provisioning). Security group has 0 inbound rules; remote management is via AWS Systems Manager (SSM) Session Manager. Traffic routes through Cloudflare Tunnel directly to `http://web:80`. See `docs/AWS_CLOUDFLARE_DEPLOYMENT.md`.
+- **Cloudflare R2 Storage:** Used for covers (public CDN), page art (private presigned GET URLs), and songs (private presigned GET URLs). Supabase edge function `supabase/functions/r2-storage/index.ts` with logic in `_shared/r2Storage.ts` (tested in `supabase/tests/r2_storage.test.mjs`). Admin CMS `web/public/admin/js/api.js` and mobile app `app/src/data/repository.ts` support `storageDriver: 'r2'` with graceful fallback to Supabase Storage.
+
 ## Launch (see docs/LAUNCH_GUIDE.md)
 `app/eas.json` (profiles preview / production / production-android), store fields and placeholder icons in `app/app.json` + `app/assets`, public `/support/` page, `web/public/_headers` + `robots.txt`. **Store-policy switch:** `EXPO_PUBLIC_WEB_LINKS=off` (see `src/lib/webLinks.ts`) hides every link-out; the Android production profile sets it. The app's only account link says "Manage my account on the web" (no "Get Premium"). Not yet built: self-service account deletion, Terms page, final brand icon.
 

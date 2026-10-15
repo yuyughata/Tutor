@@ -25,10 +25,15 @@ function checkImage(file) {
 }
 const uuid = () => (globalThis.crypto?.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`);
 
-export function createApi(sb) {
+export function createApi(sb, opts = {}) {
   const signedCache = new Map();
+  const isR2 = opts.storageDriver === 'r2' || (typeof window !== 'undefined' && window.GENOVA?.storageDriver === 'r2');
 
   async function removeFolder(bucket, folder, keep = []) {
+    if (isR2) {
+      // In R2, cleanup is handled server-side or via r2-storage delete_objects
+      return;
+    }
     const { data } = await sb.storage.from(bucket).list(folder, { limit: 1000 });
     const stale = (data || []).map((f) => `${folder}/${f.name}`).filter((p) => !keep.includes(p));
     if (stale.length) await sb.storage.from(bucket).remove(stale);
@@ -154,6 +159,22 @@ export function createApi(sb) {
     async uploadCover(storyId, file) {
       checkImage(file);
       const path = `${storyId}/${Date.now()}.${extOf(file)}`;
+      if (isR2) {
+        const { uploadUrl, publicUrl } = await invoke('r2-storage', {
+          action: 'get_upload_url',
+          bucket: 'covers',
+          path,
+          contentType: file.type,
+          cacheControl: '31536000',
+        });
+        const res = await (opts.fetch || fetch)(uploadUrl, {
+          method: 'PUT',
+          headers: { 'Content-Type': file.type, 'Cache-Control': '31536000' },
+          body: file,
+        });
+        if (!res.ok) throw new Error(`Upload to R2 failed: ${res.statusText || res.status}`);
+        return publicUrl || path;
+      }
       const { error } = await sb.storage.from('covers').upload(path, file, { contentType: file.type, cacheControl: '31536000' });
       if (error) throw friendly(error);
       try { await removeFolder('covers', storyId, [path]); } catch { /* ignore */ }
@@ -162,6 +183,22 @@ export function createApi(sb) {
     async uploadPageImage(storyId, file) {
       checkImage(file);
       const path = `${storyId}/${uuid()}.${extOf(file)}`;
+      if (isR2) {
+        const { uploadUrl } = await invoke('r2-storage', {
+          action: 'get_upload_url',
+          bucket: 'pages',
+          path,
+          contentType: file.type,
+          cacheControl: '3600',
+        });
+        const res = await (opts.fetch || fetch)(uploadUrl, {
+          method: 'PUT',
+          headers: { 'Content-Type': file.type, 'Cache-Control': '3600' },
+          body: file,
+        });
+        if (!res.ok) throw new Error(`Upload to R2 failed: ${res.statusText || res.status}`);
+        return path;
+      }
       const { error } = await sb.storage.from('pages').upload(path, file, { contentType: file.type, cacheControl: '3600' });
       if (error) throw friendly(error);
       return path;
@@ -170,6 +207,22 @@ export function createApi(sb) {
     async uploadSong(storyId, blob) {
       if (blob.size > MAX_SONG_BYTES) throw new Error('That song is still over 3 MB after compressing. Please use a shorter one.');
       const path = `${storyId}/${uuid()}.mp3`;
+      if (isR2) {
+        const { uploadUrl } = await invoke('r2-storage', {
+          action: 'get_upload_url',
+          bucket: 'songs',
+          path,
+          contentType: 'audio/mpeg',
+          cacheControl: '3600',
+        });
+        const res = await (opts.fetch || fetch)(uploadUrl, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'audio/mpeg', 'Cache-Control': '3600' },
+          body: blob,
+        });
+        if (!res.ok) throw new Error(`Upload to R2 failed: ${res.statusText || res.status}`);
+        return path;
+      }
       const { error } = await sb.storage.from('songs').upload(path, blob, { contentType: 'audio/mpeg', cacheControl: '3600' });
       if (error) throw friendly(error);
       return path;
@@ -178,6 +231,14 @@ export function createApi(sb) {
     async songUrl(path) {
       if (!path) return '';
       if (/^(https?:|data:|blob:)/.test(path)) return path;
+      if (isR2) {
+        const { signedUrl } = await invoke('r2-storage', {
+          action: 'get_signed_url',
+          bucket: 'songs',
+          path,
+        });
+        return signedUrl || '';
+      }
       const { data, error } = await sb.storage.from('songs').createSignedUrl(path, 3600);
       return error ? '' : data.signedUrl;
     },
@@ -187,6 +248,16 @@ export function createApi(sb) {
       if (/^(https?:|data:|blob:)/.test(path)) return path;
       const hit = signedCache.get(path);
       if (hit && hit.exp > Date.now()) return hit.url;
+      if (isR2) {
+        const { signedUrl } = await invoke('r2-storage', {
+          action: 'get_signed_url',
+          bucket: 'pages',
+          path,
+        });
+        if (!signedUrl) return '';
+        signedCache.set(path, { url: signedUrl, exp: Date.now() + 50 * 60 * 1000 });
+        return signedUrl;
+      }
       const { data, error } = await sb.storage.from('pages').createSignedUrl(path, 3600);
       if (error) return '';
       signedCache.set(path, { url: data.signedUrl, exp: Date.now() + 50 * 60 * 1000 });

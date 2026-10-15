@@ -1,0 +1,37 @@
+services:
+  web:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:-https://cjdrlddvbyfataumdztg.supabase.co}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZHJsZGR2YnlmYXRhdW1kenRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0NzA0MzcsImV4cCI6MjEwNzA0NjQzN30.SwnZqajinzmRx_6t2oWFlAAV-8v-u9URHImiB1DKhvA}
+        NEXT_PUBLIC_SUPPORT_EMAIL: ${NEXT_PUBLIC_SUPPORT_EMAIL:-support@custar.com}
+        NEXT_PUBLIC_BASE_PATH: ${NEXT_PUBLIC_BASE_PATH:-}
+    container_name: genova-web
+    restart: unless-stopped
+    expose:
+      - "80"
+    ports:
+      # Optional local loopback port for debugging on the host (not exposed externally)
+      - "127.0.0.1:8080:80"
+    networks:
+      - genova-net
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: genova-tunnel
+    restart: unless-stopped
+    # Run with local config file so ingress rules (custar.ng -> web:80)
+    # are defined here, not in the Cloudflare dashboard
+    command: tunnel --no-autoupdate --config /etc/cloudflared/config.yml run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    volumes:
+      - ./cloudflared-config.yml:/etc/cloudflared/config.yml:ro
+    depends_on:
+      - web
+    networks:
+      - genova-net
+
+networks:
+  genova-net:
+    driver: bridge
