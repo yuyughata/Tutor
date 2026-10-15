@@ -105,6 +105,9 @@ One minimal layout for every email (`renderEmail` in `supabase/functions/_shared
 ## Scheduled reminders (built, migration 0006)
 Daily pg_cron job `send-reminder-emails` (08:00 UTC = 09:00 Nigeria) -> pg_net -> edge function `send-reminders` (verify_jwt off; authenticates with the `x-job-secret` header = `job_secrets.reminders`, or an admin JWT for "Run now"). Rules in `email_reminder_rules` (renewal_upcoming 3 days, access_ending 3 days, grace_ending 2 days; editable in Admin > Email > Reminders). `reminder_candidates()` picks who is due; `email_reminders` records one send per (parent, kind, period_end) so nothing repeats; the claim is released if sending fails. Tests: `supabase/tests/reminders.test.mjs`. On a new project run `select private.schedule_reminders('https://<ref>.supabase.co/functions/v1');`.
 
+## Sign-up "wait a minute" (2026-10-15)
+Auth logs showed `429 over_email_send_rate_limit` on `/signup`: Supabase's built-in email sender allows only a few emails per hour for the whole project, and when it trips the sign-up is rolled back (no account). `friendly()` (web `lib/errors.ts`, app `state/auth.tsx`) now says so instead of "wait a minute". **Real fix is in the Supabase dashboard:** Authentication > SMTP Settings (custom SMTP, e.g. Resend), then raise Authentication > Rate Limits > emails. Also set Authentication > URL Configuration: Site URL is still `http://localhost:3000` (confirmation/reset links point there); use `https://www.custar.ng/Genova` and add `https://www.custar.ng/Genova/**` to redirect URLs.
+
 ## Backlog
 - Email domain verification and the first real Resend test.
 - Paystack: the live secret key must be set as the Supabase secret `PAYSTACK_SECRET_KEY` (dashboard > Edge Functions > Secrets); it was shared in chat once, so roll it in the Paystack dashboard and set the new value. The webhook URL in Paystack must be the Supabase function URL, not another site's.

@@ -32,6 +32,9 @@ const AuthContext = createContext<Ctx | null>(null);
 /** Turn technical auth errors into something a parent can act on. */
 function friendly(message: string): string {
   if (/expired|invalid/i.test(message) && /token|otp|code/i.test(message)) return 'That code is not right or has expired. Request a new one.';
+  if (/already (registered|been registered)/i.test(message)) return 'There is already an account with that email. Try signing in.';
+  // Supabase's email sender is capped per hour for the whole project; the account is not created when it trips.
+  if (/email rate limit|over_email_send_rate_limit/i.test(message)) return 'We could not send your confirmation email just now because too many emails were sent in the last hour. Nothing was created. Please try again in about an hour, or contact support.';
   if (/rate|too many|seconds/i.test(message)) return 'Please wait a minute before trying again.';
   if (/password/i.test(message) && /(6|8|short|weak|least)/i.test(message)) return 'Choose a longer password (at least 8 characters).';
   return message;
@@ -128,7 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signUp: async (email, password) => {
         if (!supabase) return 'Sign-in is not set up in this build.';
         const { data, error } = await supabase.auth.signUp({ email, password });
-        if (error) return error.message;
+        if (error) return friendly(error.message);
         return data.session ? null : 'Check your email to confirm your account, then sign in.';
       },
       signOut: async () => {
