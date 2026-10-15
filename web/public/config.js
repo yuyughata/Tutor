@@ -1,4 +1,5 @@
 // Public client configuration for the GenovaStorybook Supabase project.
+// Production domain: https://custar.ng
 // The anon key is designed to be public: every table is protected by row-level security.
 // Never put the service-role key or the Paystack secret key in this file.
 window.GENOVA = {
