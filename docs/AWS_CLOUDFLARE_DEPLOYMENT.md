@@ -181,17 +181,26 @@ You do not need SSH keys or open ports. In the AWS EC2 Console:
 2. Click **Connect** > **Session Manager** > **Connect**.
 3. A root/ssm shell opens in your browser!
 
-### 6.2 Redeploying New Code
-To redeploy when code changes are pushed:
+### 6.2 Automated Deployment via GitHub Actions
+Every push to `main` or `claude/gifted-brahmagupta-a0jtkt` touching `web/` or `deploy/` automatically runs tests and deploys to EC2 via [deploy-web.yml](file:///.github/workflows/deploy-web.yml).
+
+**Required GitHub Repository Secret:**
+- `EC2_SSH_KEY`: Private RSA key from `custar.pem` (under GitHub Repo > Settings > Secrets and variables > Actions > Secrets).
+
+**Optional GitHub Variables (defaults are configured):**
+- `EC2_HOST`: `16.170.250.41`
+- `EC2_USER`: `ubuntu`
+
+### 6.3 Manual Server Redeployment
+To redeploy directly from the server:
 ```bash
-sudo -i
-cd /opt/genova
+cd /home/ubuntu/genova
 ./deploy/deploy.sh
 ```
 
-### 6.3 Checking Logs
+### 6.4 Checking Logs
 ```bash
-cd /opt/genova
+cd /home/ubuntu/genova
 docker compose -f deploy/docker-compose.yml logs -f web
 docker compose -f deploy/docker-compose.yml logs -f tunnel
 ```
