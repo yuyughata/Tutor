@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+import { PasswordField } from '@/components/PasswordField';
 import { PremiumBadge } from '@/components/PremiumBadge';
 import { useAuth } from '@/lib/auth';
 import { friendly, functionError } from '@/lib/errors';
@@ -89,6 +90,7 @@ export function AccountClient() {
 function PasswordCard() {
   const [pw, setPw] = useState('');
   const [pw2, setPw2] = useState('');
+  const [show, setShow] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
   async function save(e: React.FormEvent) {
@@ -105,8 +107,8 @@ function PasswordCard() {
   return (
     <form className="card" style={{ marginTop: 24 }} onSubmit={save}>
       <h3 style={{ marginBottom: 14 }}>Change password</h3>
-      <div className="field"><label htmlFor="pw">New password</label><input id="pw" type="password" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} /></div>
-      <div className="field"><label htmlFor="pw2">Repeat new password</label><input id="pw2" type="password" autoComplete="new-password" value={pw2} onChange={(e) => setPw2(e.target.value)} /></div>
+      <PasswordField id="pw" label="New password" autoComplete="new-password" value={pw} onChange={setPw} shown={show} onToggle={() => setShow((v) => !v)} />
+      <PasswordField id="pw2" label="Repeat new password" autoComplete="new-password" value={pw2} onChange={setPw2} shown={show} onToggle={() => setShow((v) => !v)} />
       {msg && <div className={`notice ${msg.ok ? 'ok' : 'bad'}`} role="status" style={{ marginBottom: 14 }}>{msg.text}</div>}
       <button className="btn secondary" disabled={busy || !pw}>{busy ? 'Saving…' : 'Change password'}</button>
     </form>

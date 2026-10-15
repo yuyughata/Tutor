@@ -2,6 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput } from 'react-native';
 import { Button } from '../src/components/Button';
+import { PasswordInput } from '../src/components/PasswordInput';
 import { useAuth } from '../src/state/auth';
 import { colors, fonts, radius, space, type, themed } from '../src/theme';
 import { useTheme } from '../src/state/theme';
@@ -70,8 +71,8 @@ export default function ForgotPassword() {
         {step === 'password' && (
           <>
             <Text style={styles.body}>Use at least 8 characters.</Text>
-            <TextInput value={pw} onChangeText={setPw} placeholder="New password" placeholderTextColor={colors.lock} secureTextEntry autoCapitalize="none" autoComplete="new-password" textContentType="newPassword" accessibilityLabel="New password" style={styles.input} />
-            <TextInput value={pw2} onChangeText={setPw2} placeholder="Repeat new password" placeholderTextColor={colors.lock} secureTextEntry autoCapitalize="none" autoComplete="new-password" accessibilityLabel="Repeat new password" style={styles.input} />
+            <PasswordInput value={pw} onChangeText={setPw} placeholder="New password" placeholderTextColor={colors.lock} autoComplete="new-password" textContentType="newPassword" accessibilityLabel="New password" style={styles.input} />
+            <PasswordInput value={pw2} onChangeText={setPw2} placeholder="Repeat new password" placeholderTextColor={colors.lock} autoComplete="new-password" accessibilityLabel="Repeat new password" style={styles.input} />
           </>
         )}
         {step === 'done' && <Text style={styles.body}>Your password has been changed and you are signed in. You can close this screen.</Text>}

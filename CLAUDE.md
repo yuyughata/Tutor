@@ -108,6 +108,9 @@ Daily pg_cron job `send-reminder-emails` (08:00 UTC = 09:00 Nigeria) -> pg_net -
 ## Sign-up "wait a minute" (2026-10-15)
 Auth logs showed `429 over_email_send_rate_limit` on `/signup`: Supabase's built-in email sender allows only a few emails per hour for the whole project, and when it trips the sign-up is rolled back (no account). `friendly()` (web `lib/errors.ts`, app `state/auth.tsx`) now says so instead of "wait a minute". **Real fix is in the Supabase dashboard:** Authentication > SMTP Settings (custom SMTP, e.g. Resend), then raise Authentication > Rate Limits > emails. Also set Authentication > URL Configuration: Site URL is still `http://localhost:3000` (confirmation/reset links point there); use `https://www.custar.ng/Genova` and add `https://www.custar.ng/Genova/**` to redirect URLs.
 
+## Show / Hide password (2026-10-15)
+Every password box has a Show/Hide button (hidden by default, not remembered): website `web/components/PasswordField.tsx` (sign-in, sign-up, forgot-password, account change password; password + repeat share one toggle), app `src/components/PasswordInput.tsx` (eye icon; sign-in, forgot-password, passcode-reset password), admin sign-in (`.pw-toggle` in `admin.css`). Tests: `site-e2e.cjs` and `app-e2e.cjs` (new steps, axe clean). Tests must use `getByLabel('Password', { exact: true })` because the button is labelled "Show password".
+
 ## Backlog
 - Email domain verification and the first real Resend test.
 - Paystack: the live secret key must be set as the Supabase secret `PAYSTACK_SECRET_KEY` (dashboard > Edge Functions > Secrets); it was shared in chat once, so roll it in the Paystack dashboard and set the new value. The webhook URL in Paystack must be the Supabase function URL, not another site's.

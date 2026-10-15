@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth';
 import { friendly } from '@/lib/errors';
 import { safeNext } from '@/lib/format';
+import { PasswordField } from '@/components/PasswordField';
 import { getSupabase } from '@/lib/supabase';
 
 export function SignupClient() {
@@ -14,6 +15,7 @@ export function SignupClient() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [password2, setPassword2] = useState('');
+  const [show, setShow] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [checkEmail, setCheckEmail] = useState(false);
@@ -50,8 +52,8 @@ export function SignupClient() {
         <h1>Create your account</h1>
         <p className="muted" style={{ fontWeight: 700, marginBottom: 20 }}>For parents and guardians. You will add your children inside the app.</p>
         <div className="field"><label htmlFor="email">Email</label><input id="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} /><div className="hint">Use this same email to sign in on the Genova app.</div></div>
-        <div className="field"><label htmlFor="password">Password</label><input id="password" type="password" autoComplete="new-password" required value={password} onChange={(e) => setPassword(e.target.value)} /><div className="hint">At least 8 characters.</div></div>
-        <div className="field"><label htmlFor="password2">Repeat password</label><input id="password2" type="password" autoComplete="new-password" required value={password2} onChange={(e) => setPassword2(e.target.value)} /></div>
+        <PasswordField id="password" label="Password" autoComplete="new-password" required value={password} onChange={setPassword} hint="At least 8 characters." shown={show} onToggle={() => setShow((v) => !v)} />
+        <PasswordField id="password2" label="Repeat password" autoComplete="new-password" required value={password2} onChange={setPassword2} shown={show} onToggle={() => setShow((v) => !v)} />
         {error && <div className="notice bad" role="alert" style={{ marginBottom: 14 }}>{error}</div>}
         <button className="btn block" disabled={busy}>{busy ? 'Creating account…' : 'Create account'}</button>
         <p className="center small" style={{ marginTop: 18, fontWeight: 700 }}>

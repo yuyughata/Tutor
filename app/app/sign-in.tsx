@@ -3,6 +3,7 @@ import * as Linking from 'expo-linking';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput } from 'react-native';
 import { Button } from '../src/components/Button';
+import { PasswordInput } from '../src/components/PasswordInput';
 import { WEB_URL } from '../src/lib/webLinks';
 import { useAuth } from '../src/state/auth';
 import { colors, fonts, radius, space, type, themed } from '../src/theme';
@@ -37,7 +38,7 @@ export default function SignIn() {
         <Text style={styles.body}>Use the same email you register with on the Genova website.</Text>
 
         <TextInput value={email} onChangeText={setEmail} placeholder="Email" placeholderTextColor={colors.lock} keyboardType="email-address" autoCapitalize="none" autoComplete="email" textContentType="emailAddress" accessibilityLabel="Email" style={styles.input} />
-        <TextInput value={password} onChangeText={setPassword} placeholder="Password" placeholderTextColor={colors.lock} secureTextEntry autoCapitalize="none" autoComplete="current-password" textContentType="password" accessibilityLabel="Password" style={styles.input} />
+        <PasswordInput value={password} onChangeText={setPassword} placeholder="Password" placeholderTextColor={colors.lock} autoComplete="current-password" textContentType="password" accessibilityLabel="Password" style={styles.input} />
         {msg && <Text style={styles.msg} accessibilityLiveRegion="polite" accessibilityRole="alert">{msg}</Text>}
 
         <Button label="Sign in" onPress={submit} loading={busy} disabled={!email.includes('@') || password.length < 6} style={{ marginTop: 8 }} />

@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useRef, useState } from 'react';
+import { PasswordField } from '@/components/PasswordField';
 import { friendly } from '@/lib/errors';
 import { getSupabase } from '@/lib/supabase';
 
@@ -15,6 +16,7 @@ export function ForgotClient() {
   const [code, setCode] = useState('');
   const [pw, setPw] = useState('');
   const [pw2, setPw2] = useState('');
+  const [show, setShow] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
@@ -76,8 +78,8 @@ export function ForgotClient() {
           <form onSubmit={save}>
             <h1>Choose a new password</h1>
             <p className="muted" style={{ fontWeight: 700, margin: '6px 0 20px' }}>Use at least 8 characters.</p>
-            <div className="field"><label htmlFor="pw">New password</label><input id="pw" type="password" autoComplete="new-password" required value={pw} onChange={(e) => setPw(e.target.value)} /></div>
-            <div className="field"><label htmlFor="pw2">Repeat new password</label><input id="pw2" type="password" autoComplete="new-password" required value={pw2} onChange={(e) => setPw2(e.target.value)} /></div>
+            <PasswordField id="pw" label="New password" autoComplete="new-password" required value={pw} onChange={setPw} shown={show} onToggle={() => setShow((v) => !v)} />
+            <PasswordField id="pw2" label="Repeat new password" autoComplete="new-password" required value={pw2} onChange={setPw2} shown={show} onToggle={() => setShow((v) => !v)} />
             {error && <div className="notice bad" role="alert" style={{ marginBottom: 14 }}>{error}</div>}
             <button className="btn block" disabled={busy}>{busy ? 'Saving…' : 'Save new password'}</button>
           </form>

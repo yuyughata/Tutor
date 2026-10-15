@@ -100,7 +100,16 @@ const BASE = 'http://localhost:8096';
   });
   await step('sign out, wrong password, forgot password with a code', async () => {
     state.access = null; await goto('/account/'); await page.getByRole('button', { name: 'Sign out' }).click(); await page.waitForURL(BASE + '/');
-    await goto('/login/'); await page.getByLabel('Email').fill('parent@example.com'); await page.getByLabel('Password').fill('wrong-password'); await page.getByRole('button', { name: 'Sign in' }).click(); await page.getByText('That email or password is not right.').waitFor(); await audit('login');
+    await goto('/login/'); await page.getByLabel('Email').fill('parent@example.com'); await page.getByLabel('Password', { exact: true }).fill('wrong-password');
+    // Show / Hide password
+    const pw = page.getByLabel('Password', { exact: true });
+    if (await pw.getAttribute('type') !== 'password') throw new Error('password should start hidden');
+    await page.getByRole('button', { name: 'Show password' }).click();
+    if (await pw.getAttribute('type') !== 'text' || await pw.inputValue() !== 'wrong-password') throw new Error('Show did not reveal the password');
+    await page.getByRole('button', { name: 'Hide password' }).click();
+    if (await pw.getAttribute('type') !== 'password') throw new Error('Hide did not hide it');
+    await audit('login with show/hide');
+    await page.getByRole('button', { name: 'Sign in' }).click(); await page.getByText('That email or password is not right.').waitFor(); await audit('login');
     await page.getByRole('link', { name: 'Forgot your password?' }).click(); await page.getByRole('heading', { name: 'Forgot your password?' }).waitFor();
     if ((await page.getByLabel('Email').inputValue()) !== 'parent@example.com') throw new Error('email not carried over');
     await page.getByRole('button', { name: 'Send me a code' }).click(); await page.getByRole('heading', { name: 'Enter the code' }).waitFor(); if (state.recoverFor !== 'parent@example.com') throw new Error('recover not requested');

@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth';
 import { friendly } from '@/lib/errors';
 import { safeNext } from '@/lib/format';
+import { PasswordField } from '@/components/PasswordField';
 import { getSupabase } from '@/lib/supabase';
 
 export function LoginClient() {
@@ -31,7 +32,7 @@ export function LoginClient() {
         <h1>Welcome back</h1>
         <p className="muted" style={{ fontWeight: 700, marginBottom: 20 }}>Sign in to manage your plan.</p>
         <div className="field"><label htmlFor="email">Email</label><input id="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></div>
-        <div className="field"><label htmlFor="password">Password</label><input id="password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} /></div>
+        <PasswordField id="password" label="Password" autoComplete="current-password" required value={password} onChange={setPassword} />
         {error && <div className="notice bad" role="alert" style={{ marginBottom: 14 }}>{error}</div>}
         <button className="btn block" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
         <p className="center small" style={{ marginTop: 18, fontWeight: 700 }}>

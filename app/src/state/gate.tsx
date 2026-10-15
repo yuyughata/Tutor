@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
-import { Modal, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Modal, StyleSheet, Text, View } from 'react-native';
 import { Button } from '../components/Button';
+import { PasswordInput } from '../components/PasswordInput';
 import { PIN_LENGTH, PinPad } from '../components/PinPad';
 import { Tap } from '../components/Tap';
 import { useReducedMotion } from '../lib/a11y';
@@ -162,8 +163,8 @@ export function GateProvider({ children }: { children: ReactNode }) {
               <>
                 <Text style={styles.title}>Confirm it is you</Text>
                 <Text style={styles.sub}>Enter the password for your Genova account, then choose a new passcode.</Text>
-                <TextInput
-                  value={password} onChangeText={setPassword} secureTextEntry autoCapitalize="none" autoComplete="current-password"
+                <PasswordInput
+                  value={password} onChangeText={setPassword} autoComplete="current-password"
                   accessibilityLabel="Account password" placeholder="Account password" placeholderTextColor={colors.lock} style={styles.input}
                   onSubmitEditing={checkPassword}
                 />

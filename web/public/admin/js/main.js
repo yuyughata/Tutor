@@ -65,6 +65,13 @@ async function boot() {
 function renderLogin() {
   const email = h('input', { type: 'email', autocomplete: 'email', required: true, placeholder: 'you@custar.com' });
   const pw = h('input', { type: 'password', autocomplete: 'current-password', required: true, placeholder: 'Password' });
+  const pwToggle = h('button', { type: 'button', class: 'pw-toggle', 'aria-label': 'Show password', onclick: () => {
+    const show = pw.type === 'password';
+    pw.type = show ? 'text' : 'password';
+    pwToggle.textContent = show ? 'Hide' : 'Show';
+    pwToggle.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+  } }, 'Show');
+  const pwBox = h('div', { class: 'pw-wrap' }, pw, pwToggle);
   const err = h('div', { class: 'callout bad', hidden: true, role: 'alert' });
   const btn = h('button', { class: 'btn', type: 'submit', style: { width: '100%' } }, 'Sign in');
   const form = h('form', {
@@ -74,7 +81,7 @@ function renderLogin() {
       try { await api.signIn(email.value.trim(), pw.value); } catch (x) { err.textContent = /invalid/i.test(x.message) ? 'That email or password is not right.' : x.message; err.hidden = false; return; }
       boot();
     }),
-  }, field('Email', email), field('Password', pw), err, btn);
+  }, field('Email', email), field('Password', pwBox), err, btn);
   clear(app).append(h('div', { class: 'login' }, h('div', { class: 'card' },
     h('div', { class: 'brand' }, logo()),
     h('p', { class: 'muted', style: { marginTop: 0 } }, 'Admin dashboard · CUSTAR'), form)));

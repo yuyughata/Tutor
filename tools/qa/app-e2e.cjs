@@ -55,6 +55,17 @@ const NUM = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eigh
     await page.getByLabel('Email', { exact: true }).fill('parent@example.com'); await page.getByLabel('Password', { exact: true }).fill('nope-nope'); await page.getByRole('button', { name: 'Sign in', exact: true }).click();
     await page.getByText('That email or password is not right.').waitFor();
   });
+  await step('show / hide password on sign-in', async () => {
+    const pw = page.getByLabel('Password', { exact: true });
+    await pw.fill('abc12345');
+    if (await pw.evaluate((e) => e.type) !== 'password') throw new Error('password should start hidden');
+    await page.getByRole('button', { name: 'Show password' }).click();
+    if (await pw.evaluate((e) => e.type) !== 'text') throw new Error('Show did not reveal the password');
+    if (await pw.inputValue() !== 'abc12345') throw new Error('value changed');
+    await audit('sign-in with password shown');
+    await page.getByRole('button', { name: 'Hide password' }).click();
+    if (await pw.evaluate((e) => e.type) !== 'password') throw new Error('Hide did not hide it');
+  });
   await step('forgot password with emailed code', async () => {
     await page.getByRole('button', { name: 'Forgot password?' }).click();
     await page.getByText('Forgot your password?').waitFor();

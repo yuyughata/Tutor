@@ -26,6 +26,11 @@ main > :not(.lp) a:not(.btn) { color:var(--purple); text-decoration:underline; t
 .field label { font-size:.86rem; }
 .field input, .field select, .field textarea { min-height:50px; }
 .field textarea { min-height:120px; }
+.pw-wrap { position:relative; }
+.pw-wrap input { padding-right:84px; }
+.pw-toggle { position:absolute; top:50%; right:6px; transform:translateY(-50%); min-height:40px; min-width:64px; padding:0 12px; border:0; border-radius:10px; background:transparent; color:var(--purple-deep,#5b21b6); font:700 .9rem 'Baloo 2',sans-serif; cursor:pointer; }
+.pw-toggle:hover { background:rgba(108,43,217,.08); }
+.pw-toggle:focus-visible { outline:3px solid var(--purple-light,#b98cf2); outline-offset:1px; }
 .field select, .field textarea { font-family:inherit; }
 .notice { padding:14px 16px; border-radius:14px; font-weight:600; background:var(--gold-soft); color:var(--gold-text); font-size:.95rem; }
 .notice.bad { background:var(--danger-soft); color:var(--danger); } .notice.ok { background:var(--teal-soft); color:var(--teal-text); }
