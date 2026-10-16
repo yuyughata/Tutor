@@ -2,20 +2,16 @@
 // Deployed with verify_jwt on; the handler additionally requires the caller to be an admin.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { handleSupport } from '../_shared/support.ts';
-// CORS needs the site's origin (scheme + host), even when WEB_URL includes a folder such as https://www.custar.ng/Genova.
-const webOrigin = () => { try { return new URL(Deno.env.get('WEB_URL') ?? '').origin; } catch { return '*'; } };
+import { corsHeaders } from '../_shared/cors.ts';
 
 const url = Deno.env.get('SUPABASE_URL')!;
 const service = createClient(url, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } });
 const anon = createClient(url, Deno.env.get('SUPABASE_ANON_KEY')!, { auth: { persistSession: false } });
 
-const cors = {
-  'Access-Control-Allow-Origin': webOrigin(),
-  'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info',
-};
-const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
 
 Deno.serve(async (req) => {
+  const cors = corsHeaders(req, Deno.env.get('WEB_URL'));
+  const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
   if (req.method === 'OPTIONS') return new Response(null, { headers: cors });
   if (req.method !== 'POST') return json({ error: 'method not allowed' }, 405);
   const input = await req.json().catch(() => ({}));

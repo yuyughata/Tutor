@@ -1,16 +1,11 @@
 // Gives a signed-in parent a one-time Paystack link to update their card or cancel their subscription.
 import { createClient } from 'npm:@supabase/supabase-js@2';
-// CORS needs the site's origin (scheme + host), even when WEB_URL includes a folder such as https://www.custar.ng/Genova.
-const webOrigin = () => { try { return new URL(Deno.env.get('WEB_URL') ?? '').origin; } catch { return '*'; } };
+import { corsHeaders } from '../_shared/cors.ts';
 
-const cors = {
-  'Access-Control-Allow-Origin': webOrigin(),
-  'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info',
-};
-const json = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
 
 Deno.serve(async (req) => {
+  const cors = corsHeaders(req, Deno.env.get('WEB_URL'));
+  const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
   if (req.method === 'OPTIONS') return new Response(null, { headers: cors });
   if (req.method !== 'POST') return json({ error: 'method not allowed' }, 405);
 

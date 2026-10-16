@@ -1,15 +1,8 @@
 // Called by the website with the parent's Supabase JWT.
 // Starts a Paystack subscription checkout for the chosen plan and returns the hosted payment URL.
 import { createClient } from 'npm:@supabase/supabase-js@2';
-// CORS needs the site's origin (scheme + host), even when WEB_URL includes a folder such as https://www.custar.ng/Genova.
-const webOrigin = () => { try { return new URL(Deno.env.get('WEB_URL') ?? '').origin; } catch { return '*'; } };
+import { corsHeaders } from '../_shared/cors.ts';
 
-const cors = {
-  'Access-Control-Allow-Origin': webOrigin(),
-  'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info',
-};
-const json = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
 
 // Paystack plan codes (PLN_...) live on the plans table (admins can fill them in) with env vars as a fallback.
 const ENV_CODE: Record<string, string | undefined> = {
@@ -18,6 +11,8 @@ const ENV_CODE: Record<string, string | undefined> = {
 };
 
 Deno.serve(async (req) => {
+  const cors = corsHeaders(req, Deno.env.get('WEB_URL'));
+  const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
   if (req.method === 'OPTIONS') return new Response(null, { headers: cors });
   if (req.method !== 'POST') return json({ error: 'method not allowed' }, 405);
 

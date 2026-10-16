@@ -7,7 +7,7 @@ export function friendly(message: string): string {
   if (/email rate limit|over_email_send_rate_limit/i.test(message)) return 'We could not send your confirmation email just now because too many emails were sent in the last hour. Nothing was created. Please try again in about an hour, or contact support.';
   if (/rate|too many|seconds/i.test(message)) return 'Please wait a minute before trying again.';
   if (/password/i.test(message) && /(short|weak|least|characters)/i.test(message)) return 'Choose a longer password (at least 8 characters).';
-  if (/fetch|network/i.test(message)) return 'We could not reach the server. Check your connection and try again.';
+  if (/fetch|network|failed to send a request|relay/i.test(message)) return 'We could not reach the server. Check your connection and try again.';
   return message;
 }
 /** Read the message our edge functions return in their JSON error body. */
