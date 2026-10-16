@@ -89,7 +89,7 @@ Prices were not re-checked on the vendors' pages; check at checkout. **Start the
 ### 2.3 Resend (email)
 1. Create an account at resend.com. Add your domain (Domains) and add the DNS records it shows; wait for **Verified**.
 2. Create an API key ("Sending access" is enough).
-3. In the admin: **Email > Connection**: paste the key, set From email (`hello@your-domain`), Reply-to (`support@…`), and "Support notifications" (the inbox that gets new support requests). Press **Save settings**, then **Activate email**, then **Send test email**.
+3. In the admin: **Email > Connection**: paste the key, set From email (`hello@your-domain`), Reply-to (`support@…`), and "Team notifications" (the inbox that gets new support messages and website form requests; leave empty to email every admin). Press **Save settings**, then **Activate email**, then **Send test email**.
 4. Check the received test in Gmail and on a phone, in light and dark mode.
 
 ### 2.4 Content

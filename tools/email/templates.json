@@ -206,5 +206,22 @@
    "support_email"
   ],
   "automatic": true
+ },
+ {
+  "key": "new_request",
+  "name": "New form request (to the team)",
+  "description": "Sent to the team when a visitor sends the Request a GRP spot or Request a title form on the website.",
+  "subject": "New {{kind_label}}: {{name}}",
+  "eyebrow": "New request",
+  "body": "# New {{kind_label}}\n\nSomeone just sent a form on the Genova website. Reply quickly while they are interested.\n\n## Details\n{{details}}\n\n{{comments_block}}\n\n[Open in the dashboard]({{site_url}}/admin/)\n\n{{whatsapp_block}}",
+  "variables": [
+   "kind_label",
+   "name",
+   "details",
+   "comments_block",
+   "whatsapp_block",
+   "site_url"
+  ],
+  "automatic": true
  }
 ]

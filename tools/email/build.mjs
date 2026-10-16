@@ -23,6 +23,7 @@ const index = [];
 for (const t of templates) {
   const vars = { ...SAMPLE, logo_url: '../../web/public/admin/img/genova-logo.png' }; // previews open from docs/email-templates, so use the repo file
   if (t.key === 'support_received') vars.message = 'My tablet still shows the Free plan after I paid yesterday.';
+  if (t.key === 'new_request') Object.assign(vars, { kind_label: 'GRP spot request', name: 'Ada Parent', details: '- Name: Ada Parent\n- Phone: 0801 234 5678\n- Email: ada.parent@example.com\n- Reading level: Spark\n- How: Online', comments_block: '> Please call after 4pm.', whatsapp_block: '[Reply on WhatsApp](https://wa.me/2348012345678)' });
   const r = renderEmail(t.subject, t.body, vars, { eyebrow: t.eyebrow });
   writeFileSync(join(root, 'docs', 'email-templates', `${t.key}.html`), r.html);
   index.push({ key: t.key, name: t.name, subject: r.subject, eyebrow: t.eyebrow, description: t.description, automatic: t.automatic });

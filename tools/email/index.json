@@ -102,5 +102,13 @@
   "eyebrow": "Your plan",
   "description": "Sent when a parent taps \"Change plan\" in the app. Links to the plans page on the website.",
   "automatic": true
+ },
+ {
+  "key": "new_request",
+  "name": "New form request (to the team)",
+  "subject": "New GRP spot request: Ada Parent",
+  "eyebrow": "New request",
+  "description": "Sent to the team when a visitor sends the Request a GRP spot or Request a title form on the website.",
+  "automatic": true
  }
 ]

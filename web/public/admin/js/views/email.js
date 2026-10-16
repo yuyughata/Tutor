@@ -185,7 +185,7 @@ export async function render(ctx) {
     const fromName = h('input', { type: 'text', value: status.from_name || 'Genova', maxlength: 60 });
     const fromEmail = h('input', { type: 'email', value: status.from_email || '', placeholder: 'hello@yourdomain.com' });
     const replyTo = h('input', { type: 'email', value: status.reply_to || '', placeholder: 'support@yourdomain.com (optional)' });
-    const notify = h('input', { type: 'email', value: status.notify_email || '', placeholder: 'Where new support requests are announced (optional)' });
+    const notify = h('input', { type: 'email', value: status.notify_email || '', placeholder: 'Where new support messages and form requests are announced (optional)' });
     const state = h('div', { class: `callout ${status.enabled ? 'ok' : ''}`, role: 'status' });
     const paintState = () => {
       state.className = `callout ${status.enabled ? 'ok' : ''}`;
@@ -217,7 +217,7 @@ export async function render(ctx) {
       h('div', { class: 'card' }, h('h2', {}, 'Resend connection'), state,
         h('div', { style: { height: '14px' } }),
         field('Resend API key', key, 'Stored on the server only. It is never shown again, only its last four characters.'),
-        field('From name', fromName), field('From email', fromEmail, 'Must be an address on a domain you verified in Resend.'), field('Reply-to', replyTo), field('Support notifications', notify),
+        field('From name', fromName), field('From email', fromEmail, 'Must be an address on a domain you verified in Resend.'), field('Reply-to', replyTo), field('Team notifications', notify, 'Where new support messages and website form requests are announced. Leave empty to email all admins.'),
         h('div', { class: 'row' }, save, activate, off),
         h('hr', { style: { border: 0, borderTop: '1px solid var(--line)', margin: '20px 0' } }),
         h('h3', {}, 'Send a test'), h('div', { class: 'row', style: { marginTop: '10px', flexWrap: 'nowrap' } }, h('div', { class: 'grow' }, testTo), test)),
