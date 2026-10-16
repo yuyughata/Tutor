@@ -13,6 +13,10 @@ function accessState(r) {
   return ['Free · lapsed', 'bad'];
 }
 
+const GENDER = { female: 'Female', male: 'Male', prefer_not_to_say: 'Prefer not to say' };
+/** "First Last" from the details a parent added on the website, or '' when they have not added a name. */
+const fullName = (d) => [d?.first_name, d?.last_name].filter(Boolean).join(' ');
+
 const randomPassword = () => {
   const chars = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   const bytes = crypto.getRandomValues(new Uint32Array(12));
@@ -48,12 +52,14 @@ export async function render(ctx) {
         pick.onchange = () => { pick.checked ? selected.add(r.parent_id) : selected.delete(r.parent_id); paintBulk(); all.checked = deletable.every((x) => selected.has(x.parent_id)); };
         return h('tr', {},
           h('td', {}, pick),
-          h('td', {}, h('b', {}, r.email || '(no email)'), r.is_admin ? h('span', { class: 'pill purple', style: { marginLeft: '8px' } }, 'Admin') : null),
+          h('td', {}, h('b', {}, r.email || '(no email)'), r.is_admin ? h('span', { class: 'pill purple', style: { marginLeft: '8px' } }, 'Admin') : null,
+            fullName(r.details) ? h('div', { class: 'small muted' }, fullName(r.details)) : null),
           h('td', { class: 'small muted nowrap hide-sm' }, fmtDate(r.joined_at)), h('td', { class: 'hide-sm' }, num(r.readers)),
           h('td', { class: 'small' }, r.plan || '—'), h('td', {}, h('span', { class: `pill ${kind}` }, label)),
           h('td', { class: 'small nowrap', style: { color: r.has_access || !until ? '' : 'var(--danger)' } }, r.has_access && !until && r.status !== 'none' ? 'No end date' : fmtDate(until)),
           h('td', {}, h('div', { class: 'row', style: { flexWrap: 'nowrap' } },
             h('button', { class: 'btn sm secondary', onclick: () => manage(r, () => load(search)) }, 'Access'),
+            h('button', { class: 'btn sm ghost', 'aria-label': `Details for ${r.email}`, onclick: () => showDetails(r) }, 'Details'),
             h('button', { class: 'btn sm ghost', title: 'Password help', onclick: () => passwordHelp(r) }, 'Password'),
             r.is_admin ? null : h('button', { class: 'btn sm ghost', style: { color: 'var(--danger)' }, 'aria-label': `Delete account ${r.email}`, onclick: () => deleteAccounts([r], () => { selected.delete(r.parent_id); load(search); }) }, 'Delete'))));
       }))))) : h('div', { class: 'card empty' }, h('div', { class: 'big' }, '👪'), h('h2', {}, 'No parents found'), h('p', {}, 'Accounts appear here as parents sign up on the website.')));
@@ -75,6 +81,21 @@ export async function render(ctx) {
         h('div', { class: 'actions' }, h('button', { class: 'btn ghost', onclick: () => close(false) }, 'Cancel'), save));
     });
     done();
+  }
+
+  /** The optional details a parent added on their Account page (read-only here). */
+  async function showDetails(r) {
+    const d = r.details;
+    const rows = d ? [
+      ['Name', fullName(d)], ['Phone', d.phone ? h('a', { href: `tel:${d.phone.replace(/[^0-9+]/g, '')}` }, d.phone) : ''],
+      ['Email', h('a', { href: `mailto:${r.email}` }, r.email)], ['Address', d.address], ['State', d.state], ['Gender', GENDER[d.gender] || ''],
+    ] : [];
+    await ctx.modal((close) => h('div', {}, h('h2', {}, 'Parent details'), h('p', { class: 'muted' }, r.email),
+      d ? h('div', { style: { display: 'grid', gridTemplateColumns: 'minmax(80px, 110px) 1fr', gap: '10px 14px', margin: '12px 0 18px' } },
+        rows.flatMap(([k, v]) => [h('div', { class: 'small muted' }, k), h('div', { style: { fontWeight: '700', wordBreak: 'break-word' } }, v || h('span', { class: 'muted' }, 'Not given'))]))
+        : h('div', { class: 'callout', style: { margin: '12px 0 18px' } }, 'This parent has not added their details yet. They can do it on the Account page of the website.'),
+      d?.updated_at ? h('p', { class: 'small muted' }, `Last updated ${fmtDate(d.updated_at)}`) : null,
+      h('div', { class: 'actions' }, h('button', { class: 'btn ghost', onclick: () => close(true) }, 'Close'))));
   }
 
   async function passwordHelp(r) {

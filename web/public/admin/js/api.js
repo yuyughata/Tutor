@@ -285,7 +285,13 @@ export function createApi(sb, opts = {}) {
     async deleteFeatured(id) { unwrap(await sb.from('featured_slots').delete().eq('id', id)); },
 
     // ---------- people ----------
-    async listSubscribers(search) { return unwrap(await sb.rpc('admin_people', { search: search || null })); },
+    async listSubscribers(search) {
+      const rows = unwrap(await sb.rpc('admin_people', { search: search || null }));
+      // the optional details parents add on their Account page (admins can read them); a failure just leaves them out
+      const { data } = await sb.from('parent_details').select('parent_id, first_name, last_name, phone, address, state, gender, updated_at').limit(5000);
+      const by = new Map((data || []).map((d) => [d.parent_id, d]));
+      return rows.map((r) => ({ ...r, details: by.get(r.parent_id) || null }));
+    },
     async setEntitlement(parentId, status, until, plan) {
       unwrap(await sb.rpc('admin_set_entitlement', { p_parent: parentId, p_status: status, p_until: until, p_plan: plan || null }));
     },

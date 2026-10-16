@@ -18,6 +18,17 @@ const { chromium } = require(process.env.PW);
     await page.locator('dialog select').selectOption('canceled'); await page.getByRole('button', { name: 'Save access' }).click();
     await page.getByText('Access updated').waitFor();
   });
+  await step('subscribers show the details parents added', async () => {
+    await page.locator('table').getByText('Amara Nwosu').waitFor();
+    await page.getByRole('button', { name: 'Details for amara@example.com' }).click(); await page.locator('dialog').waitFor();
+    const d = page.locator('dialog');
+    for (const t of ['Parent details', 'Amara Nwosu', '+234 803 555 0101', '14 Marina Road, Lagos Island', 'Lagos', 'Female']) await d.getByText(t, { exact: true }).waitFor();
+    await d.getByRole('link', { name: '+234 803 555 0101' }).waitFor();
+    await d.getByRole('button', { name: 'Close' }).click();
+    // a parent with no details yet
+    await page.getByRole('button', { name: 'Details for kofi@example.com' }).click(); await page.locator('dialog').getByText('has not added their details yet').waitFor();
+    await page.locator('dialog').getByRole('button', { name: 'Close' }).click();
+  });
   await step('password reset email', async () => {
     await page.getByRole('button', { name: 'Password' }).first().click(); await page.locator('dialog').waitFor();
     await page.locator('dialog').getByRole('button', { name: 'Send reset email' }).click();

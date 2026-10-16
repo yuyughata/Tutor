@@ -53,7 +53,7 @@ export function createDemoApi() {
   ];
   const GRACE = 5 * day;
   const people = [
-    { parent_id: 'p1', email: 'amara@example.com', joined_at: iso(-60), status: 'active', plan: 'monthly', current_period_end: iso(11), readers: 2 },
+    { parent_id: 'p1', email: 'amara@example.com', joined_at: iso(-60), status: 'active', plan: 'monthly', current_period_end: iso(11), readers: 2, details: { first_name: 'Amara', last_name: 'Nwosu', phone: '+234 803 555 0101', address: '14 Marina Road, Lagos Island', state: 'Lagos', gender: 'female', updated_at: iso(-20) } },
     { parent_id: 'p2', email: 'kofi@example.com', joined_at: iso(-41), status: 'active', plan: 'quarterly', current_period_end: iso(80), readers: 1 },
     { parent_id: 'p3', email: 'zainab@example.com', joined_at: iso(-20), status: 'past_due', plan: 'monthly', current_period_end: iso(-2), readers: 3 },
     { parent_id: 'p4', email: 'tunde@example.com', joined_at: iso(-9), status: 'none', plan: null, current_period_end: null, readers: 1 },
