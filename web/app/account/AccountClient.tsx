@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+import { DetailsCard } from '@/components/DetailsCard';
 import { PasswordField } from '@/components/PasswordField';
 import { PremiumBadge } from '@/components/PremiumBadge';
 import { useAuth } from '@/lib/auth';
@@ -74,6 +75,8 @@ export function AccountClient() {
         </div>
         <p className="muted small" style={{ fontWeight: 600 }}>Sign in on the Genova app with <b>{email}</b> and your Premium stories unlock on that device.</p>
       </div>
+
+      <DetailsCard userId={session.user.id} />
 
       <SupportCard />
 

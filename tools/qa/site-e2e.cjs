@@ -78,6 +78,24 @@ const BASE = 'http://localhost:8096';
     await page.getByText('Your recent messages').waitFor(); await page.getByText('I paid but my app still shows Free.').waitFor(); await audit('account support');
     await page.getByRole('link', { name: 'Contact support' }).first().waitFor();
   });
+  await step('account: "Your details" (name, phone, address, state, gender) saved with Update and loaded again', async () => {
+    await goto('/account/'); await page.getByRole('heading', { name: 'Your details' }).waitFor();
+    await page.getByLabel('First name').fill('Ada'); await page.getByLabel('Last name').fill('Okafor');
+    await page.getByLabel('Phone number').fill('not a phone'); await page.getByRole('button', { name: 'Update', exact: true }).click();
+    await page.getByText(/Enter a phone number/).waitFor(); if (state.detailsWrites) throw new Error('a bad phone number must not be saved');
+    await page.getByLabel('Phone number').fill('+234 812 000 1111'); await page.getByLabel('Address').fill('12 Allen Avenue, Ikeja');
+    await page.getByLabel('State').selectOption('Lagos'); await page.getByLabel('Gender').selectOption('female');
+    await audit('account details');
+    await page.getByRole('button', { name: 'Update', exact: true }).click(); await page.getByText('Your details were saved.').waitFor();
+    const d = state.details; if (!d || d.first_name !== 'Ada' || d.last_name !== 'Okafor' || d.phone !== '+234 812 000 1111' || d.address !== '12 Allen Avenue, Ikeja' || d.state !== 'Lagos' || d.gender !== 'female' || d.parent_id !== state.user.id) throw new Error('saved row: ' + JSON.stringify(d));
+    // a fresh page load shows what was saved
+    await goto('/account/'); await page.getByRole('heading', { name: 'Your details' }).waitFor();
+    await page.waitForFunction(() => document.querySelector('#d-first')?.value === 'Ada', null, { timeout: 5000 });
+    if (await page.getByLabel('State').inputValue() !== 'Lagos' || await page.getByLabel('Gender').inputValue() !== 'female' || await page.getByLabel('Address').inputValue() !== '12 Allen Avenue, Ikeja') throw new Error('details did not load back');
+    // empty fields are stored as nothing
+    await page.getByLabel('Address').fill(''); await page.getByRole('button', { name: 'Update', exact: true }).click(); await page.getByText('Your details were saved.').waitFor();
+    if (state.details.address !== null) throw new Error('empty address should be null: ' + state.details.address);
+  });
   await step('Premium badge on checkout, plans, account and header', async () => {
     state.access = premium();
     await goto('/account/?paid=1'); await page.getByText('Payment received. Welcome to Premium').waitFor({ timeout: 8000 });
